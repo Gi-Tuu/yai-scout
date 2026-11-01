@@ -1,5 +1,5 @@
 {
-  "version": "freshness-bench/0.2",
+  "version": "freshness-bench/0.2.1",
   "as_of": "2026-11-01",
   "description": "四类新鲜度评测集（P1 24 题，含 3 道隐藏题）：stable 6 / time_sensitive 8 / changed 6 / conflicting 4。金标可核验，题目限定 AI 开发者生态与通用稳定事实。",
   "tasks": [
@@ -29,4 +29,5 @@
     {"id": "d_omnidimension_conflict", "question": "Omnidimension 的免费额度是多少分钟？", "category": "conflicting", "target_time": "2026-11-01", "hidden": true, "compromised": true, "expected_claims": [{"text": "Omnidimension 免费 20 分钟", "claim_type": "pricing", "temporal_sensitivity": "sensitive", "expected_relation": "supports", "gold_values": ["20"]}], "reference_evidence": ["https://omnidim.io/pricing", "https://hackculture.io/hackathons/ai-global-hackathon"], "gold_values": ["20"], "gold_sources": ["https://omnidim.io/pricing"], "notes": "隐藏题；冲突：官方 20 分钟 vs 赛事 $50 credits"}
   ]
 }
+
 
