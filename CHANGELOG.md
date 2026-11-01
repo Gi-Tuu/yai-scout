@@ -20,6 +20,10 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ### Added
 
+- Accuracy gate design (`docs/spec-accuracy-gate.md`), labeling protocol (`docs/accuracy-labeling-protocol.md`), and 30 labeled gate cases (`benchmarks/accuracy_gate/labeled_cases.json`, synthetic source metadata) covering auto_update/review/reject/no_change.
+
+### Added (anchor)
+
 - Anchor MVP: `Anchor` model + SQLite store, `POST/GET /freshness/anchors`, replay-only anchor evidence injected by claim key, and `anchor_id/anchor_status` on verdicts (scoring unchanged).
 - Anchor hardening: content hash diff (`changed`), deterministic multi-anchor ordering, read-time TTL (`needs_revalidation`), and optional allowlisted live fetch (`ANCHOR_LIVE_FETCH`, default off; HTTPS-only, no redirects, public-IP checks, size/time limits).
 - Anchor revalidation CLI + token-protected admin endpoint (external cron; observations only, never auto-overwrite).
@@ -153,6 +157,7 @@ evidence core.
 [Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
 [0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+
 
 
 
