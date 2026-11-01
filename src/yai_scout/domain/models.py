@@ -186,6 +186,28 @@ class AnchorObservation(BaseModel):
     note: str = ""
 
 
+class AnchorCandidate(BaseModel):
+    id: str
+    anchor_id: str
+    claim_key: str
+    old_value: str = ""
+    new_value: str = ""
+    normalized_old: str = ""
+    normalized_new: str = ""
+    evidence: list[dict[str, Any]] = Field(default_factory=list)
+    gate_decision: str = ""
+    gate_reason: str = ""
+    gate_version: str = ""
+    confidence: float = 0.0
+    accuracy_status: Literal[
+        "pending", "approved", "rejected", "auto_applied", "no_change"
+    ] = "pending"
+    created_at: str = Field(default_factory=utcnow_iso)
+    decided_at: str | None = None
+    decided_by: str = ""
+    applied_anchor_id: str | None = None
+
+
 class FreshnessVerdict(BaseModel):
     claim_id: str
     status: FreshnessStatus
@@ -355,6 +377,7 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
 
 
 

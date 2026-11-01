@@ -14,6 +14,7 @@ from typing import Any
 
 from .domain.models import (
     Anchor,
+    AnchorCandidate,
     AnchorObservation,
     BenchSession,
     CostEntry,
@@ -116,6 +117,14 @@ CREATE TABLE IF NOT EXISTS anchor (
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_anchor_claim ON anchor(claim_key);
+CREATE TABLE IF NOT EXISTS anchor_candidate (
+    id TEXT PRIMARY KEY,
+    anchor_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_anchor_candidate_anchor ON anchor_candidate(anchor_id);
 CREATE TABLE IF NOT EXISTS anchor_observation (
     id TEXT PRIMARY KEY,
     anchor_id TEXT NOT NULL,
@@ -605,6 +614,64 @@ class Store:
             rows = self._conn.execute(query, vals).fetchall()
         return [AnchorObservation.model_validate_json(row["payload_json"]) for row in rows]
 
+    def save_anchor_candidate(self, candidate: AnchorCandidate) -> AnchorCandidate:
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO anchor_candidate (id, anchor_id, status, payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (
+                    candidate.id,
+                    candidate.anchor_id,
+                    candidate.accuracy_status,
+                    candidate.model_dump_json(),
+                    candidate.created_at,
+                ),
+            )
+            self._conn.commit()
+        return candidate
+
+    def update_anchor_candidate(self, candidate: AnchorCandidate) -> AnchorCandidate:
+        with self._lock:
+            self._conn.execute(
+                "UPDATE anchor_candidate SET status = ?, payload_json = ? WHERE id = ?",
+                (candidate.accuracy_status, candidate.model_dump_json(), candidate.id),
+            )
+            self._conn.commit()
+        return candidate
+
+    def get_anchor_candidate(self, candidate_id: str) -> AnchorCandidate | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT payload_json FROM anchor_candidate WHERE id = ?", (candidate_id,)
+            ).fetchone()
+        return AnchorCandidate.model_validate_json(row["payload_json"]) if row else None
+
+    def list_anchor_candidates(
+        self, status: str | None = None, limit: int = 100
+    ) -> list[AnchorCandidate]:
+        query = "SELECT payload_json FROM anchor_candidate"
+        vals: list[Any] = []
+        if status:
+            query += " WHERE status = ?"
+            vals.append(status)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        vals.append(limit)
+        with self._lock:
+            rows = self._conn.execute(query, vals).fetchall()
+        return [AnchorCandidate.model_validate_json(row["payload_json"]) for row in rows]
+
+    def supersede_anchor(self, old_id: str, new_id: str) -> None:
+        anchor = self.get_anchor(old_id)
+        if anchor is None:
+            return
+        updated = anchor.model_copy(update={"status": "superseded", "superseded_by": new_id})
+        with self._lock:
+            self._conn.execute(
+                "UPDATE anchor SET payload_json = ? WHERE id = ?",
+                (updated.model_dump_json(), old_id),
+            )
+            self._conn.commit()
+
     # ------------------------------------------------------------------ snapshots
     def save_snapshot(self, snapshot: EvidenceSnapshot) -> EvidenceSnapshot:
         with self._lock:
@@ -721,6 +788,8 @@ def _parse_detector_report(payload: str) -> DetectorReport:
         if status in {"uncertain", "unverifiable"}:
             verdict["status"] = "insufficient"
     return DetectorReport.model_validate(data)
+
+
 
 
 

@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     scout_mode: str = "all"
     snapshots_seed: str = "benchmarks/snapshots.json"
     admin_token: str = ""
+    accuracy_auto_update: bool = False
     anchor_live_fetch: bool = False
     anchor_allowlist: str = ""
 
@@ -67,6 +68,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """返回配置（测试可替换）。"""
     return Settings()
+
 
 
 

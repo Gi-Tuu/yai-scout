@@ -24,6 +24,7 @@ from ..benchmark.runner import DEFAULT_AGENT_SPECS, BenchmarkRunner
 from ..benchmark.scoring import leaderboard as build_leaderboard
 from ..benchmark.scoring import pareto_frontier
 from ..config import ROOT, Settings, get_settings
+from ..detector.accuracy_gate import GateObservation, evaluate_gate
 from ..detector.compare import claim_key, compare_reports
 from ..detector.revalidate import revalidate_due
 from ..detector.service import StaleAnswerDetector
@@ -31,10 +32,12 @@ from ..detector.snapshot_search import SnapshotSearcher
 from ..domain.models import (
     AgentSpec,
     Anchor,
+    AnchorCandidate,
     ResearchTask,
     RunEvent,
     TaskStatus,
     TemporalSensitivity,
+    utcnow_iso,
 )
 from ..llm import LLMClient
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
@@ -70,6 +73,20 @@ class AnchorCreate(BaseModel):
 
 class RevalidateRequest(BaseModel):
     limit: int = Field(default=50, ge=1, le=500)
+
+
+class ObservationInput(BaseModel):
+    url: str
+    source_tier: int = Field(default=3, ge=1, le=4)
+    independent_group: str = ""
+    value: str = ""
+    published_at: str | None = None
+    content_hash: str = ""
+    reachable: bool = True
+
+
+class CandidateCreate(BaseModel):
+    observations: list[ObservationInput] = Field(default_factory=list)
 
 
 class BenchmarkRequest(BaseModel):
@@ -454,6 +471,190 @@ def create_app(
         anchors = store.list_anchors(claim_key=claim_key)
         return {"anchors": [anchor.model_dump(mode="json") for anchor in anchors]}
 
+    @app.post("/admin/anchors/{anchor_id}/candidates", status_code=201)
+    async def create_anchor_candidate(
+        anchor_id: str, payload: CandidateCreate, request: Request
+    ) -> dict[str, Any]:
+        if not cfg.admin_token:
+            raise HTTPException(status_code=404, detail="admin endpoint disabled")
+        if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
+            raise HTTPException(status_code=401, detail="unauthorized")
+        anchor = store.get_anchor(anchor_id)
+        if anchor is None:
+            raise HTTPException(status_code=404, detail="anchor not found")
+        observations = [
+            GateObservation(
+                url=item.url,
+                source_tier=item.source_tier,
+                independent_group=item.independent_group or item.url,
+                value=item.value,
+                published_at=item.published_at,
+                content_hash=item.content_hash,
+                reachable=item.reachable,
+            )
+            for item in payload.observations
+        ]
+        gate = evaluate_gate(
+            anchor_value=anchor.last_value,
+            anchor_published_at=anchor.published_at,
+            observations=observations,
+            claim_text=anchor.claim_text,
+        )
+        reachable = [item for item in observations if item.reachable and item.value]
+        best = max(reachable, key=lambda item: item.published_at or "") if reachable else None
+        candidate = AnchorCandidate(
+            id=f"cand_{uuid.uuid4().hex[:12]}",
+            anchor_id=anchor.id,
+            claim_key=anchor.claim_key,
+            old_value=anchor.last_value,
+            new_value=best.value if best else "",
+            normalized_old=gate.normalized_old,
+            normalized_new=gate.normalized_new,
+            evidence=[
+                {
+                    "url": item.url,
+                    "source_tier": item.source_tier,
+                    "independent_group": item.independent_group,
+                    "value": item.value,
+                    "published_at": item.published_at,
+                    "content_hash": item.content_hash,
+                }
+                for item in observations
+            ],
+            gate_decision=gate.decision.value,
+            gate_reason=gate.reason,
+            gate_version="accuracy-gate-v0",
+            confidence=gate.confidence,
+        )
+        store.save_anchor_candidate(candidate)
+
+        def apply(status: str, decided_by: str) -> AnchorCandidate:
+            if best is None:
+                raise HTTPException(status_code=400, detail="no usable observation")
+            new_anchor = Anchor(
+                id=f"anc_{uuid.uuid4().hex[:12]}",
+                claim_key=anchor.claim_key,
+                claim_text=anchor.claim_text,
+                url=best.url,
+                source_tier=best.source_tier,
+                last_value=best.value,
+                content_hash=best.content_hash,
+                published_at=best.published_at,
+                last_verified_at=utcnow_iso(),
+                supersedes=anchor.id,
+                temporal_sensitivity=anchor.temporal_sensitivity,
+            )
+            store.save_anchor(new_anchor)
+            store.supersede_anchor(anchor.id, new_anchor.id)
+            updated = candidate.model_copy(
+                update={
+                    "accuracy_status": status,
+                    "decided_at": utcnow_iso(),
+                    "decided_by": decided_by,
+                    "applied_anchor_id": new_anchor.id,
+                }
+            )
+            store.update_anchor_candidate(updated)
+            return updated
+
+        if gate.decision.value == "no_change":
+            candidate = candidate.model_copy(
+                update={"accuracy_status": "no_change", "decided_at": utcnow_iso()}
+            )
+            store.update_anchor_candidate(candidate)
+        elif gate.decision.value == "reject":
+            candidate = candidate.model_copy(
+                update={
+                    "accuracy_status": "rejected",
+                    "decided_at": utcnow_iso(),
+                    "decided_by": "gate",
+                }
+            )
+            store.update_anchor_candidate(candidate)
+        elif gate.decision.value == "auto_update" and cfg.accuracy_auto_update:
+            candidate = apply("auto_applied", "auto-gate")
+        return candidate.model_dump(mode="json")
+
+    @app.get("/admin/anchors/candidates")
+    async def list_anchor_candidates(
+        request: Request, status: str | None = None
+    ) -> dict[str, Any]:
+        if not cfg.admin_token:
+            raise HTTPException(status_code=404, detail="admin endpoint disabled")
+        if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
+            raise HTTPException(status_code=401, detail="unauthorized")
+        candidates = store.list_anchor_candidates(status=status)
+        return {"candidates": [item.model_dump(mode="json") for item in candidates]}
+
+    @app.post("/admin/anchors/candidates/{candidate_id}/approve")
+    async def approve_anchor_candidate(
+        candidate_id: str, request: Request
+    ) -> dict[str, Any]:
+        if not cfg.admin_token:
+            raise HTTPException(status_code=404, detail="admin endpoint disabled")
+        if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
+            raise HTTPException(status_code=401, detail="unauthorized")
+        candidate = store.get_anchor_candidate(candidate_id)
+        if candidate is None:
+            raise HTTPException(status_code=404, detail="candidate not found")
+        if candidate.accuracy_status != "pending":
+            raise HTTPException(status_code=409, detail="candidate is not pending")
+        anchor = store.get_anchor(candidate.anchor_id)
+        if anchor is None:
+            raise HTTPException(status_code=404, detail="anchor not found")
+        best = max(
+            candidate.evidence,
+            key=lambda item: str(item.get("published_at") or ""),
+        )
+        new_anchor = Anchor(
+            id=f"anc_{uuid.uuid4().hex[:12]}",
+            claim_key=anchor.claim_key,
+            claim_text=anchor.claim_text,
+            url=str(best.get("url") or anchor.url),
+            source_tier=int(best.get("source_tier") or anchor.source_tier),
+            last_value=str(best.get("value") or candidate.new_value),
+            content_hash=str(best.get("content_hash") or ""),
+            published_at=str(best.get("published_at") or "") or None,
+            last_verified_at=utcnow_iso(),
+            supersedes=anchor.id,
+            temporal_sensitivity=anchor.temporal_sensitivity,
+        )
+        store.save_anchor(new_anchor)
+        store.supersede_anchor(anchor.id, new_anchor.id)
+        updated = candidate.model_copy(
+            update={
+                "accuracy_status": "approved",
+                "decided_at": utcnow_iso(),
+                "decided_by": "admin",
+                "applied_anchor_id": new_anchor.id,
+            }
+        )
+        store.update_anchor_candidate(updated)
+        return updated.model_dump(mode="json")
+
+    @app.post("/admin/anchors/candidates/{candidate_id}/reject")
+    async def reject_anchor_candidate(
+        candidate_id: str, request: Request
+    ) -> dict[str, Any]:
+        if not cfg.admin_token:
+            raise HTTPException(status_code=404, detail="admin endpoint disabled")
+        if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
+            raise HTTPException(status_code=401, detail="unauthorized")
+        candidate = store.get_anchor_candidate(candidate_id)
+        if candidate is None:
+            raise HTTPException(status_code=404, detail="candidate not found")
+        if candidate.accuracy_status != "pending":
+            raise HTTPException(status_code=409, detail="candidate is not pending")
+        updated = candidate.model_copy(
+            update={
+                "accuracy_status": "rejected",
+                "decided_at": utcnow_iso(),
+                "decided_by": "admin",
+            }
+        )
+        store.update_anchor_candidate(updated)
+        return updated.model_dump(mode="json")
+
     @app.get("/freshness/compare")
     async def compare_freshness_reports(left_id: str, right_id: str) -> dict[str, Any]:
         left = store.get_detector_report(left_id)
@@ -602,6 +803,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 

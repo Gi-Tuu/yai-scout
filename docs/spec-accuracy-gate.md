@@ -160,14 +160,24 @@ Review：
 - `synthetic_metadata=true`：事实来自公开资料，来源元数据为合成，用于规则测试，不是生产真值；
 - 人工标注协议见 `docs/accuracy-labeling-protocol.md`。
 
-## 11. 上线计划
+## 11. 上线状态（2026-11-01）
 
-1. 先实现 candidate + gate + label 评估脚本（不自动写）；
-2. 用 30 条标注集跑 Gate，要求 agreement ≥0.85、false update rate ≤0.05；
-3. 默认 `AUTO_UPDATE=false`；
-4. 评审演示：candidate → gate 决策 → approve/reject → 审计；
-5. 通过后只对 R4 高置信候选开启自动更新；
-6. 保留 rollback 与审计。
+已实现：
+
+1. `AnchorCandidate` 表 + candidate 生命周期；
+2. `POST /admin/anchors/{id}/candidates`（Gate 评估、候选持久化）；
+3. `GET /admin/anchors/candidates`；
+4. `POST /admin/anchors/candidates/{id}/approve|reject`；
+5. `AUTO_UPDATE` 开关（`ACCURACY_AUTO_UPDATE`，默认 false）；
+6. 自动更新仅对 R4 且开关开启生效；否则停留 pending；
+7. 写回：新 Anchor + `supersedes` + 旧 Anchor `superseded`；无独立 memory 表，Anchor 即当前持久记忆。
+
+仍待完成：
+
+- 60 条独立人工标注 + 对抗样本；
+- rollback 管理端点（当前可通过新 Anchor 再 supersede 实现，未做 UI）；
+- false update rate 在线监控；
+- 评审 UI（当前 admin API 足够演示）。
 
 ## 12. v0 评估结果（2026-11-01）
 
@@ -186,4 +196,5 @@ Review：
 - 不允许单源自动更新；
 - 不允许同一来源镜像凑数；
 - 不在无标注集的情况下开启自动更新。
+
 
