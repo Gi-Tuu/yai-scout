@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -128,6 +129,7 @@ def create_app(
             "version": cfg.app_version,
             "mode": cfg.scout_mode,
             "snapshots": len(store.list_snapshots(limit=1000)),
+            "build": os.environ.get("RENDER_GIT_COMMIT", "dev")[:12],
             "tavily": {"mode": tavily.mode, "authenticated": tavily.authenticated},
             "llm": {"available": llm.available, "model": cfg.llm_model},
         }
@@ -432,6 +434,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 
