@@ -23,7 +23,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - Accuracy gate design (`docs/spec-accuracy-gate.md`), labeling protocol (`docs/accuracy-labeling-protocol.md`), and 30 labeled gate cases (`benchmarks/accuracy_gate/labeled_cases.json`, synthetic source metadata) covering auto_update/review/reject/no_change.
 - Deterministic accuracy gate evaluator (`accuracy_gate.py`) + `scripts/eval_accuracy_gate.py`; v0 reports 30/30 agreement on rule-consistent labels (overfit caveat documented).
 - Accuracy labels expanded to 60; gate agreement 1.000 on rule-consistent labels (independent human labels still pending).
-- Typed value-hint templates (price/credits, version, license, port, date, numeric) with ambiguity rejection.
+- Blind labeling kit: 60-case worksheet, hidden key, `/label` UI, and `eval_accuracy_gate.py --labels` for independent human labels/false-update rate.\n- Typed value-hint templates (price/credits, version, license, port, date, numeric) with ambiguity rejection.
 - Cached/budgeted Tavily discovery (`ANCHOR_DISCOVERY_TTL_SECONDS`, `ANCHOR_DISCOVERY_DAILY_BUDGET`); healthz exposes usage.
 - Multi-source discovery for changed anchors: revalidation now enriches observations via Tavily (2–3 sources) before gate evaluation.
 - Rollback API + `/admin` UI: token-gated anchor/candidate tables, approve/reject and rollback.
@@ -165,6 +165,7 @@ evidence core.
 [Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
 [0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+
 
 
 

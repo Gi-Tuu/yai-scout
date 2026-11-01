@@ -794,6 +794,7 @@ def create_app(
     inspector_page = static_dir / "inspector.html" if static_dir.is_dir() else None
     compare_page = static_dir / "compare.html" if static_dir.is_dir() else None
     admin_page = static_dir / "admin-anchors.html" if static_dir.is_dir() else None
+    label_page = static_dir / "label.html" if static_dir.is_dir() else None
 
     @app.get("/detector", include_in_schema=False)
     @app.get("/freshness", include_in_schema=False)
@@ -815,6 +816,12 @@ def create_app(
         if inspector_page is None or not inspector_page.is_file():
             raise HTTPException(status_code=404, detail="inspector page not found")
         return FileResponse(inspector_page)
+
+    @app.get("/label", include_in_schema=False)
+    async def label_page_route() -> FileResponse:
+        if label_page is None or not label_page.is_file():
+            raise HTTPException(status_code=404, detail="label page not found")
+        return FileResponse(label_page)
 
     @app.get("/admin", include_in_schema=False)
     async def admin_page_route() -> FileResponse:
@@ -850,6 +857,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 

@@ -70,7 +70,28 @@
 - 许可证非标准写法；
 - 同一独立组内部冲突。
 
-## 8. 评估指标（Gate 实现后）
+## 8. 独立标注工作流
+
+```powershell
+# 1) 生成 60 条盲标题目（已生成，可重跑）
+python scripts/make_labeling_worksheet.py
+#    → benchmarks/accuracy_gate/holdout_worksheet.json
+#    → benchmarks/accuracy_gate/holdout_key.json（标注者不要打开）
+
+# 2) 打开盲标页面
+#    http://127.0.0.1:8010/label
+#    输入 labeler 名字，逐题选择 4 类决策；localStorage 自动保存
+#    完成后“导出 labels JSON”
+
+# 3) 评估独立标签
+python scripts/eval_accuracy_gate.py \
+  --labels accuracy_labels_<name>.json \
+  --key benchmarks/accuracy_gate/holdout_key.json
+```
+
+输出：agreement、gate auto precision、false update rate、review coverage、confusion。
+
+## 9. 评估指标
 
 | 指标 | 目标 |
 |---|---|
@@ -96,11 +117,12 @@
 - 每条含 `expected.reason` 和 `gate_version`；
 - 后续扩到 60 条时保持同一 schema，提升 `version`。
 
-## 10. 禁止事项
+## 11. 禁止事项
 
 - 不把 LLM 判断当成人工标签；
 - 不用未核验的“行业常识”补标签；
 - 不为了让 Gate 好看而修改标签；
 - 不把 accuracy 标签用于 freshness 分数。
+
 
 

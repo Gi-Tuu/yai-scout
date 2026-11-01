@@ -43,7 +43,7 @@ uv run uvicorn yai_scout.api.app:app --port 8010
 | `/benchmark` | multi-agent leaderboard, Pareto frontier, 24-task dataset |
 | `/freshness` | paste an LLM answer → claim-level freshness report |
 | `/inspector` | evidence inspector: claims, sources, score breakdown |
-| `/compare` | temporal drift between two reports (real replay when snapshots exist) |
+| `/compare` | temporal drift between two reports (real replay when snapshots exist) |\n| `/label` | blind accuracy labeling worksheet (independent human labels) |
 
 Deploy free: see [docs/deploy-free.md](docs/deploy-free.md) (Render / Hugging Face / Cloudflare Tunnel, $0).\n\nDocker (verified locally):
 
@@ -125,6 +125,7 @@ docs/              charters, specs, evaluation, demo script
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
+
 
 
 

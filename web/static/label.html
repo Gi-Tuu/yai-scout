@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>YAI Scout — Accuracy Labeling</title>
+<style>
+  :root{--bg:#0b0f14;--panel:#121821;--line:#1f2a37;--text:#e6e9ef;--muted:#8b98a9;--accent:#f5a524;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--mono:ui-monospace,Consolas,monospace}
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;color:var(--text);background:radial-gradient(1200px 700px at 20% -10%,#16202c 0%,var(--bg) 55%);font:14px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  header{display:flex;gap:14px;align-items:baseline;padding:18px 26px;border-bottom:1px solid var(--line)}
+  h1{font-size:17px;margin:0} h1 span{color:var(--accent)} .tag{color:var(--muted);font-size:12px}
+  main{max-width:980px;margin:0 auto;padding:20px 26px 60px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  input{background:#0f141c;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px;font:inherit}
+  button{background:var(--accent);color:#1b1206;border:0;border-radius:7px;padding:7px 11px;font-weight:600;cursor:pointer;font-size:12px;margin-right:6px}
+  button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:400}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{text-align:left;padding:7px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+  .mono{font-family:var(--mono)} .muted{color:var(--muted)}
+  .case-title{font-size:18px;margin:8px 0}
+  .choices button{min-width:120px;margin-top:10px}
+  .progress{font-family:var(--mono);font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>YAI <span>Scout</span> · Accuracy Labeling</h1>
+  <div class="tag">blind worksheet · 60 cases · auto_update / review / reject / no_change</div>
+  <div style="margin-left:auto"><a href="/" style="color:var(--accent)">首页</a></div>
+</header>
+<main>
+  <div class="panel">
+    <h2>Labeler</h2>
+    <input id="labeler" placeholder="你的名字/编号（用于独立性记录）" style="width:320px" />
+    <span class="progress" id="progress"></span>
+  </div>
+  <div class="panel" id="casePanel">
+    <div class="muted">加载中…</div>
+  </div>
+  <div class="panel">
+    <button id="prev" class="ghost">上一题</button>
+    <button id="next" class="ghost">下一题</button>
+    <button id="export">导出 labels JSON</button>
+    <span class="muted" id="status"></span>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const DECISIONS = ["auto_update", "review", "reject", "no_change"];
+let worksheet = [];
+let index = 0;
+let labels = JSON.parse(localStorage.getItem("accuracyLabels") || "{}");
+$("labeler").value = localStorage.getItem("accuracyLabeler") || "";
+
+async function init() {
+  const response = await fetch("/static/accuracy_worksheet.json");
+  worksheet = (await response.json()).cases;
+  render();
+}
+function current() { return worksheet[index]; }
+function render() {
+  $("labeler").oninput = () => localStorage.setItem("accuracyLabeler", $("labeler").value);
+  const item = current();
+  if (!item) { $("casePanel").innerHTML = '<div class="muted">没有题目</div>'; return; }
+  const anchor = item.anchor;
+  const observations = item.observations || [];
+  $("progress").textContent = `${index + 1}/${worksheet.length} · labeled ${Object.keys(labels).length}`;
+  $("casePanel").innerHTML = `
+    <div class="progress">${item.worksheet_id} · ${esc(item.temporal_sensitivity)}</div>
+    <div class="case-title">${esc(item.claim_text)}</div>
+    <div class="muted" style="font-size:12px">当前 Anchor：${esc(anchor.value)} · T${anchor.source_tier} · ${esc(anchor.url)}</div>
+    <table style="margin-top:10px"><thead><tr><th>来源</th><th>tier</th><th>group</th><th>value</th><th>published</th><th>reachable</th></tr></thead><tbody>
+      ${observations.map((o) => `<tr><td><a style="color:var(--accent)" href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.url)}</a></td><td>T${o.source_tier}</td><td>${esc(o.independent_group)}</td><td class="mono">${esc(o.value)}</td><td>${esc(o.published_at || "—")}</td><td>${o.reachable === false ? "no" : "yes"}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="choices">
+      ${DECISIONS.map((d) => `<button data-decision="${d}">${d}</button>`).join("")}
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">选择后会保存到本机 localStorage；完成后导出 JSON 交给评估。</div>`;
+  document.querySelectorAll("[data-decision]").forEach((button) => {
+    button.onclick = () => {
+      labels[item.worksheet_id] = button.dataset.decision;
+      localStorage.setItem("accuracyLabels", JSON.stringify(labels));
+      if (index < worksheet.length - 1) index += 1;
+      render();
+    };
+  });
+}
+$("prev").onclick = () => { if (index > 0) index -= 1; render(); };
+$("next").onclick = () => { if (index < worksheet.length - 1) index += 1; render(); };
+$("export").onclick = () => {
+  const payload = {
+    version: "accuracy-gate-labels-independent/0.1",
+    labeler: $("labeler").value || "anonymous",
+    labels,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `accuracy_labels_${payload.labeler}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  $("status").textContent = `picked ${Object.keys(labels).length}/${worksheet.length}`;
+};
+init();
+</script>
+</body>
+</html>
+

@@ -196,4 +196,6 @@ def test_admin_page_is_served():
     app = _app(store)
     with TestClient(app) as client:
         assert client.get("/admin").status_code == 200
+        assert client.get("/label").status_code == 200
     store.close()
+

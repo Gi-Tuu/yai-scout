@@ -1,0 +1,302 @@
+{
+  "BL-001": {
+    "source_id": "AG-05",
+    "expected_decision": "reject",
+    "expected_reason": "low-authority source only"
+  },
+  "BL-002": {
+    "source_id": "AG-51",
+    "expected_decision": "reject",
+    "expected_reason": "low-authority source only"
+  },
+  "BL-003": {
+    "source_id": "AG-30",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 groups agree"
+  },
+  "BL-004": {
+    "source_id": "AG-34",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1 groups agree after currency normalization"
+  },
+  "BL-005": {
+    "source_id": "AG-54",
+    "expected_decision": "reject",
+    "expected_reason": "source unreachable/empty"
+  },
+  "BL-006": {
+    "source_id": "AG-38",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 agree"
+  },
+  "BL-007": {
+    "source_id": "AG-17",
+    "expected_decision": "reject",
+    "expected_reason": "low-authority source only"
+  },
+  "BL-008": {
+    "source_id": "AG-13",
+    "expected_decision": "review",
+    "expected_reason": "repo and wiki are same independent group"
+  },
+  "BL-009": {
+    "source_id": "AG-16",
+    "expected_decision": "review",
+    "expected_reason": "authoritative conflict"
+  },
+  "BL-010": {
+    "source_id": "AG-20",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-011": {
+    "source_id": "AG-52",
+    "expected_decision": "reject",
+    "expected_reason": "low-authority source only"
+  },
+  "BL-012": {
+    "source_id": "AG-35",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 agree"
+  },
+  "BL-013": {
+    "source_id": "AG-50",
+    "expected_decision": "review",
+    "expected_reason": "authoritative observations conflict"
+  },
+  "BL-014": {
+    "source_id": "AG-27",
+    "expected_decision": "no_change",
+    "expected_reason": "same value after update"
+  },
+  "BL-015": {
+    "source_id": "AG-19",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1 groups agree"
+  },
+  "BL-016": {
+    "source_id": "AG-31",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 agree"
+  },
+  "BL-017": {
+    "source_id": "AG-14",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 groups agree"
+  },
+  "BL-018": {
+    "source_id": "AG-24",
+    "expected_decision": "review",
+    "expected_reason": "thousand-separator ambiguity (1.000 could be 1 or 1000)"
+  },
+  "BL-019": {
+    "source_id": "AG-39",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1 groups agree"
+  },
+  "BL-020": {
+    "source_id": "AG-33",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 agree"
+  },
+  "BL-021": {
+    "source_id": "AG-55",
+    "expected_decision": "reject",
+    "expected_reason": "low-authority source only"
+  },
+  "BL-022": {
+    "source_id": "AG-47",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-023": {
+    "source_id": "AG-43",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-024": {
+    "source_id": "AG-58",
+    "expected_decision": "no_change",
+    "expected_reason": "same value"
+  },
+  "BL-025": {
+    "source_id": "AG-11",
+    "expected_decision": "no_change",
+    "expected_reason": "same value; authority irrelevant when no change"
+  },
+  "BL-026": {
+    "source_id": "AG-21",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1 groups agree after currency normalization"
+  },
+  "BL-027": {
+    "source_id": "AG-53",
+    "expected_decision": "reject",
+    "expected_reason": "observation older than anchor"
+  },
+  "BL-028": {
+    "source_id": "AG-28",
+    "expected_decision": "reject",
+    "expected_reason": "source unreachable/empty; no update"
+  },
+  "BL-029": {
+    "source_id": "AG-46",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-030": {
+    "source_id": "AG-57",
+    "expected_decision": "no_change",
+    "expected_reason": "same value"
+  },
+  "BL-031": {
+    "source_id": "AG-49",
+    "expected_decision": "review",
+    "expected_reason": "same independent group"
+  },
+  "BL-032": {
+    "source_id": "AG-12",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-033": {
+    "source_id": "AG-41",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-034": {
+    "source_id": "AG-37",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 agree"
+  },
+  "BL-035": {
+    "source_id": "AG-07",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 agree; low-tier conflict ignored but recorded"
+  },
+  "BL-036": {
+    "source_id": "AG-25",
+    "expected_decision": "auto_update",
+    "expected_reason": "version v-prefix normalized; two independent groups agree"
+  },
+  "BL-037": {
+    "source_id": "AG-44",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-038": {
+    "source_id": "AG-02",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-039": {
+    "source_id": "AG-23",
+    "expected_decision": "reject",
+    "expected_reason": "observation older than anchor; do not overwrite with stale evidence"
+  },
+  "BL-040": {
+    "source_id": "AG-01",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 groups agree"
+  },
+  "BL-041": {
+    "source_id": "AG-40",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1 groups agree"
+  },
+  "BL-042": {
+    "source_id": "AG-60",
+    "expected_decision": "no_change",
+    "expected_reason": "same value after version normalization"
+  },
+  "BL-043": {
+    "source_id": "AG-59",
+    "expected_decision": "no_change",
+    "expected_reason": "same value after normalization"
+  },
+  "BL-044": {
+    "source_id": "AG-32",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1/T2 agree"
+  },
+  "BL-045": {
+    "source_id": "AG-36",
+    "expected_decision": "auto_update",
+    "expected_reason": "v-prefix normalized; two groups agree"
+  },
+  "BL-046": {
+    "source_id": "AG-29",
+    "expected_decision": "review",
+    "expected_reason": "same group reports conflicting values"
+  },
+  "BL-047": {
+    "source_id": "AG-10",
+    "expected_decision": "no_change",
+    "expected_reason": "same value; no update needed"
+  },
+  "BL-048": {
+    "source_id": "AG-09",
+    "expected_decision": "review",
+    "expected_reason": "unit mismatch: credits vs USD"
+  },
+  "BL-049": {
+    "source_id": "AG-22",
+    "expected_decision": "review",
+    "expected_reason": "authoritative conflict inside same group"
+  },
+  "BL-050": {
+    "source_id": "AG-18",
+    "expected_decision": "no_change",
+    "expected_reason": "same stable value"
+  },
+  "BL-051": {
+    "source_id": "AG-15",
+    "expected_decision": "auto_update",
+    "expected_reason": "two independent T1 groups agree after normalization"
+  },
+  "BL-052": {
+    "source_id": "AG-42",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-053": {
+    "source_id": "AG-56",
+    "expected_decision": "no_change",
+    "expected_reason": "same value"
+  },
+  "BL-054": {
+    "source_id": "AG-03",
+    "expected_decision": "review",
+    "expected_reason": "mirror is same independent group"
+  },
+  "BL-055": {
+    "source_id": "AG-45",
+    "expected_decision": "review",
+    "expected_reason": "only one authoritative group"
+  },
+  "BL-056": {
+    "source_id": "AG-04",
+    "expected_decision": "review",
+    "expected_reason": "authoritative conflict inside one group"
+  },
+  "BL-057": {
+    "source_id": "AG-26",
+    "expected_decision": "review",
+    "expected_reason": "date without timezone and cross-day ambiguity"
+  },
+  "BL-058": {
+    "source_id": "AG-08",
+    "expected_decision": "no_change",
+    "expected_reason": "normalized values equal"
+  },
+  "BL-059": {
+    "source_id": "AG-06",
+    "expected_decision": "reject",
+    "expected_reason": "no observations"
+  },
+  "BL-060": {
+    "source_id": "AG-48",
+    "expected_decision": "review",
+    "expected_reason": "mirror is same independent group"
+  }
+}
