@@ -65,11 +65,16 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_base_url: str = "https://api.deepseek.com"
     llm_model: str = "deepseek-chat"
+    # Bifrost AI Gateway：设置后所有模型请求走 Bifrost 的 OpenAI-compatible endpoint。
+    bifrost_base_url: str = ""
+    bifrost_api_key: str = ""
+    bifrost_model: str = ""
 
 
 def get_settings() -> Settings:
     """返回配置（测试可替换）。"""
     return Settings()
+
 
 
 

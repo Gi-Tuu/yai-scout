@@ -1,4 +1,9 @@
-# YAI Scout Benchmark — Bifrost Track, Problem 02
+# YAI Scout Benchmark — Evaluation Evidence (Supporting, Not Primary)
+
+> **这不是本次提交的 primary challenge。**  
+> 本仓库唯一 primary submission 是 Tavily Track Problem 05（Stale-answer detector）。  
+> Benchmark 作为 freshness 的评测证据保留，**不声称完成 Bifrost Track Problem 02**；  
+> 若要报 02，还需 failure injection、重复运行、steps/tool calls 逐步 trace。
 
 > **Agent Benchmarking Platform**：不只看模型分数，而是比较不同 Agent 架构在**准确率、新鲜度、证据质量、成本、延迟**上的取舍。
 
@@ -81,3 +86,4 @@ HTTP_AGENT_URL=http://127.0.0.1:9101 uv run uvicorn yai_scout.api.app:app --port
 | 不可复现 | 固定 dataset/target_time/budget + 历史 run |
 
 详见 [spec-benchmark-adapter.md](spec-benchmark-adapter.md)、[differentiation-spec.md](differentiation-spec.md)。
+

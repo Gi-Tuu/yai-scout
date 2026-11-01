@@ -1,6 +1,9 @@
-# YAI Scout Freshness — Tavily Track, Problem 01
+# YAI Scout Freshness — Primary Submission
 
-> **Stale-answer detector**：不是再生成一个答案，而是审计“你已有的答案”是否仍然成立。
+> **Tavily Track, Problem 05（Proposed）· Stale-answer detector**  
+> 不是再生成一个答案，而是审计“你已有的答案”是否仍然成立。  
+> **Bifrost 角色**：所有 claim 抽取 / 关系判断 / 修正建议的模型请求走 Bifrost gateway；见 [bifrost-integration](bifrost-integration.md)。
+
 
 - 在线 Demo：<https://yai-scout.onrender.com/freshness>
 - 证据检查器：<https://yai-scout.onrender.com/inspector>
@@ -11,7 +14,15 @@
 LLM/Agent 的答案经常“看起来有引用”，但引用的是旧页面。  
 Grounding / citation check 只能回答“是否被证据支持”，不能回答“证据是否过期、当前值是什么”。
 
-## 2. 我们做什么
+## 2. 两种技术怎么配合
+
+| 技术 | 作用 |
+|---|---|
+| **Tavily** | live research：找当前来源、抓内容、来源等级/时间信号 |
+| **Bifrost** | OpenAI-compatible 模型网关：claim 抽取、关系判断、修正建议；provider routing / logs / budget |
+| 确定性代码 | 状态判定、预算、证据存储、评分、审计 |
+
+## 3. 我们做什么
 
 ```text
 答案 → 拆 claim → 判时间敏感性 → Tavily 取当前证据
@@ -26,7 +37,7 @@ Grounding / citation check 只能回答“是否被证据支持”，不能回�
 3. **给当前值 + 修正**，不只红绿灯；
 4. **As-of replay**：同一答案在 2026-10-28 FRESH、2026-11-01 STALE。
 
-## 3. 60 秒演示
+## 4. 60 秒演示
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\demo_fixed_cases.py
@@ -45,7 +56,7 @@ Grounding / citation check 只能回答“是否被证据支持”，不能回�
 
 **录制策略**：先用 `--record` 生成缓存，录屏时用默认离线回放，保证不受网络/额度影响；现场可用 `--check` 验证实时结果。Tavily 定价的 live stale 案例可另在 `/freshness` 手动跑（受搜索质量影响，不作为固定镜头）。
 
-## 4. 关键证据
+## 5. 关键证据
 
 - Claim 级审计 + 证据时间 + 来源等级 + 判定理由；
 - Freshness 分数：relation / recency / authority / coverage，版本化 policy；
@@ -53,7 +64,7 @@ Grounding / citation check 只能回答“是否被证据支持”，不能回�
 - 真实 replay：GitHub Releases 官方历史，STALE 24 → FRESH 88；
 - 已接入 Tavily Search/Extract；无 key 时 keyless 降级。
 
-## 5. 运行
+## 6. 运行
 
 ```powershell
 uv sync --extra dev
@@ -70,7 +81,7 @@ curl -s http://127.0.0.1:8010/freshness/verify \
   -d '{"answer":"Tavily 免费计划每月提供 500 credits。","as_of":"2026-11-01"}'
 ```
 
-## 6. 诚实局限
+## 7. 诚实局限
 
 - 检索/抽取仍有噪声；复杂页面可能落到 INSUFFICIENT；
 - 20/60 条标注不是独立人工 ground truth；
@@ -78,7 +89,7 @@ curl -s http://127.0.0.1:8010/freshness/verify \
 - 公开 Demo 有限流（4/min、60/日），冷启动 30–90s；
 - 自动 Anchor 更新默认关闭，需人工 approve。
 
-## 7. 为什么不是“重复造轮子”
+## 8. 为什么不是“重复造轮子”
 
 | 类别 | 代表 | 我们不同 |
 |---|---|---|
@@ -88,4 +99,5 @@ curl -s http://127.0.0.1:8010/freshness/verify \
 | 事实核查 | 引用验证工具 | 输出当前值 + 修正 + as-of replay |
 
 详见 [positioning.md](positioning.md)。
+
 

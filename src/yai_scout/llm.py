@@ -41,6 +41,7 @@ class LLMClient:
         input_price: float = DEFAULT_INPUT_PRICE,
         output_price: float = DEFAULT_OUTPUT_PRICE,
         transport: httpx.AsyncBaseTransport | None = None,
+        require_key: bool = True,
     ) -> None:
         self.api_key = api_key.strip()
         self.base_url = base_url.rstrip("/")
@@ -49,11 +50,12 @@ class LLMClient:
         self.input_price = input_price
         self.output_price = output_price
         self._transport = transport
+        self._require_key = require_key
         self._client: httpx.AsyncClient | None = None
 
     @property
     def available(self) -> bool:
-        return bool(self.api_key)
+        return bool(self.api_key) or not self._require_key
 
     async def _http(self) -> httpx.AsyncClient:
         if self._client is None:
@@ -167,3 +169,4 @@ class LLMClient:
         if not isinstance(payload, dict):
             return None
         return payload, result
+

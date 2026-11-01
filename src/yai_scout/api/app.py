@@ -214,7 +214,11 @@ def create_app(
             "build": os.environ.get("RENDER_GIT_COMMIT", "dev")[:12],
             "limits": limiter.usage(),
             "tavily": {"mode": tavily.mode, "authenticated": tavily.authenticated},
-            "llm": {"available": llm.available, "model": cfg.llm_model},
+            "llm": {
+                "available": llm.available,
+                "gateway": "bifrost" if cfg.bifrost_base_url else "direct",
+                "model": cfg.bifrost_model or cfg.llm_model,
+            },
         }
 
     # ------------------------------------------------------------------ research
@@ -864,6 +868,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 

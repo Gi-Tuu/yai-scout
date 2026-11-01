@@ -1,147 +1,141 @@
 # YAI Scout
 
-**Evidence-first research agent + freshness-aware agent benchmark.**
-Two independent hackathon projects sharing one evidence core.
+**Evidence-first stale-answer detector.** Audit any LLM answer claim by claim, verify it against live sources, and show what is still true, what changed, and what cannot be verified.
+
+**Primary submission: Tavily Track — Problem 05, Stale-answer detector (proposed).**  
+**Both required technologies are used:** Tavily for live web research; **Bifrost by Maxim AI as the model gateway** for claim extraction, assessment and rewrite. The 24-task benchmark is evaluation evidence for the freshness work, not a second submission.
 
 [![CI](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Gi-Tuu/yai-scout?include_prereleases&label=release)](https://github.com/Gi-Tuu/yai-scout/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 
-> *We benchmark not just whether agents are right, but whether their evidence is still current.*\n\n**Submission mapping:** Project A → Bifrost Track, Problem 02 · Project B → Tavily Track, Problem 01. Organizer confirmed (2026-11-01) that a combined submission is allowed and tracks are judged separately.
+**Live demo:** <https://yai-scout.onrender.com/freshness>  
+Free tier sleeps after ~15 min idle; first request can take 30–90s. 32 real GitHub-release snapshots ship in the image, so replay works without setup.
 
-**Live demo:** <https://yai-scout.onrender.com> — free tier sleeps after ~15 min idle; first request can take 30–90s. The image ships with 32 real GitHub-release snapshots, so replay works online without setup.
+**Build window:** 1–15 November 2026 · **Submission deadline:** 15 Nov 2026, 23:59 IST.
 
 ---
 
-## The two projects
+## The problem
 
-| Project | Track | Problem statement | What it does |
-|---|---|---|---|
-| **[YAI Scout Benchmark](docs/charter-benchmark.md)** | Bifrost — Problem 02 | Build a benchmarking platform for AI agents, not just models | Runs different agent architectures on one dataset; ranks accuracy, **freshness**, evidence quality, cost and latency |
-| **[YAI Scout Freshness](docs/charter-freshness.md)** | Tavily — Problem 01 | Stale-answer detector | Splits any LLM answer into claims, verifies each against live sources, returns Freshness Score + evidence + correction |
+LLM answers often look cited but cite **old pages**. Grounding/citation checks answer "is this supported by evidence", not "is the evidence still current, and what is the value today".
 
-Both are independent deliverables (separate entry points, README, tests and demo), sharing one **evidence core**:
-claim extraction, source validation, freshness scoring, snapshot store and execution trace.
+YAI Scout is a **post-hoc audit layer**:
+
+```text
+answer → claims → temporal sensitivity → Tavily live research
+       → FRESH / STALE / CONFLICTED / INSUFFICIENT / UNKNOWN per claim
+       → current value + correction + evidence links
+```
+
+## What is different
+
+1. **Post-hoc**: audit answers from any model; no need to rebuild the RAG/agent.
+2. **Support ≠ freshness**: evidence can fully support a claim that is already outdated.
+3. **Current value + correction**, not just a red/green light.
+4. **As-of replay**: the same answer is FRESH at 2026-10-28 and STALE at 2026-11-01 (real GitHub release history).
+5. **Evidence governance**: anchors, multi-source candidates, an accuracy gate, approve/reject and rollback — so automated updates are auditable rather than blind overwrites.
+
+## Both technologies, meaningful roles
+
+| Technology | Role in the product | Where |
+|---|---|---|
+| **Tavily** | live research: find current sources, fetch content, tier/recency signals | `retrieval/tavily.py`, detector verification |
+| **Bifrost** | OpenAI-compatible model gateway: claim extraction, relation assessment, correction rewrite; provider routing/logs/budget | `llm.py`, `docs/bifrost-integration.md` |
+| Deterministic code | status decisions, budgets, evidence storage, scoring, audit | `detector/`, `store.py` |
+
+When `BIFROST_BASE_URL` is set, **all model requests go through Bifrost**. Without it, the app falls back to a direct OpenAI-compatible endpoint; the public demo uses the fallback, the local/video demo shows Bifrost (`healthz` → `"gateway":"bifrost"`).
 
 ## Quick start
 
 ```bash
-# 1) install
 uv sync --extra dev
-
-# 2) keys (optional: falls back to keyless Tavily / rule-based extraction)
-cp .env.example .env    # fill TAVILY_API_KEY / OPENAI_API_KEY
-
-# 3) run
+cp .env.example .env
+# fill TAVILY_API_KEY
+# start Bifrost (optional but required for the Bifrost demo):
+#   scripts/start_bifrost.ps1   # or: docker run -p 8080:8080 maximhq/bifrost
+# fill BIFROST_BASE_URL / BIFROST_MODEL
 uv run uvicorn yai_scout.api.app:app --port 8010
 ```
 
 | URL | Purpose |
 |---|---|
-| `http://127.0.0.1:8010/` | landing: choose a project |
-| `/benchmark` | multi-agent leaderboard, Pareto frontier, 24-task dataset |
 | `/freshness` | paste an LLM answer → claim-level freshness report |
-| `/inspector` | evidence inspector: claims, sources, score breakdown |
-| `/compare` | temporal drift between two reports (real replay when snapshots exist) |\n| `/label` | blind accuracy labeling worksheet (independent human labels) |
+| `/inspector` | claims → sources → timestamps → score breakdown |
+| `/compare` | temporal drift between two reports (real replay) |
+| `/benchmark` | supporting evaluation: 24 tasks, multiple agents, Pareto |
+| `/label` | blind accuracy labeling (independent human labels) |
+| `/admin` | token-gated candidates / approve / reject / rollback |
 
-Deploy free: see [docs/deploy-free.md](docs/deploy-free.md) (Render / Hugging Face / Cloudflare Tunnel, $0).\n\nDocker (verified locally):
+## 60-second fixed demo
 
-```bash
-docker compose up -d --build
-# benchmark → http://127.0.0.1:8010
-# freshness → http://127.0.0.1:8011
+```powershell
+# deterministic offline replay from cached real API responses
+.\.venv\Scripts\python.exe scripts\demo_fixed_cases.py
+
+# live check
+.\.venv\Scripts\python.exe scripts\demo_fixed_cases.py --check `
+  --url https://yai-scout.onrender.com
+```
+
+Fixed cases:
+
+```text
+Python 3.12 (2023)        FRESH   stable fact, old source is fine
+YAI 0.24.0 @ 2026-10-28   FRESH   correct at the time
+YAI 0.24.0 @ 2026-11-01   STALE   citation ≠ freshness
+YAI 0.25.0 @ 2026-11-01   FRESH   current value
 ```
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  subgraph CORE[Shared evidence core]
-    AD[Agent Adapter]
-    SR[Sources / snapshots]
-    EV[Claim + evidence engine]
-    TR[Trace / cost]
-    ST[(SQLite)]
-  end
-  B[Benchmark app] --> CORE
-  F[Freshness app] --> CORE
-  B --> LB[Leaderboard / Pareto]
-  F --> RP[Freshness report / Inspector]
-  F --> CP[Temporal compare]
+  U[User / API] --> F[Claim extraction]
+  F -->|LLM via Bifrost| B[Bifrost AI Gateway]
+  B --> M[Model provider]
+  F --> T[Tavily live research]
+  T --> E[Evidence + source tiers]
+  E --> V[Deterministic verification<br/>relation / recency / authority / coverage]
+  V --> R[Freshness report + correction]
+  R --> A[Anchor / candidate / audit]
+  A --> UI[Inspector / compare / admin]
 ```
 
-## What is real today (2026-11-01)
+## What is real today
 
 | Capability | Status |
 |---|---|
-| Claim extraction | LLM (JSON mode, quote-substring validated) + rule fallback |
-| Live verification | Tavily search, 4-source relation analysis (supports / contradicts / mentions) |
-| Freshness model | temporal-sensitivity classes (stable/slow/sensitive/volatile), decision table, explainable score breakdown, confidence |
-| Benchmark | 24 tasks (21 public + 3 hidden), four categories; report categories stable / time-sensitive / changed / conflicting |
-| Agent adapters | HTTP `scout-adapter/1.0`, Python in-process, CLI subprocess, plus reference agents |
-| Ranking | multi-dimensional table + non-dominated Pareto frontier |
-| Evidence inspector | claim → sources → timestamps → relation → score breakdown → suggestion |
-| Temporal replay | **real**: GitHub Releases official history; example: YAI version `0.25.0` is **STALE at 2026-10-28** and **FRESH at 2026-11-01** |
-| Deployment | `Dockerfile` + two-container compose, `SCOUT_MODE` isolation verified |
-| Cost guard | per-IP per-minute + global daily limits on detector/benchmark endpoints (429 + Retry-After) |\n| Accuracy gate | v0 evaluator + candidate/review/approve/reject API; auto-update default off |\n| Quality gates | 131 tests on Python 3.11 and 3.12, ruff, mypy strict; CI matrix runs lint + types + tests + Docker build |
+| Claim extraction | LLM via Bifrost/direct + rule fallback, quote-substring validated |
+| Live verification | Tavily search, supports/contradicts/mentions relation |
+| Freshness model | temporal sensitivity classes, policy + weights, explainable breakdown |
+| Bifrost integration | configurable OpenAI-compatible gateway; `healthz` reports gateway, local demo/logs |
+| Temporal replay | real GitHub release snapshots: 2026-10-28 FRESH vs 2026-11-01 STALE |
+| Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
+| Benchmark (supporting) | 24 tasks, HTTP/Python/CLI adapters, Pareto, manifest + `result_hash` |
+| Quality gates | 136 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
-- Web-archive history is **not** available from the current network (archive.org unreachable); replay uses GitHub release history and must be labelled `simulated` when no snapshot exists. We never fake historical evidence.
-- The freshness calibration set has 20 rule-labelled claims (status 20/20, MAE 12.06); human scoring of 60 claims is pending.
-- The benchmark dataset is intentionally small and scoped to the AI-developer ecosystem; it is a demo benchmark, not an academic leaderboard.
-- LLM/API keys are **not** stored in this repo; runs without keys fall back to keyless/rule-based modes.
-
-## AI usage (for judges)
-
-AI is used at bounded joints: claim extraction, relation judgement, correction suggestions and answer synthesis. Deterministic code owns the pipeline, budgets, evidence storage, status decisions and scoring. Every AI output is schema-checked; extracted quotes must be exact substrings of the source; scores are computed by fixed formulas (no LLM-generated score).
-
-## Repository map
-
-```text
-src/yai_scout/
-  detector/        claim extraction, temporal classification, verification, freshness scoring, compare
-  benchmark/       dataset, adapters, runner, scoring, protocol
-  retrieval/       Tavily client, URL canonicalization, source tiers
-  sources/         snapshots (Wayback / manual / GitHub history), snapshot search
-  pipeline/        research console pipeline (legacy /research entry)
-  store.py         SQLite store
-  api/app.py       FastAPI app: /benchmark, /freshness, /inspector, /compare
-web/static/        landing, benchmark, freshness, inspector, compare pages
-benchmarks/        tasks.json (24 tasks), labeled_claims.json (20 claims)
-examples/          external agents: echo (HTTP), python, CLI
-docs/              charters, specs, evaluation, demo script
-```
+- Human labels: 60/60 matched the hidden key, so they are **rule-following**, not independent ground truth; `AUTO_UPDATE` stays **off**. See [accuracy-eval](docs/accuracy-eval.md).
+- Web-archive history is unavailable from the current network; replay uses GitHub release history and is labelled `simulated` when no snapshot exists. We never fake historical evidence.
+- The benchmark is a small demo benchmark, not an academic leaderboard; it is **not** the primary submission.
+- Bifrost is a **local/video** demo by default; the public Render link falls back to direct model access unless a public Bifrost deployment is configured.
+- LLM/Tavily keys are not in this repo; keyless/rule-based fallbacks exist.
 
 ## Documentation
 
-- [Project charters](docs/charter-benchmark.md) · [Freshness charter](docs/charter-freshness.md)
-- [Differentiation spec](docs/differentiation-spec.md) · [Freshness scoring spec](docs/spec-freshness-scoring.md)
-- [Adapter & dataset spec](docs/spec-benchmark-adapter.md) · [Temporal replay spec](docs/spec-temporal-replay.md)
-- [Positioning & competitor map](docs/positioning.md) · [Anchor-first retrieval design](docs/spec-anchor-retrieval.md) · [Citation-vs-freshness demo](docs/demo-case-citation-vs-freshness.md)\n- [Tavily track README](docs/track-tavily.md) · [Bifrost track README](docs/track-bifrost.md)\n- [Accuracy gate design](docs/spec-accuracy-gate.md) · [Accuracy labeling protocol](docs/accuracy-labeling-protocol.md) · [Accuracy eval](docs/accuracy-eval.md)\n- [Evaluation](docs/freshness-eval.md) · [Demo script](docs/demo-script.md) · [Hackathon rules report](docs/hackathon-rules-report.md)\n- [Engineering governance v1.0](docs/governance/engineering-governance-v1.md) · [ADR-0003](docs/adr/0003-engineering-governance.md) · [P1 governance backlog](docs/governance/p1-backlog.md) · [Governance audit](docs/governance/audit-2026-11-01.md)
-- [YAI reuse & license audit](docs/yai-reuse.md) · [API resources](docs/api-resources.md) · [Changelog](CHANGELOG.md)
+- [Tavily track / primary submission](docs/track-tavily.md) · [Bifrost integration](docs/bifrost-integration.md)
+- [Benchmark evidence (not primary)](docs/track-bifrost.md)
+- [Differentiation spec](docs/differentiation-spec.md) · [Positioning](docs/positioning.md)
+- [Freshness scoring](docs/spec-freshness-scoring.md) · [Temporal replay](docs/spec-temporal-replay.md)
+- [Anchor retrieval](docs/spec-anchor-retrieval.md) · [Accuracy gate](docs/spec-accuracy-gate.md) · [Accuracy eval](docs/accuracy-eval.md)
+- [Submission checklist](docs/submission.md) · [Demo script](docs/demo-script.md) · [Deploy free](docs/deploy-free.md)
+- [Governance](docs/governance/engineering-governance-v1.md) · [ADR-0003](docs/adr/0003-engineering-governance.md)
+- [Changelog](CHANGELOG.md) · [API resources](docs/api-resources.md)
 
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
