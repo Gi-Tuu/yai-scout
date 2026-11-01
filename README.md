@@ -15,6 +15,8 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 | [docs/tavily-setup.md](docs/tavily-setup.md) | Tavily 接入决策：Windows 下走 REST API（不装 CLI/全局 Skills）、key 存放与验证 |
 | [docs/hackathon-rules-report.md](docs/hackathon-rules-report.md) | **赛事调查全文**：赛题、双赛道规则（含 4 处官方口径冲突）、奖金修正、选题与开发建议 |
 | [research/organizer-reply.md](research/organizer-reply.md) | 主办方 "All yes." 确认记录（双赛道/双作品/整合均可） |
+| [research/organizer-followup-email.md](research/organizer-followup-email.md) | **第二封追问邮件**（提交机制/credits，可直接复制发送） |
+| [research/organizer-reply/](research/organizer-reply/) | 主办方回复原件/截图存档目录 |
 | [docs/adr/0001-track-selection.md](docs/adr/0001-track-selection.md) | ~~整合方案~~（已被 ADR-0002 取代） |
 | [docs/adr/0002-dual-project-strategy.md](docs/adr/0002-dual-project-strategy.md) | **决策**：双赛道、双独立作品、共享技术底座 |
 | [docs/charter-benchmark.md](docs/charter-benchmark.md) | Project A 立项：Benchmark（Bifrost-02） |
