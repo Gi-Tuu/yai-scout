@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>YAI Scout — Temporal Drift</title>
+<style>
+  :root{--bg:#0b0f14;--panel:#121821;--panel2:#0f141c;--line:#1f2a37;--text:#e6e9ef;--muted:#8b98a9;
+        --accent:#f5a524;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--mono:ui-monospace,Consolas,monospace}
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;color:var(--text);
+    background:radial-gradient(1200px 700px at 20% -10%,#16202c 0%,var(--bg) 55%);
+    font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  header{display:flex;gap:14px;align-items:baseline;padding:18px 26px;border-bottom:1px solid var(--line)}
+  h1{font-size:17px;margin:0} h1 span{color:var(--accent)} .tag{color:var(--muted);font-size:12px}
+  a{color:var(--accent);text-decoration:none}
+  main{max-width:1100px;margin:0 auto;padding:20px 26px 60px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font:inherit}
+  button{background:var(--accent);color:#1b1206;border:0;border-radius:7px;padding:7px 12px;font-weight:600;cursor:pointer}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:11px;font-weight:500}
+  .mono{font-family:var(--mono)} .muted{color:var(--muted)}
+  .badge{font-family:var(--mono);font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid var(--line)}
+  .changed{color:var(--warn)} .new{color:var(--ok)} .removed{color:var(--bad)}
+  .warnbox{color:var(--warn);border:1px solid #78350f;background:#1c1208;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>YAI <span>Scout</span> · Temporal Drift</h1>
+  <div class="tag">两份报告 → claim 级漂移（历史对比默认 simulated）</div>
+  <div style="margin-left:auto"><a href="/inspector">Inspector</a> · <a href="/freshness">Freshness</a></div>
+</header>
+<main>
+  <div class="panel">
+    <h2>选择两份报告</h2>
+    <select id="left"></select> → <select id="right"></select>
+    <button id="run" style="margin-left:10px">对比</button>
+    <div class="muted" id="hint" style="margin-top:8px"></div>
+  </div>
+  <div id="result"></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+let reports = [];
+async function init() {
+  const res = await fetch("/freshness/reports");
+  reports = (await res.json()).reports || [];
+  ["left", "right"].forEach((id) => {
+    $(id).innerHTML = reports.map((r) => `<option value="${r.id}">${r.id} · ${r.as_of} · score ${r.overall_score ?? "—"}</option>`).join("");
+  });
+  if (reports.length > 1) $("right").selectedIndex = 1;
+}
+$("run").onclick = async () => {
+  const left = $("left").value, right = $("right").value;
+  if (!left || !right) return;
+  const res = await fetch(`/freshness/compare?left_id=${encodeURIComponent(left)}&right_id=${encodeURIComponent(right)}`);
+  if (!res.ok) { $("result").innerHTML = '<div class="panel">对比失败</div>'; return; }
+  render(await res.json());
+};
+function render(d) {
+  $("hint").textContent = `mode=${d.mode} · ${d.left_as_of} → ${d.right_as_of} · summary ${JSON.stringify(d.summary)}`;
+  const warn = d.warning ? `<div class="warnbox">${esc(d.warning)}</div>` : "";
+  const rows = d.diffs.map((x) => `<tr>
+    <td><span class="badge ${x.change}">${x.change}</span></td>
+    <td>${esc(x.text_left || "—")}</td>
+    <td>${esc(x.text_right || "—")}</td>
+    <td class="mono">${(x.numbers_left || []).join(",") || "—"} → ${(x.numbers_right || []).join(",") || "—"}</td>
+    <td class="mono">${x.status_left ?? "—"} → ${x.status_right ?? "—"}</td>
+    <td class="mono">${x.freshness_delta ?? "—"}</td>
+    <td class="muted">+${(x.evidence_added || []).length} / −${(x.evidence_removed || []).length}</td>
+  </tr>`).join("");
+  $("result").innerHTML = `<div class="panel">${warn}
+    <h2>Claim 漂移</h2>
+    <table><tr><th>变化</th><th>之前</th><th>之后</th><th>数值</th><th>状态</th><th>Δfreshness</th><th>证据</th></tr>
+    ${rows || '<tr><td colspan="7" class="muted">没有可对比的 claim</td></tr>'}</table></div>`;
+}
+init();
+</script>
+</body>
+</html>

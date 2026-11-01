@@ -21,6 +21,7 @@ from ..benchmark.runner import BenchmarkRunner
 from ..benchmark.scoring import leaderboard as build_leaderboard
 from ..benchmark.scoring import pareto_frontier
 from ..config import Settings, get_settings
+from ..detector.compare import compare_reports
 from ..detector.service import StaleAnswerDetector
 from ..domain.models import ResearchTask, RunEvent, TaskStatus
 from ..llm import LLMClient
@@ -281,6 +282,14 @@ def create_app(
             lines.append("")
         return {"markdown": "\n".join(lines)}
 
+    @app.get("/freshness/compare")
+    async def compare_freshness_reports(left_id: str, right_id: str) -> dict[str, Any]:
+        left = store.get_detector_report(left_id)
+        right = store.get_detector_report(right_id)
+        if left is None or right is None:
+            raise HTTPException(status_code=404, detail="report not found")
+        return compare_reports(left, right).model_dump(mode="json")
+
     # ------------------------------------------------------------------ benchmark
     @app.get("/api/benchmark/tasks")
     @app.get("/benchmark/tasks")
@@ -351,6 +360,7 @@ def create_app(
     bench_page = static_dir / "bench.html" if static_dir.is_dir() else None
     landing_page = static_dir / "landing.html" if static_dir.is_dir() else None
     inspector_page = static_dir / "inspector.html" if static_dir.is_dir() else None
+    compare_page = static_dir / "compare.html" if static_dir.is_dir() else None
 
     @app.get("/detector", include_in_schema=False)
     @app.get("/freshness", include_in_schema=False)
@@ -372,6 +382,12 @@ def create_app(
         if inspector_page is None or not inspector_page.is_file():
             raise HTTPException(status_code=404, detail="inspector page not found")
         return FileResponse(inspector_page)
+
+    @app.get("/compare", include_in_schema=False)
+    async def compare_page_route() -> FileResponse:
+        if compare_page is None or not compare_page.is_file():
+            raise HTTPException(status_code=404, detail="compare page not found")
+        return FileResponse(compare_page)
 
     # ------------------------------------------------------------------ static UI
     if static_dir.is_dir():
@@ -395,6 +411,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 

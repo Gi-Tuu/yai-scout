@@ -64,3 +64,15 @@ def test_api_create_and_poll():
         missing = client.get("/api/research/task_missing")
         assert missing.status_code == 404
 
+
+def test_mode_guard_hides_disabled_app():
+    app = create_app(
+        settings=Settings(db_path=":memory:", max_queries=1, scout_mode="benchmark"),
+        tavily=FakeTavily(),  # type: ignore[arg-type]
+        store=Store(":memory:"),
+    )
+    with TestClient(app) as client:
+        assert client.get("/benchmark").status_code == 200
+        assert client.get("/freshness").status_code == 404
+        assert client.get("/freshness/reports").status_code == 404
+

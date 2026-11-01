@@ -44,8 +44,8 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 - Tavily REST（key 模式）+ DeepSeek LLM（`deepseek-v4.1-flash-1017`），无 key 时自动降级。
 - **61 个测试 + ruff + mypy(strict) 全绿**；Freshness 规则层 20/20 标注一致（见 [freshness-eval](docs/freshness-eval.md)）。
 
-页面：`/benchmark` 榜单 · `/freshness` 检测器 · `/research` 旧研究控制台。
-未实现（P1）：Evidence Inspector、Pareto 可视化、24 题、Wayback 历史快照与漂移对比、更多 Adapter。详见 [differentiation-spec.md](docs/differentiation-spec.md)。
+页面：`/benchmark` 榜单 · `/freshness` 检测器 · `/inspector` 证据检查器 · `/compare` 时间漂移 · `/research` 旧研究控制台。
+部署：`Dockerfile` + `docker-compose.yml`（benchmark / freshness 两个容器，`SCOUT_MODE` 分离）。\n未实现（P1 尾项）：Wayback 真实历史快照（当前网络不可达，As-of 标 simulated）、60 条人工评分、更多 Adapter。详见 [differentiation-spec.md](docs/differentiation-spec.md)。
 
 ### 本地运行
 
@@ -81,6 +81,7 @@ copy .env.example .env          # 填 TAVILY_API_KEY（不填则走 keyless 模�
 - 未创建任何收费资源；
 - 未修改 YAI 主仓库（只读审计；该仓库原有未提交改动与本项目无关）；
 - 未进行任何远程提交或报名操作（需本人确认）。
+
 
 
 
