@@ -55,14 +55,15 @@ copy .env.example .env          # 填 TAVILY_API_KEY（不填则走 keyless 模�
 
 ## 下一步
 
-1. **等题目**：官网仍 `REVEALING SOON`；在 Discord 看到题目后按 Charter §3.3 做 Track 打分与 ADR-000。
-2. **配 Tavily key**：写入 `.env` 的 `TAVILY_API_KEY`（当前走 keyless，有限速）；有学生身份可申请学生计划。
-3. **实现 M4/M5/M7**：证据抽取 + 引文逐字校验 → 跨来源验证 → 带引用报告与自审计。
-4. **注册与入群**（若尚未）：https://hackculture.io/hackathons/register/ai-global-hackathon + 官方 Discord（邀请 2026-11-08 到期）。
+1. **发确认邮件**（[报告 §G](docs/hackathon-rules-report.md)）：双赛道是否必选、两个项目怎么交、整合项目能否双轨获奖、credits 归属/有效期。等回复期间按 [ADR-0001](docs/adr/0001-track-selection.md) 推进。
+2. **建队 + 加群**：单人参赛也必须在 HackCulture 建队；官方 10/26 起把公告迁到 WhatsApp 群（`https://chat.whatsapp.com/GkRxNNSAhBP0y89HG8SGpa`），务必加入；Discord 仍是强制项。
+3. **配 Tavily key**：写入 `.env` 的 `TAVILY_API_KEY`（当前 keyless，有限速）。
+4. **按报告 §F 开发**：P0 = Stale-answer Detector（claim 抽取 + Tavily 核验 + Freshness Score）与 Benchmark Runner + 2 个 Adapter + 榜单；11/12 功能冻结。
 
 ## 合规边界（本项目已遵守）
 
 - 未创建任何收费资源；
 - 未修改 YAI 主仓库（只读审计；该仓库原有未提交改动与本项目无关）；
 - 未进行任何远程提交或报名操作（需本人确认）。
+
 
