@@ -11,6 +11,7 @@ from yai_scout.detector.anchor_policy import needs_revalidation, select_anchors
 from yai_scout.detector.compare import claim_key
 from yai_scout.detector.service import StaleAnswerDetector
 from yai_scout.domain.models import Anchor, TemporalSensitivity
+from yai_scout.retrieval.tavily import SearchResult
 from yai_scout.sources.anchor import replay_anchor_result
 from yai_scout.sources.snapshot import save_snapshot
 from yai_scout.store import Store
@@ -103,9 +104,11 @@ def test_anchor_api_create_and_list():
                 "url": "https://docs.tavily.com/documentation/api-credits",
                 "last_value": "1000",
                 "source_tier": 1,
+                "temporal_sensitivity": "sensitive",
             },
         )
         assert created.status_code == 201
+        assert created.json()["temporal_sensitivity"] == "sensitive"
         anchor_id = created.json()["id"]
         listed = client.get("/freshness/anchors").json()["anchors"]
         assert [item["id"] for item in listed] == [anchor_id]
@@ -161,4 +164,51 @@ async def test_anchor_content_hash_change_marks_changed(tmp_path: Path):
     store.close()
 
 
+
+
+
+async def test_unreachable_anchor_does_not_shift_evidence_anchor_ids():
+    store = Store(":memory:")
+    first = Anchor(
+        id="anc_first",
+        claim_key=claim_key("YAI Agent Core 当前版本是 0.24.0"),
+        claim_text="YAI Agent Core 当前版本是 0.24.0",
+        url="https://first.example/releases",
+        source_tier=2,
+        last_value="0.24.0",
+        content_hash="first-hash",
+    )
+    second = Anchor(
+        id="anc_second",
+        claim_key=first.claim_key,
+        claim_text=first.claim_text,
+        url="https://second.example/releases",
+        source_tier=2,
+        last_value="0.24.0",
+        content_hash="second-hash",
+    )
+    store.save_anchor(first)
+    store.save_anchor(second)
+
+    async def fetcher(anchor: Anchor, target: str):
+        if anchor.id == "anc_first":
+            return None
+        return SearchResult(
+            title="second",
+            url=anchor.url,
+            content="YAI Agent Core 当前版本是 0.24.0",
+            published_date="2026-10-01T00:00:00Z",
+            content_hash="second-hash",
+        )
+
+    detector = StaleAnswerDetector(
+        FakeTavily(), as_of="2026-11-01", max_claims=1, anchor_fetcher=fetcher
+    )
+    report = await detector.detect(
+        "YAI Agent Core 当前版本是 0.24.0。", anchors=[first, second]
+    )
+    anchor_evidence = [e for e in report.verdicts[0].evidence if e.anchor_id]
+    assert anchor_evidence
+    assert anchor_evidence[0].anchor_id == "anc_second"
+    store.close()
 

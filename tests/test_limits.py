@@ -103,3 +103,17 @@ def test_healthz_exposes_usage():
         limits = client.get("/api/healthz").json()["limits"]
         assert limits["daily_used"]["detector"] == 1
         assert limits["daily_limit"]["detector"] == 10
+
+def test_anchor_creation_is_rate_limited():
+    app = _app(rate_limit_per_minute=1)
+    body = {
+        "claim_text": "Tavily 免费计划每月提供 1,000 credits",
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "last_value": "1000",
+        "source_tier": 1,
+    }
+    with TestClient(app) as client:
+        assert client.post("/freshness/anchors", json=body).status_code == 201
+        blocked = client.post("/freshness/anchors", json=body)
+        assert blocked.status_code == 429
+        assert "anchor" in blocked.json()["detail"]

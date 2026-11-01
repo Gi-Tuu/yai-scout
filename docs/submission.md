@@ -16,7 +16,7 @@
 | Working project/demo | Render link + `/label` + fixed demo script |
 | Repository, setup, architecture | `README.md`, `docs/`, Docker/uv setup |
 | Explanation of AI use | README “AI usage” + deterministic-code boundary |
-| Test/measurement evidence | 136 tests; fixed replay cases; 60 rule-labeled claims + Gate eval; benchmark appendix |
+| Test/measurement evidence | 140 tests; fixed replay cases; 60 rule-labeled claims + Gate eval; benchmark appendix |
 | Safety/authorization | read-only web research; no pentest/security claims |
 
 ## 2. Both technologies — proof to show
@@ -41,4 +41,5 @@
 - Do **not** claim independent human ground truth: labeler 001 matched the hidden key; call it “rule-consistent labeling”.
 - Public Render demo uses direct model fallback unless a public Bifrost deployment is added; video/local demo shows Bifrost.
 - Benchmark is supporting evaluation evidence, not the primary submission.
+
 

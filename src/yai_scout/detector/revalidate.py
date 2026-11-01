@@ -10,14 +10,17 @@ from __future__ import annotations
 import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
-from urllib.parse import urlsplit
 
 from ..domain.models import Anchor, AnchorObservation, Claim
 from ..retrieval.quality import classify_source
 from ..sources.anchor import replay_anchor_result
 from ..store import Store
 from .anchor_policy import needs_revalidation
-from .candidates import create_candidate_from_observations, extract_value_hint
+from .candidates import (
+    create_candidate_from_observations,
+    extract_value_hint,
+    independent_group_from_url,
+)
 from .verify import Searcher, build_query
 
 AnchorResultFetcher = Callable[[Anchor, str], Awaitable[object | None]]
@@ -70,22 +73,13 @@ async def revalidate_anchor(
             observed_hash=observed_hash,
             url=anchor.url,
             source_tier=anchor.source_tier,
-            independent_group=anchor.url,
+            independent_group=independent_group_from_url(anchor.url),
             value=extract_value_hint(content, anchor.last_value, anchor.claim_text),
             published_at=str(getattr(result, "published_date", "") or "") or None,
         )
     store.save_anchor_observation(observation)
+    store.update_anchor(anchor.model_copy(update={"last_checked_at": current.isoformat()}))
     return observation
-
-
-def _independent_group(url: str) -> str:
-    host = (urlsplit(url).hostname or "").lower()
-    if host.startswith("www."):
-        host = host[4:]
-    parts = host.split(".")
-    if len(parts) >= 2:
-        return ".".join(parts[-2:])
-    return host
 
 
 async def revalidate_due(
@@ -130,7 +124,7 @@ async def revalidate_due(
                         observed_hash=result.content_hash,
                         url=result.url,
                         source_tier=tier,
-                        independent_group=_independent_group(result.url),
+                        independent_group=independent_group_from_url(result.url),
                         value=value,
                         published_at=result.published_date,
                     )
@@ -139,6 +133,8 @@ async def revalidate_due(
             store, anchor, candidates, auto_update=auto_update
         )
     return observations
+
+
 
 
 

@@ -114,7 +114,7 @@ flowchart LR
 | Temporal replay | real GitHub release snapshots: 2026-10-28 FRESH vs 2026-11-01 STALE |
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
 | Benchmark (supporting) | 24 tasks, HTTP/Python/CLI adapters, Pareto, manifest + `result_hash` |
-| Quality gates | 136 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Quality gates | 140 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
@@ -133,10 +133,11 @@ flowchart LR
 - [Anchor retrieval](docs/spec-anchor-retrieval.md) · [Accuracy gate](docs/spec-accuracy-gate.md) · [Accuracy eval](docs/accuracy-eval.md)
 - [Submission checklist](docs/submission.md) · [Demo script](docs/demo-script.md) · [Deploy free](docs/deploy-free.md)
 - [Governance](docs/governance/engineering-governance-v1.md) · [ADR-0003](docs/adr/0003-engineering-governance.md)
-- [Changelog](CHANGELOG.md) · [API resources](docs/api-resources.md)
+- [Engineering audit (2026-11-02)](docs/audit-2026-11-02.md) · [Changelog](CHANGELOG.md) · [API resources](docs/api-resources.md)
 
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
+
 
 

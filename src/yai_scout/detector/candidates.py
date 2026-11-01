@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import uuid
+from urllib.parse import urlsplit
 
 from ..domain.models import Anchor, AnchorCandidate, AnchorObservation, utcnow_iso
 from ..store import Store
@@ -55,6 +56,17 @@ def _claim_kind(claim_text: str, old_value: str) -> str:
     if "年" in claim_text or "date" in lower or "发布" in claim_text:
         return "date"
     return "numeric"
+
+
+def independent_group_from_url(url: str) -> str:
+    """Coarse publisher grouping: same registrable domain = one source group."""
+    host = (urlsplit(url).hostname or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    parts = host.split(".")
+    if len(parts) >= 2:
+        return ".".join(parts[-2:])
+    return host
 
 
 def _unique(values: list[str]) -> list[str]:
@@ -140,6 +152,14 @@ def create_candidate_from_observations(
     best = _best_observation(gate_observations)
     if best is None:
         return None
+    for existing in store.list_anchor_candidates(limit=200):
+        if (
+            existing.anchor_id == anchor.id
+            and existing.normalized_new == gate.normalized_new
+            and existing.gate_decision == gate.decision.value
+            and existing.accuracy_status in {"pending", "rejected"}
+        ):
+            return existing
     candidate = AnchorCandidate(
         id=f"cand_{uuid.uuid4().hex[:12]}",
         anchor_id=anchor.id,
@@ -163,6 +183,13 @@ def create_candidate_from_observations(
         gate_reason=gate.reason,
         gate_version="accuracy-gate-v0",
         confidence=gate.confidence,
+        accuracy_status=(
+            "rejected" if gate.decision is GateDecision.REJECT else "pending"
+        ),
+        decided_at=(
+            utcnow_iso() if gate.decision is GateDecision.REJECT else None
+        ),
+        decided_by="gate" if gate.decision is GateDecision.REJECT else "",
     )
     store.save_anchor_candidate(candidate)
     if gate.decision is GateDecision.AUTO_UPDATE and auto_update:
@@ -200,8 +227,8 @@ def apply_candidate(
         supersedes=anchor.id,
         temporal_sensitivity=anchor.temporal_sensitivity,
     )
-    store.save_anchor(new_anchor)
-    store.supersede_anchor(anchor.id, new_anchor.id)
+    if not store.save_anchor_replacement(anchor.id, new_anchor):
+        return candidate
     updated = candidate.model_copy(
         update={
             "accuracy_status": status,
@@ -212,6 +239,9 @@ def apply_candidate(
     )
     store.update_anchor_candidate(updated)
     return updated
+
+
+
 
 
 

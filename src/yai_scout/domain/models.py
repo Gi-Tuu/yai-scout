@@ -170,6 +170,7 @@ class Anchor(BaseModel):
     published_at: str | None = None
     updated_at: str | None = None
     last_verified_at: str = Field(default_factory=utcnow_iso)
+    last_checked_at: str | None = None
     valid_from: str | None = None
     temporal_sensitivity: TemporalSensitivity | None = None
     supersedes: str | None = None
@@ -382,6 +383,8 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
+
 
 
 

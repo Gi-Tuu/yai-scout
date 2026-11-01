@@ -50,7 +50,13 @@ def needs_revalidation(
         return True
     ttl = TTL_DAYS.get(sensitivity, 7)
     verified = _parse(anchor.last_verified_at)
-    if verified is None:
+    checked = _parse(anchor.last_checked_at)
+    reference = max(
+        [value for value in (verified, checked) if value is not None],
+        default=None,
+    )
+    if reference is None:
         return True
     current = now or datetime.now(UTC)
-    return current - verified > timedelta(days=ttl)
+    return current - reference > timedelta(days=ttl)
+

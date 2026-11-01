@@ -111,6 +111,7 @@ async def live_anchor_result(
     client = client or httpx.AsyncClient(
         timeout=LIVE_TIMEOUT_S,
         follow_redirects=False,
+        trust_env=False,
         headers={"User-Agent": "yai-scout-anchor/1.0"},
     )
     try:
@@ -155,5 +156,6 @@ async def live_anchor_result(
     finally:
         if owns_client:
             await client.aclose()
+
 
 

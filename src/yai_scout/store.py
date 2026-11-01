@@ -125,6 +125,7 @@ CREATE TABLE IF NOT EXISTS anchor_candidate (
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_anchor_candidate_anchor ON anchor_candidate(anchor_id);
+CREATE INDEX IF NOT EXISTS idx_anchor_candidate_status ON anchor_candidate(status);
 CREATE TABLE IF NOT EXISTS anchor_observation (
     id TEXT PRIMARY KEY,
     anchor_id TEXT NOT NULL,
@@ -134,6 +135,7 @@ CREATE TABLE IF NOT EXISTS anchor_observation (
     payload_json TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_anchor_observation_anchor ON anchor_observation(anchor_id);
 CREATE TABLE IF NOT EXISTS snapshot (
     id TEXT PRIMARY KEY,
     url TEXT NOT NULL,
@@ -692,6 +694,36 @@ class Store:
             self._conn.commit()
         return restored, rolled_back
 
+    def save_anchor_replacement(self, old_id: str, new_anchor: Anchor) -> bool:
+        """Atomically insert replacement and mark the old anchor superseded."""
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT payload_json FROM anchor WHERE id = ?", (old_id,)
+            ).fetchone()
+            if row is None:
+                return False
+            old = Anchor.model_validate_json(row["payload_json"])
+            superseded = old.model_copy(
+                update={"status": "superseded", "superseded_by": new_anchor.id}
+            )
+            self._conn.execute(
+                """INSERT INTO anchor (id, claim_key, url, payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (
+                    new_anchor.id,
+                    new_anchor.claim_key,
+                    new_anchor.url,
+                    new_anchor.model_dump_json(),
+                    new_anchor.last_verified_at,
+                ),
+            )
+            self._conn.execute(
+                "UPDATE anchor SET payload_json = ? WHERE id = ?",
+                (superseded.model_dump_json(), old_id),
+            )
+            self._conn.commit()
+        return True
+
     def supersede_anchor(self, old_id: str, new_id: str) -> None:
         anchor = self.get_anchor(old_id)
         if anchor is None:
@@ -820,6 +852,10 @@ def _parse_detector_report(payload: str) -> DetectorReport:
         if status in {"uncertain", "unverifiable"}:
             verdict["status"] = "insufficient"
     return DetectorReport.model_validate(data)
+
+
+
+
 
 
 

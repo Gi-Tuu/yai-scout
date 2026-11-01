@@ -7,8 +7,12 @@ from fastapi.testclient import TestClient
 
 from yai_scout.api.app import create_app
 from yai_scout.config import Settings
+from yai_scout.detector.candidates import (
+    create_candidate_from_observations,
+    independent_group_from_url,
+)
 from yai_scout.detector.revalidate import due_anchors, revalidate_due
-from yai_scout.domain.models import Anchor, TemporalSensitivity
+from yai_scout.domain.models import Anchor, AnchorObservation, TemporalSensitivity
 from yai_scout.retrieval.tavily import SearchResult
 from yai_scout.sources.snapshot import save_snapshot
 from yai_scout.store import Store
@@ -67,11 +71,13 @@ async def test_revalidate_records_change_without_overwriting(tmp_path: Path):
     anchor = store.list_anchors()[0]
     assert anchor.last_value == "500"
     assert store.list_anchor_observations()[0].status == "changed"
+    assert store.list_anchor_observations()[0].independent_group == "example.com"
     candidates = store.list_anchor_candidates()
     assert len(candidates) == 1
     assert candidates[0].accuracy_status == "pending"
     assert candidates[0].gate_decision == "review"
     assert candidates[0].new_value == "1000"
+    assert due_anchors(store, now=datetime(2026, 11, 1, tzinfo=UTC)) == []
     store.close()
 
 
@@ -131,3 +137,33 @@ async def test_revalidation_discovers_independent_sources(tmp_path: Path):
     assert candidates[0].accuracy_status == "pending"
     assert len(candidates[0].evidence) >= 2
     store.close()
+
+def test_candidate_reject_status_and_dedupe(tmp_path: Path):
+    store = _store_with_anchor(tmp_path)
+    anchor = store.list_anchors()[0]
+    observation = AnchorObservation(
+        id="obs_reject",
+        anchor_id=anchor.id,
+        status="changed",
+        content_changed=True,
+        observed_hash="h",
+        url="https://some-blog.example/post",
+        source_tier=3,
+        independent_group="some-blog.example",
+        value="1200",
+        published_at="2026-10-01T00:00:00Z",
+    )
+    first = create_candidate_from_observations(store, anchor, [observation])
+    second = create_candidate_from_observations(store, anchor, [observation])
+    assert first is not None and second is not None
+    assert first.id == second.id
+    assert first.gate_decision == "reject"
+    assert first.accuracy_status == "rejected"
+    assert len(store.list_anchor_candidates()) == 1
+    store.close()
+
+
+def test_independent_group_uses_registrable_domain():
+    assert independent_group_from_url("https://docs.tavily.com/x") == "tavily.com"
+    assert independent_group_from_url("https://github.com/a/b") == "github.com"
+

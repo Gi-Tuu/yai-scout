@@ -11,7 +11,7 @@ from collections import deque
 from datetime import UTC, datetime, timedelta
 from threading import Lock
 
-BUCKETS = ("detector", "benchmark")
+BUCKETS = ("detector", "benchmark", "anchor")
 
 
 class UsageLimiter:
@@ -88,4 +88,5 @@ class UsageLimiter:
             if first:
                 return first
         return fallback or "unknown"
+
 

@@ -89,6 +89,7 @@ class ClaimVerifier:
         self, claim: Claim, anchors: list[Anchor] | None = None
     ) -> tuple[FreshnessVerdict, float, float]:
         anchor_results: list[SearchResult] = []
+        anchor_pairs: list[tuple[Anchor, SearchResult]] = []
         anchor_ids: list[str] = []
         anchor_status: Literal[
             "used", "changed", "needs_revalidation", "unreachable"
@@ -107,6 +108,7 @@ class ClaimVerifier:
                 if result is None:
                     continue
                 anchor_results.append(result)
+                anchor_pairs.append((anchor, result))
                 anchor_ids.append(anchor.id)
                 if (
                     anchor.content_hash
@@ -153,8 +155,7 @@ class ClaimVerifier:
             seen_urls.add(item.url)
             unique_results.append(item)
         anchor_meta = {
-            anchor.id: (anchor, result)
-            for anchor, result in zip(anchors or [], anchor_results, strict=False)
+            anchor.id: (anchor, result) for anchor, result in anchor_pairs
         }
         anchor_by_url = {result.url: anchor for anchor, result in anchor_meta.values()}
         evidence = []

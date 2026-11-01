@@ -16,6 +16,25 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Final submission package: one primary README, slides, demo video; independent second labeler for accuracy.
 
+## [0.3.1] - 2026-11-02
+
+### Fixed
+
+- **Anchor evidence mapping**: unreachable first anchor no longer shifts `anchor_id`/`content_changed` onto a later anchor (verify.py explicit pairs).
+- **Revalidation candidates**: gate `reject` results are saved as `rejected`, not `pending`; duplicate pending/rejected candidates are deduped.
+- **Temporal sensitivity**: `POST /freshness/anchors` now persists `temporal_sensitivity`.
+- **TTL loop**: added `Anchor.last_checked_at`; revalidation no longer keeps every anchor permanently due.
+- **Independence**: primary and discovery observations share registrable-domain grouping; same publisher cannot masquerade as two sources.
+- **Atomic replacement**: new anchor + supersede old in one transaction, avoiding two active anchors on crash.
+- **Rate limit**: public anchor creation now uses the `anchor` bucket (`DAILY_ANCHOR_LIMIT`, default 30).
+- **Live fetch**: `trust_env=False` prevents proxy env vars from bypassing pinned-IP SSRF protection.
+- **API consistency**: candidate approve/auto-apply use the shared service; no divergent selection rules.
+- **Indexes**: anchor observation/candidate indexes added after table creation.
+
+### Docs
+
+- `docs/audit-2026-11-02.md`: findings, fixes, open risks, data-model assessment.
+
 ## [0.3.0] - 2026-11-02
 
 ### Changed
@@ -186,6 +205,7 @@ evidence core.
 [Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
 [0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+
 
 
 
