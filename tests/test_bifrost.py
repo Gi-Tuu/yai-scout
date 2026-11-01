@@ -38,6 +38,7 @@ async def test_llm_client_routes_to_bifrost_without_key():
     assert result.prompt_tokens == 10
     assert str(calls[0].url) == "http://127.0.0.1:8080/v1/chat/completions"
     assert calls[0].headers["content-type"] == "application/json"
+    assert "authorization" not in calls[0].headers
     await client.aclose()
 
 
@@ -86,3 +87,4 @@ def test_healthz_reports_bifrost_gateway():
         assert health["llm"]["gateway"] == "bifrost"
         assert health["llm"]["model"] == "openai/deepseek-chat"
     store.close()
+

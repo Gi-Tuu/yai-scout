@@ -126,7 +126,7 @@ flowchart LR
 
 ## Documentation
 
-- [Tavily track / primary submission](docs/track-tavily.md) · [Bifrost integration](docs/bifrost-integration.md)
+- [Tavily track / primary submission](docs/track-tavily.md) · [Bifrost integration](docs/bifrost-integration.md) · [Bifrost verification](docs/bifrost-verification.md)
 - [Benchmark evidence (not primary)](docs/track-bifrost.md)
 - [Differentiation spec](docs/differentiation-spec.md) · [Positioning](docs/positioning.md)
 - [Freshness scoring](docs/spec-freshness-scoring.md) · [Temporal replay](docs/spec-temporal-replay.md)
@@ -138,4 +138,5 @@ flowchart LR
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
+
 

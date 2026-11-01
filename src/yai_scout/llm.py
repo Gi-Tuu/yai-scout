@@ -92,10 +92,13 @@ class LLMClient:
         started = time.monotonic()
         try:
             client = await self._http()
+            headers = (
+                {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+            )
             resp = await client.post(
                 "/chat/completions",
                 json=body,
-                headers={"Authorization": f"Bearer {self.api_key}"},
+                headers=headers,
             )
         except httpx.HTTPError:
             return None
@@ -169,4 +172,5 @@ class LLMClient:
         if not isinstance(payload, dict):
             return None
         return payload, result
+
 
