@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Build the YAI Scout submission deck (editable PPTX)."""
 
 from __future__ import annotations
@@ -432,3 +433,4 @@ def build() -> Path:
 if __name__ == "__main__":
     path = build()
     print(path)
+
