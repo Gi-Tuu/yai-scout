@@ -105,7 +105,7 @@ python scripts/eval_accuracy_gate.py \
 
 ## 9. v0 结果与局限
 
-- 60 条 v0 标签上 gate agreement = 1.000（18/22/10/10）；
+- 60 条 v0 标签上 gate agreement = 1.000（18/22/10/10）；\n- labeler `001` 独立结果 60/60 与 key 一致 → 视为“按规则标注”，不是独立 ground truth；见 `docs/accuracy-eval.md`。
 - 标签由规则同一作者设计，存在**过拟合**，不能当作泛化证据；
 - 扩到 60 条时必须由第二人独立标注/裁决，并加入 adversarial cases（镜像、歧义、旧证据、冲突）。
 
@@ -123,6 +123,7 @@ python scripts/eval_accuracy_gate.py \
 - 不用未核验的“行业常识”补标签；
 - 不为了让 Gate 好看而修改标签；
 - 不把 accuracy 标签用于 freshness 分数。
+
 
 
 

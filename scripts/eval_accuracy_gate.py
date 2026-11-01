@@ -98,6 +98,15 @@ def evaluate_independent(labels_path: Path, key_path: Path) -> int:
     print(f"gate_auto={gate_auto} auto_precision={precision:.3f} false_update_rate={fals:.3f}")
     print(f"review_coverage={coverage:.3f} ({review_coverage}/{human_auto})")
     print("confusion (human,gate):", dict(confusion))
+    identical = all(
+        labels.get(wid) == meta["expected_decision"] for wid, meta in key.items()
+    )
+    if identical:
+        print(
+            "WARNING: labels are identical to the hidden key. This may mean the "
+            "annotator followed the same rule sheet or saw the key; do not treat "
+            "it as independent validation."
+        )
     return 0 if agreement >= 0.85 and fals <= 0.05 else 1
 
 
@@ -113,3 +122,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
