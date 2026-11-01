@@ -1,6 +1,7 @@
 # YAI Scout Benchmark — Project Charter（Bifrost Track / Problem 02）
 
 > 状态：**立项（v1.0）** · 2026-11-01 · 独立参赛作品 A
+> **v2 升级（2026-11-01）**：差异化定位为 **Freshness-aware Benchmarking**；指标、Adapter 协议、Dataset、Pareto 与验收以 [`differentiation-spec.md`](differentiation-spec.md) 与 [`spec-benchmark-adapter.md`](spec-benchmark-adapter.md) 为准。
 > 赛题：*Build a benchmarking platform for AI agents, not just models.*
 > 中文：**构建一个面向 AI Agent 的评测平台，而不只是评测模型。**
 

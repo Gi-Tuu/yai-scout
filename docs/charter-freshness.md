@@ -1,6 +1,7 @@
 # YAI Scout Freshness — Project Charter（Tavily Track / Problem 01）
 
 > 状态：**立项（v1.0）** · 2026-11-01 · 独立参赛作品 B
+> **v2 升级（2026-11-01）**：新增 Temporal Sensitivity 分类、target_time、完整状态机与 Evidence Inspector；评分与边界以 [`spec-freshness-scoring.md`](spec-freshness-scoring.md) 为准。
 > 赛题：*Stale-answer detector.*
 > 中文：**过时答案检测器**——检测 LLM 答案中已过时/可能过时的事实，并用实时检索重新验证。
 

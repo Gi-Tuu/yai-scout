@@ -1,6 +1,7 @@
 # 双项目执行计划：MVP、排期、风险与整合展示
 
 > 版本 v1.0 · 2026-11-01 · 适用：Project A（Benchmark）+ Project B（Freshness）
+> **v2 变更**：差异化升级为 Freshness-aware Benchmarking；P0/P1/P2 与模块验收以 [`differentiation-spec.md`](differentiation-spec.md) 为准（本文 §2 的 MVP 清单相应扩展：Freshness 指标、claim-level 评测、Pareto、Adapter 协议）。
 > 目标截止：**2026-11-15 23:59 IST = 北京 11-16 02:29**；计划 11-15 12:00 前提交。
 
 ## 1. 共享底座先行（避免瓶颈）

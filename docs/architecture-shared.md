@@ -1,6 +1,7 @@
 # YAI Scout 共享技术架构（Shared Core）
 
 > 适用范围：Project A（Benchmark，Bifrost-02）与 Project B（Freshness，Tavily-01）
+> **v2 升级（2026-11-01）**：Claim/Evidence/Snapshot 模型、Adapter 协议、Pareto 与 Replay 的详细规格见 [`differentiation-spec.md`](differentiation-spec.md) 及三份 `spec-*.md`；本文的模块边界与部署方式不变。
 > 原则：**共享底座、独立产品、独立交付**。共享层只实现"两个产品都真正需要"的能力；不为形式独立复制组件。
 
 ## 1. 仓库组织（monorepo）

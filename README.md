@@ -25,6 +25,10 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 | [docs/yai-reuse.md](docs/yai-reuse.md) | YAI 复用清单与许可证核对（MIT，非 AGPL） |
 | [docs/api-resources.md](docs/api-resources.md) | Tavily / Bifrost / 模型 API 额度与成本评估 |
 | [docs/dual-project-plan.md](docs/dual-project-plan.md) | MVP 验收、14 天排期、风险、提交材料矩阵 |
+| [docs/differentiation-spec.md](docs/differentiation-spec.md) | **v2 差异化总规格**：六项能力、P0/P1/P2、验收、Demo、现状差距 |
+| [docs/spec-freshness-scoring.md](docs/spec-freshness-scoring.md) | 时间敏感性分类、Freshness Score、关系语义、边界测试向量 |
+| [docs/spec-benchmark-adapter.md](docs/spec-benchmark-adapter.md) | Agent Adapter 协议、Dataset schema、指标、成本模型、Pareto |
+| [docs/spec-temporal-replay.md](docs/spec-temporal-replay.md) | As-of 时间回放：快照、不可变运行、漂移比较 |
 | [docs/benchmark.md](docs/benchmark.md) | 已实现 Benchmark/Detector 的说明（demo v0） |
 | [research/problem-statements/hackculture-event.json](research/problem-statements/hackculture-event.json) | 官方平台事件原始 JSON（时间线/提交字段/公告/奖项）存档 |
 | [scripts/tavily_smoke.py](scripts/tavily_smoke.py) | Tavily 冒烟测试（只打印标题/URL/credits，不打印 key） |
