@@ -43,7 +43,7 @@ uv run uvicorn yai_scout.api.app:app --port 8010
 | `/inspector` | evidence inspector: claims, sources, score breakdown |
 | `/compare` | temporal drift between two reports (real replay when snapshots exist) |
 
-Docker (verified locally):
+Deploy free: see [docs/deploy-free.md](docs/deploy-free.md) (Render / Hugging Face / Cloudflare Tunnel, $0).\n\nDocker (verified locally):
 
 ```bash
 docker compose up -d --build
@@ -123,5 +123,6 @@ docs/              charters, specs, evaluation, demo script
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
+
 
 

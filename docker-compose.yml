@@ -3,6 +3,7 @@ services:
     build: .
     environment:
       SCOUT_MODE: benchmark
+      PORT: 8010
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.suanli.cn/v1}
@@ -16,6 +17,7 @@ services:
     build: .
     environment:
       SCOUT_MODE: freshness
+      PORT: 8010
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.suanli.cn/v1}
@@ -24,3 +26,4 @@ services:
       - "8011:8010"
     volumes:
       - ./data/freshness:/app/data
+

@@ -15,4 +15,5 @@ COPY benchmarks ./benchmarks
 COPY examples ./examples
 
 EXPOSE 8010
-CMD ["uvicorn", "yai_scout.api.app:app", "--host", "0.0.0.0", "--port", "8010"]
+CMD ["sh", "-c", "uvicorn yai_scout.api.app:app --host 0.0.0.0 --port ${PORT:-8010}"]
+

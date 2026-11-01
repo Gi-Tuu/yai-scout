@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: yai-scout
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /api/healthz
+    autoDeploy: true
+    envVars:
+      - key: SCOUT_MODE
+        value: all
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_BASE_URL
+        value: https://api.suanli.cn/v1
+      - key: LLM_MODEL
+        value: deepseek/deepseek-v4.1-flash-1017
