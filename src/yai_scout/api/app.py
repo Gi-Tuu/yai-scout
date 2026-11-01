@@ -31,7 +31,7 @@ from ..domain.models import AgentSpec, Anchor, ResearchTask, RunEvent, TaskStatu
 from ..llm import LLMClient
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
 from ..retrieval.tavily import TavilyClient
-from ..sources.anchor import replay_anchor_result
+from ..sources.anchor import live_anchor_result, replay_anchor_result
 from ..sources.seed import seed_snapshots
 from ..store import Store
 from .limits import UsageLimiter
@@ -54,6 +54,7 @@ class AnchorCreate(BaseModel):
     claim_text: str = Field(min_length=3, max_length=800)
     url: str = Field(min_length=5, max_length=2000)
     last_value: str = ""
+    content_hash: str = ""
     source_tier: int = Field(default=3, ge=1, le=4)
     published_at: str | None = None
 
@@ -287,6 +288,31 @@ def create_app(
             report = await replay.detect(
                 payload.answer, as_of=effective_as_of, anchors=anchors
             )
+        elif cfg.anchor_live_fetch and anchors:
+            allowlist = {
+                item.strip().lower()
+                for item in cfg.anchor_allowlist.split(",")
+                if item.strip()
+            }
+
+            async def _live_anchor(anchor: Anchor, target: str) -> Any:
+                return await live_anchor_result(anchor, allowlist)
+
+            live_detector = StaleAnswerDetector(
+                tavily,
+                as_of=effective_as_of,
+                max_claims=payload.max_claims,
+                concurrency=3,
+                llm=llm,
+                mode="live",
+                anchor_fetcher=_live_anchor,
+            )
+            report = await live_detector.detect(
+                payload.answer,
+                as_of=payload.as_of,
+                max_claims=payload.max_claims,
+                anchors=anchors,
+            )
         else:
             report = await detector.detect(
                 payload.answer,
@@ -363,6 +389,10 @@ def create_app(
     async def create_anchor(payload: AnchorCreate) -> dict[str, Any]:
         if not payload.url.startswith(("http://", "https://")):
             raise HTTPException(status_code=400, detail="anchor url must be http(s)")
+        latest = next(
+            (snap for snap in store.list_snapshots(limit=1000) if snap.url == payload.url),
+            None,
+        )
         anchor = Anchor(
             id=f"anc_{uuid.uuid4().hex[:12]}",
             claim_key=claim_key(payload.claim_text),
@@ -370,7 +400,8 @@ def create_app(
             url=payload.url,
             source_tier=payload.source_tier,
             last_value=payload.last_value,
-            published_at=payload.published_at,
+            content_hash=payload.content_hash or (latest.content_hash if latest else ""),
+            published_at=payload.published_at or (latest.published_at if latest else None),
         )
         store.save_anchor(anchor)
         return anchor.model_dump(mode="json")
@@ -528,6 +559,8 @@ def create_app(
 
 
 app = create_app()
+
+
 
 
 

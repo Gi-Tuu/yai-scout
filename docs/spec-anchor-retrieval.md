@@ -110,19 +110,21 @@ Anchor:
 **已实现**：
 
 1. `Anchor` 数据模型 + SQLite `anchor` 表（append-only，不删旧记录）；
-2. `POST /freshness/anchors` / `GET /freshness/anchors`（仅存元数据，不抓取 URL）；
+2. `POST /freshness/anchors` / `GET /freshness/anchors`（仅存元数据，不自动抓取 URL）；
 3. `POST /freshness/verify` 增加 `use_anchors`；replay 模式下按 `claim_key` 匹配 anchor，并从**已存 snapshot**注入锚点证据；
-4. Verdict 增加 `anchor_id` / `anchor_status`（used/unreachable），**不改变状态机与分数公式**；
-5. live 模式暂不抓取 anchor URL（避免 SSRF），标记 `unreachable` 或忽略；
-6. 测试：anchor 存储、replay 锚点证据注入、不改变原有评分。
+4. Verdict 增加 `anchor_id` / `anchor_status`（used / changed / needs_revalidation / unreachable），**不改变状态机与分数公式**；
+5. **content hash diff**：anchor 与最新 snapshot 的 `content_hash` 比较，不同则标记 `changed`（只提示，不自动写记忆）；
+6. **多 anchor 选择**：按 `source_tier` → `published_at` → `last_verified_at` 确定性排序，取前 2 条；
+7. **读时 TTL**：STABLE 365d / SLOW 90d / SENSITIVE 7d / VOLATILE 1d；到期标记 `needs_revalidation`，不做后台 scheduler；
+8. **可选 live 抓取**：`ANCHOR_LIVE_FETCH=1` 时启用，但必须配置 `ANCHOR_ALLOWLIST`（精确 host）、仅 HTTPS、禁 redirect、公网 IP 检查、无 cookie/auth、大小/超时限制；默认关闭；
+9. 测试：anchor 存储、replay 证据、content hash、TTL、排序、allowlist/private-IP 拒绝、live happy path（MockTransport）。
 
 **未实现（下一阶段）**：
 
-- live 锚点定向抓取 + allowlist；
-- 多 anchor 选择/权威度排序；
-- content hash diff；
-- accuracy gate 与自动记忆更新；
-- TTL 调度与后台复验。
+- accuracy gate 与自动记忆更新（需要独立 ground truth/多源校验）；
+- 后台 TTL 复验调度（当前是读时判断）；
+- DNS rebinding 的完整防护（allowlist + 公网检查是缓解，不是证明）；
+- 多 anchor 的冲突合并 UI。
 
 ## 7. 验收（未来）
 
@@ -142,3 +144,4 @@ Anchor:
 | SSRF | 公开 API 不抓取任意 anchor URL；MVP replay-only |
 | 记忆污染 | append-only + candidate + gate；不静默覆盖 |
 | 成本/延迟 | TTL 按 sensitivity；缓存 snapshot |
+

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from yai_scout.api.app import create_app
 from yai_scout.config import Settings
+from yai_scout.detector.anchor_policy import needs_revalidation, select_anchors
 from yai_scout.detector.compare import claim_key
 from yai_scout.detector.service import StaleAnswerDetector
-from yai_scout.domain.models import Anchor
+from yai_scout.domain.models import Anchor, TemporalSensitivity
 from yai_scout.sources.anchor import replay_anchor_result
 from yai_scout.sources.snapshot import save_snapshot
 from yai_scout.store import Store
@@ -107,3 +109,56 @@ def test_anchor_api_create_and_list():
         anchor_id = created.json()["id"]
         listed = client.get("/freshness/anchors").json()["anchors"]
         assert [item["id"] for item in listed] == [anchor_id]
+
+def test_select_anchors_orders_by_tier_and_recency():
+    anchors = [
+        Anchor(id="t3", claim_key="k", url="https://a", source_tier=3),
+        Anchor(id="t1", claim_key="k", url="https://b", source_tier=1),
+        Anchor(id="t2", claim_key="k", url="https://c", source_tier=2),
+    ]
+    assert [item.id for item in select_anchors(anchors)] == ["t1", "t2"]
+
+
+def test_anchor_ttl_marks_old_sensitive_anchor():
+    anchor = Anchor(
+        id="a",
+        claim_key="k",
+        url="https://a",
+        last_verified_at="2026-01-01T00:00:00Z",
+    )
+    assert needs_revalidation(
+        anchor,
+        TemporalSensitivity.SENSITIVE,
+        now=datetime(2026, 11, 1, tzinfo=UTC),
+    )
+    assert not needs_revalidation(
+        anchor,
+        TemporalSensitivity.STABLE,
+        now=datetime(2026, 11, 1, tzinfo=UTC),
+    )
+
+
+async def test_anchor_content_hash_change_marks_changed(tmp_path: Path):
+    store = Store(":memory:")
+    anchor = _anchor(store, tmp_path)
+    changed = anchor.model_copy(update={"id": "anc_changed", "content_hash": "different-hash"})
+    store.save_anchor(changed)
+
+    async def fetcher(item: Anchor, target: str):
+        return await replay_anchor_result(store, item, target)
+
+    detector = StaleAnswerDetector(
+        FakeTavily(),
+        as_of="2026-10-28",
+        max_claims=1,
+        mode="replay",
+        anchor_fetcher=fetcher,
+    )
+    report = await detector.detect(
+        "YAI Agent Core 当前版本是 0.24.0。", anchors=store.list_anchors()
+    )
+    assert report.verdicts[0].anchor_status == "changed"
+    store.close()
+
+
+

@@ -32,6 +32,7 @@ class SearchResult:
     content: str
     score: float = 0.0
     published_date: str | None = None
+    content_hash: str = ""
 
 
 def estimate_credits(depth: str) -> float:
@@ -145,3 +146,4 @@ class TavilyClient:
         if not isinstance(data, dict):
             raise TavilyError("响应格式异常：不是 JSON object")
         return parse_search_payload(data, depth=depth)
+

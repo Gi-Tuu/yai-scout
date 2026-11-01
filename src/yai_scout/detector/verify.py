@@ -18,6 +18,7 @@ from ..domain.models import (
 from ..llm import LLMClient
 from ..retrieval.quality import classify_source
 from ..retrieval.tavily import SearchResult, TavilyError
+from .anchor_policy import needs_revalidation
 from .claims import extract_numbers
 from .freshness import as_of_datetime, parse_published, score_claim
 
@@ -85,19 +86,40 @@ class ClaimVerifier:
         self.anchor_fetcher = anchor_fetcher
 
     async def verify(
-        self, claim: Claim, anchor: Anchor | None = None
+        self, claim: Claim, anchors: list[Anchor] | None = None
     ) -> tuple[FreshnessVerdict, float, float]:
-        anchor_result: SearchResult | None = None
-        anchor_status: Literal["used", "unreachable", "not_found"] | None = None
-        if anchor is not None:
+        anchor_results: list[SearchResult] = []
+        anchor_ids: list[str] = []
+        anchor_status: Literal[
+            "used", "changed", "needs_revalidation", "unreachable"
+        ] | None = None
+        if anchors:
             anchor_status = "unreachable"
-            if self.anchor_fetcher is not None:
-                anchor_target = as_of_datetime(
-                    claim.target_time or self.as_of.isoformat()
-                ).isoformat()
-                anchor_result = await self.anchor_fetcher(anchor, anchor_target)
-                if anchor_result is not None:
-                    anchor_status = "used"
+            anchor_target = as_of_datetime(
+                claim.target_time or self.as_of.isoformat()
+            ).isoformat()
+            stale = False
+            changed = False
+            for anchor in anchors:
+                if self.anchor_fetcher is None:
+                    continue
+                result = await self.anchor_fetcher(anchor, anchor_target)
+                if result is None:
+                    continue
+                anchor_results.append(result)
+                anchor_ids.append(anchor.id)
+                if (
+                    anchor.content_hash
+                    and result.content_hash
+                    and anchor.content_hash != result.content_hash
+                ):
+                    changed = True
+                if needs_revalidation(anchor, claim.temporal_sensitivity):
+                    stale = True
+            if anchor_results:
+                anchor_status = (
+                    "changed" if changed else ("needs_revalidation" if stale else "used")
+                )
         query = build_query(claim)
         try:
             results, credits = await asyncio.wait_for(
@@ -121,8 +143,8 @@ class ClaimVerifier:
                 if (parse_published(item.published_date) or target) <= target
             ]
 
-        if anchor_result is not None:
-            results = [anchor_result, *results]
+        if anchor_results:
+            results = [*anchor_results, *results]
         seen_urls: set[str] = set()
         unique_results: list[SearchResult] = []
         for item in results:
@@ -154,8 +176,8 @@ class ClaimVerifier:
         )
         if llm_reason:
             verdict.rationale = f"{verdict.rationale}（LLM 判定：{llm_reason}）"
-        if anchor is not None:
-            verdict.anchor_id = anchor.id
+        if anchors:
+            verdict.anchor_id = anchor_ids[0] if anchor_ids else anchors[0].id
             verdict.anchor_status = anchor_status
         return verdict, credits, llm_cost
 
@@ -234,6 +256,7 @@ class ClaimVerifier:
             if result_numbers and shares_unit:
                 return "contradicts"
         return "mentions"
+
 
 
 

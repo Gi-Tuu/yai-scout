@@ -7,6 +7,7 @@ import uuid
 
 from ..domain.models import Anchor, DetectorReport, FreshnessStatus, FreshnessVerdict
 from ..llm import LLMClient
+from .anchor_policy import select_anchors
 from .claims import extract_claims
 from .compare import claim_key
 from .extract_llm import extract_claims_llm
@@ -67,18 +68,19 @@ class StaleAnswerDetector:
             mode="replay" if self.mode == "replay" else "live",
             anchor_fetcher=self.anchor_fetcher,
         )
-        anchors_by_key = {
-            anchor.claim_key: anchor
-            for anchor in (anchors or [])
-            if anchor.status == "active"
-        }
+        anchors_by_key: dict[str, list[Anchor]] = {}
+        for anchor in anchors or []:
+            if anchor.status != "active":
+                continue
+            anchors_by_key.setdefault(anchor.claim_key, []).append(anchor)
         semaphore = asyncio.Semaphore(self.concurrency)
 
         async def one(claim_index: int) -> tuple[FreshnessVerdict, float, float]:
             claim = claims[claim_index]
             async with semaphore:
-                anchor = anchors_by_key.get(claim_key(claim.text))
-                verdict, credits, relation_cost = await verifier.verify(claim, anchor)
+                candidates = anchors_by_key.get(claim_key(claim.text), [])
+                selected = select_anchors(candidates) if candidates else []
+                verdict, credits, relation_cost = await verifier.verify(claim, selected)
             return verdict, credits, relation_cost
 
         outcomes = await asyncio.gather(*(one(i) for i in range(len(claims))))
@@ -113,6 +115,8 @@ class StaleAnswerDetector:
             policy_version=POLICY_VERSION,
             weights_version=WEIGHTS_VERSION,
         )
+
+
 
 
 

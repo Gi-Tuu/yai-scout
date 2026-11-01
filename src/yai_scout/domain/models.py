@@ -164,6 +164,7 @@ class Anchor(BaseModel):
     url: str
     source_tier: int = Field(default=3, ge=1, le=4)
     last_value: str = ""
+    content_hash: str = ""
     published_at: str | None = None
     updated_at: str | None = None
     last_verified_at: str = Field(default_factory=utcnow_iso)
@@ -182,7 +183,9 @@ class FreshnessVerdict(BaseModel):
     breakdown: dict[str, float] = Field(default_factory=dict)
     evidence: list[EvidenceRef] = Field(default_factory=list)
     anchor_id: str | None = None
-    anchor_status: Literal["used", "unreachable", "not_found"] | None = None
+    anchor_status: Literal[
+        "used", "changed", "needs_revalidation", "unreachable", "not_found"
+    ] | None = None
     checked_at: str = Field(default_factory=utcnow_iso)
 
 
@@ -339,6 +342,8 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
+
 
 
 

@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     # all | benchmark | freshness —— 用于独立部署/独立入口
     scout_mode: str = "all"
     snapshots_seed: str = "benchmarks/snapshots.json"
+    anchor_live_fetch: bool = False
+    anchor_allowlist: str = ""
 
     # --- 公开 Demo 成本保护（单进程内存计数，重启清零）---
     demo_limits_enabled: bool = True
@@ -64,6 +66,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """返回配置（测试可替换）。"""
     return Settings()
+
 
 
 
