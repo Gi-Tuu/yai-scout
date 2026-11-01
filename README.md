@@ -8,7 +8,7 @@ Two independent hackathon projects sharing one evidence core.
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 
-> *We benchmark not just whether agents are right, but whether their evidence is still current.*
+> *We benchmark not just whether agents are right, but whether their evidence is still current.*\n\n**Submission mapping:** Project A → Bifrost Track, Problem 02 · Project B → Tavily Track, Problem 01. Organizer confirmed (2026-11-01) that a combined submission is allowed and tracks are judged separately.
 
 **Live demo:** <https://yai-scout.onrender.com> — free tier sleeps after ~15 min idle; first request can take 30–90s. The image ships with 32 real GitHub-release snapshots, so replay works online without setup.
 
@@ -125,6 +125,7 @@ docs/              charters, specs, evaluation, demo script
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
+
 
 
 

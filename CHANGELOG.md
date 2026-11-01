@@ -10,6 +10,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ### Added
 
+- Organizer reply recorded (`research/organizer-reply-2026-11-01.md`), submission playbook with combined vs dual-submission options, and updated rules/cluster docs.
 - Engineering governance v1.0 (`docs/governance/engineering-governance-v1.md`), ADR-0003, P1 backlog and a read-only audit report.
 - Experiment Manifest for benchmark runs: dataset/task hashes, agent manifests, model/protocol/tool/budget/timeout config, evaluator/policy/weights/prompt versions, code commit, dependency-lock hash, snapshot IDs, `config_hash` and `result_hash`.
 - `GET /benchmark/runs/{id}/verify` to recompute and compare the stored result hash.
@@ -103,3 +104,4 @@ evidence core.
 
 [Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.1.0-hackathon...HEAD
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+
