@@ -170,7 +170,8 @@ Review：
 4. `POST /admin/anchors/candidates/{id}/approve|reject`；
 5. `AUTO_UPDATE` 开关（`ACCURACY_AUTO_UPDATE`，默认 false）；
 6. 自动更新仅对 R4 且开关开启生效；否则停留 pending；
-7. 写回：新 Anchor + `supersedes` + 旧 Anchor `superseded`；无独立 memory 表，Anchor 即当前持久记忆。
+7. 写回：新 Anchor + `supersedes` + 旧 Anchor `superseded`；无独立 memory 表，Anchor 即当前持久记忆；
+8. **真实 revalidation → candidate 串联**：`revalidate_due` 对 content hash 变化的 anchor 生成 `AnchorObservation`，提取 value hint 后自动创建 candidate（单源 → review；多源一致 → auto 候选）；`AUTO_UPDATE` 默认关闭。
 
 仍待完成：
 
@@ -183,10 +184,10 @@ Review：
 
 - 规则实现：`src/yai_scout/detector/accuracy_gate.py`；
 - 评估脚本：`scripts/eval_accuracy_gate.py`；
-- 30 条标注：**agreement 1.000**，auto_update precision 1.000（8/8）；
-- 决策分布：auto 8 / review 12 / reject 5 / no_change 5。
+- 60 条标注（30 seed + 30 expansion）：**agreement 1.000**，auto_update precision 1.000（18/18）；
+- 决策分布：auto 18 / review 22 / reject 10 / no_change 10。
 
-**必须诚实说明**：这 30 条标签是按同一套规则设计的，1.000 只证明“实现与设计一致”，不代表泛化。下一步需要 60 条独立标注（不由规则作者编写）+ 对抗样本，才可谈真实 precision。
+**必须诚实说明**：这 60 条标签仍由规则作者设计，1.000 只证明“实现与设计一致”，不代表泛化。下一步需要 **独立人工标注/裁决** + 对抗样本，才可谈真实 precision。
 
 ## 13. 明确不做
 
@@ -196,5 +197,6 @@ Review：
 - 不允许单源自动更新；
 - 不允许同一来源镜像凑数；
 - 不在无标注集的情况下开启自动更新。
+
 
 

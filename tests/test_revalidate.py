@@ -66,6 +66,11 @@ async def test_revalidate_records_change_without_overwriting(tmp_path: Path):
     anchor = store.list_anchors()[0]
     assert anchor.last_value == "500"
     assert store.list_anchor_observations()[0].status == "changed"
+    candidates = store.list_anchor_candidates()
+    assert len(candidates) == 1
+    assert candidates[0].accuracy_status == "pending"
+    assert candidates[0].gate_decision == "review"
+    assert candidates[0].new_value == "1000"
     store.close()
 
 
@@ -89,4 +94,5 @@ def test_admin_endpoint_requires_token(tmp_path: Path):
         assert response.status_code == 200
         assert response.json()["checked"] == 1
     store.close()
+
 

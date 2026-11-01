@@ -1,355 +1,2035 @@
 {
-  "version": "accuracy-gate-labels/0.1",
+  "version": "accuracy-gate-labels/0.2",
   "date": "2026-11-01",
   "synthetic_metadata": true,
-  "notes": "Facts are from public sources; source metadata is synthetic for gate-rule testing. Not production ground truth.",
+  "notes": "60 cases: 30 seed + 30 expansion. Source metadata is synthetic; labels are rule-author labels, not independent human adjudication.",
   "cases": [
     {
       "id": "AG-01",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1"},
-        {"url": "https://github.com/tavily-ai/tavily-python", "source_tier": 2, "independent_group": "tavily-github", "value": "1,000", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-a2"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1"
+        },
+        {
+          "url": "https://github.com/tavily-ai/tavily-python",
+          "source_tier": 2,
+          "independent_group": "tavily-github",
+          "value": "1,000",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-a2"
+        }
       ],
-      "expected": {"decision": "auto_update", "value": "1000", "reason": "two independent T1/T2 groups agree", "gate_version": "v0"}
+      "expected": {
+        "decision": "auto_update",
+        "value": "1000",
+        "reason": "two independent T1/T2 groups agree",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-02",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1"
+        }
       ],
-      "expected": {"decision": "review", "reason": "only one authoritative group", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-03",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1"},
-        {"url": "https://cdn.docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1-mirror"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1"
+        },
+        {
+          "url": "https://cdn.docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1-mirror"
+        }
       ],
-      "expected": {"decision": "review", "reason": "mirror is same independent group", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "mirror is same independent group",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-04",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1"},
-        {"url": "https://docs.tavily.com/changelog", "source_tier": 1, "independent_group": "tavily-docs", "value": "500", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a2"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1"
+        },
+        {
+          "url": "https://docs.tavily.com/changelog",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "500",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a2"
+        }
       ],
-      "expected": {"decision": "review", "reason": "authoritative conflict inside one group", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "authoritative conflict inside one group",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-05",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://some-blog.example/tavily", "source_tier": 3, "independent_group": "some-blog", "value": "1200", "published_at": "2026-10-01T00:00:00Z", "content_hash": "blog1"}
+        {
+          "url": "https://some-blog.example/tavily",
+          "source_tier": 3,
+          "independent_group": "some-blog",
+          "value": "1200",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "blog1"
+        }
       ],
-      "expected": {"decision": "reject", "reason": "low-authority source only", "gate_version": "v0"}
+      "expected": {
+        "decision": "reject",
+        "reason": "low-authority source only",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-06",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [],
-      "expected": {"decision": "reject", "reason": "no observations", "gate_version": "v0"}
+      "expected": {
+        "decision": "reject",
+        "reason": "no observations",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-07",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1"},
-        {"url": "https://github.com/tavily-ai/tavily-python", "source_tier": 2, "independent_group": "tavily-github", "value": "1000", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-a2"},
-        {"url": "https://some-blog.example/tavily", "source_tier": 3, "independent_group": "some-blog", "value": "500", "published_at": "2026-10-03T00:00:00Z", "content_hash": "blog1"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1"
+        },
+        {
+          "url": "https://github.com/tavily-ai/tavily-python",
+          "source_tier": 2,
+          "independent_group": "tavily-github",
+          "value": "1000",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-a2"
+        },
+        {
+          "url": "https://some-blog.example/tavily",
+          "source_tier": 3,
+          "independent_group": "some-blog",
+          "value": "500",
+          "published_at": "2026-10-03T00:00:00Z",
+          "content_hash": "blog1"
+        }
       ],
-      "expected": {"decision": "auto_update", "value": "1000", "reason": "two independent T1/T2 agree; low-tier conflict ignored but recorded", "gate_version": "v0"}
+      "expected": {
+        "decision": "auto_update",
+        "value": "1000",
+        "reason": "two independent T1/T2 agree; low-tier conflict ignored but recorded",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-08",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "1000", "published_at": "2026-09-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "1000",
+        "published_at": "2026-09-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1,000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1,000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1"
+        }
       ],
-      "expected": {"decision": "no_change", "reason": "normalized values equal", "gate_version": "v0"}
+      "expected": {
+        "decision": "no_change",
+        "reason": "normalized values equal",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-09",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500 credits", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500 credits",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "$1,000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "$1,000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1"
+        }
       ],
-      "expected": {"decision": "review", "reason": "unit mismatch: credits vs USD", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "unit mismatch: credits vs USD",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-10",
       "claim_text": "Python 3.12 于 2023 年发布",
       "claim_key": "python # # 于 # 年发布",
       "temporal_sensitivity": "stable",
-      "anchor": {"url": "https://docs.python.org/3.12/whatsnew/3.12.html", "source_tier": 1, "value": "2023", "published_at": "2023-10-02T00:00:00Z", "content_hash": "old-p1"},
+      "anchor": {
+        "url": "https://docs.python.org/3.12/whatsnew/3.12.html",
+        "source_tier": 1,
+        "value": "2023",
+        "published_at": "2023-10-02T00:00:00Z",
+        "content_hash": "old-p1"
+      },
       "observations": [
-        {"url": "https://docs.python.org/3.12/whatsnew/3.12.html", "source_tier": 1, "independent_group": "python-docs", "value": "2023", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-p1"},
-        {"url": "https://en.wikipedia.org/wiki/CPython", "source_tier": 2, "independent_group": "wikipedia", "value": "2023", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-p2"}
+        {
+          "url": "https://docs.python.org/3.12/whatsnew/3.12.html",
+          "source_tier": 1,
+          "independent_group": "python-docs",
+          "value": "2023",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-p1"
+        },
+        {
+          "url": "https://en.wikipedia.org/wiki/CPython",
+          "source_tier": 2,
+          "independent_group": "wikipedia",
+          "value": "2023",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-p2"
+        }
       ],
-      "expected": {"decision": "no_change", "reason": "same value; no update needed", "gate_version": "v0"}
+      "expected": {
+        "decision": "no_change",
+        "reason": "same value; no update needed",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-11",
       "claim_text": "Python 3.12 于 2023 年发布",
       "claim_key": "python # # 于 # 年发布",
       "temporal_sensitivity": "stable",
-      "anchor": {"url": "https://docs.python.org/3.12/whatsnew/3.12.html", "source_tier": 1, "value": "2023", "published_at": "2023-10-02T00:00:00Z", "content_hash": "old-p1"},
+      "anchor": {
+        "url": "https://docs.python.org/3.12/whatsnew/3.12.html",
+        "source_tier": 1,
+        "value": "2023",
+        "published_at": "2023-10-02T00:00:00Z",
+        "content_hash": "old-p1"
+      },
       "observations": [
-        {"url": "https://some-blog.example/python", "source_tier": 4, "independent_group": "some-blog", "value": "2023", "published_at": "2026-10-01T00:00:00Z", "content_hash": "blog1"}
+        {
+          "url": "https://some-blog.example/python",
+          "source_tier": 4,
+          "independent_group": "some-blog",
+          "value": "2023",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "blog1"
+        }
       ],
-      "expected": {"decision": "no_change", "reason": "same value; authority irrelevant when no change", "gate_version": "v0"}
+      "expected": {
+        "decision": "no_change",
+        "reason": "same value; authority irrelevant when no change",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-12",
       "claim_text": "YAI Agent Core 当前版本是 0.25.0",
       "claim_key": "yai agent core 当前版本是 #",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://github.com/Gi-Tuu/yai-agent-core/releases", "source_tier": 2, "value": "0.24.0", "published_at": "2026-10-27T08:11:51Z", "content_hash": "old-y1"},
+      "anchor": {
+        "url": "https://github.com/Gi-Tuu/yai-agent-core/releases",
+        "source_tier": 2,
+        "value": "0.24.0",
+        "published_at": "2026-10-27T08:11:51Z",
+        "content_hash": "old-y1"
+      },
       "observations": [
-        {"url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0", "source_tier": 2, "independent_group": "github-yai", "value": "0.25.0", "published_at": "2026-10-31T04:09:06Z", "content_hash": "new-y1"}
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "source_tier": 2,
+          "independent_group": "github-yai",
+          "value": "0.25.0",
+          "published_at": "2026-10-31T04:09:06Z",
+          "content_hash": "new-y1"
+        }
       ],
-      "expected": {"decision": "review", "reason": "only one authoritative group", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-13",
       "claim_text": "YAI Agent Core 当前版本是 0.25.0",
       "claim_key": "yai agent core 当前版本是 #",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://github.com/Gi-Tuu/yai-agent-core/releases", "source_tier": 2, "value": "0.24.0", "published_at": "2026-10-27T08:11:51Z", "content_hash": "old-y1"},
+      "anchor": {
+        "url": "https://github.com/Gi-Tuu/yai-agent-core/releases",
+        "source_tier": 2,
+        "value": "0.24.0",
+        "published_at": "2026-10-27T08:11:51Z",
+        "content_hash": "old-y1"
+      },
       "observations": [
-        {"url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0", "source_tier": 2, "independent_group": "github-yai", "value": "0.25.0", "published_at": "2026-10-31T04:09:06Z", "content_hash": "new-y1"},
-        {"url": "https://github.com/Gi-Tuu/yai-agent-core/wiki/Releases", "source_tier": 2, "independent_group": "github-yai", "value": "0.25.0", "published_at": "2026-10-31T05:00:00Z", "content_hash": "new-y2"}
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "source_tier": 2,
+          "independent_group": "github-yai",
+          "value": "0.25.0",
+          "published_at": "2026-10-31T04:09:06Z",
+          "content_hash": "new-y1"
+        },
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/wiki/Releases",
+          "source_tier": 2,
+          "independent_group": "github-yai",
+          "value": "0.25.0",
+          "published_at": "2026-10-31T05:00:00Z",
+          "content_hash": "new-y2"
+        }
       ],
-      "expected": {"decision": "review", "reason": "repo and wiki are same independent group", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "repo and wiki are same independent group",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-14",
       "claim_text": "YAI Agent Core 当前版本是 0.25.0",
       "claim_key": "yai agent core 当前版本是 #",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://github.com/Gi-Tuu/yai-agent-core/releases", "source_tier": 2, "value": "0.24.0", "published_at": "2026-10-27T08:11:51Z", "content_hash": "old-y1"},
+      "anchor": {
+        "url": "https://github.com/Gi-Tuu/yai-agent-core/releases",
+        "source_tier": 2,
+        "value": "0.24.0",
+        "published_at": "2026-10-27T08:11:51Z",
+        "content_hash": "old-y1"
+      },
       "observations": [
-        {"url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0", "source_tier": 2, "independent_group": "github-yai", "value": "0.25.0", "published_at": "2026-10-31T04:09:06Z", "content_hash": "new-y1"},
-        {"url": "https://pypi.org/project/yai-agent-core/", "source_tier": 1, "independent_group": "pypi", "value": "0.25.0", "published_at": "2026-10-31T05:00:00Z", "content_hash": "new-y2"}
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "source_tier": 2,
+          "independent_group": "github-yai",
+          "value": "0.25.0",
+          "published_at": "2026-10-31T04:09:06Z",
+          "content_hash": "new-y1"
+        },
+        {
+          "url": "https://pypi.org/project/yai-agent-core/",
+          "source_tier": 1,
+          "independent_group": "pypi",
+          "value": "0.25.0",
+          "published_at": "2026-10-31T05:00:00Z",
+          "content_hash": "new-y2"
+        }
       ],
-      "expected": {"decision": "auto_update", "value": "0.25.0", "reason": "two independent T1/T2 groups agree", "gate_version": "v0"}
+      "expected": {
+        "decision": "auto_update",
+        "value": "0.25.0",
+        "reason": "two independent T1/T2 groups agree",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-15",
       "claim_text": "Bifrost 使用 Apache-2.0 许可证",
       "claim_key": "bifrost 使用 # 许可证",
       "temporal_sensitivity": "slow",
-      "anchor": {"url": "https://github.com/maximhq/bifrost", "source_tier": 1, "value": "AGPL-3.0", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-b1"},
+      "anchor": {
+        "url": "https://github.com/maximhq/bifrost",
+        "source_tier": 1,
+        "value": "AGPL-3.0",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-b1"
+      },
       "observations": [
-        {"url": "https://github.com/maximhq/bifrost", "source_tier": 1, "independent_group": "bifrost-github", "value": "Apache-2.0", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-b1"},
-        {"url": "https://docs.getbifrost.ai/overview", "source_tier": 1, "independent_group": "bifrost-docs", "value": "Apache 2.0", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-b2"}
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "source_tier": 1,
+          "independent_group": "bifrost-github",
+          "value": "Apache-2.0",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-b1"
+        },
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "source_tier": 1,
+          "independent_group": "bifrost-docs",
+          "value": "Apache 2.0",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-b2"
+        }
       ],
-      "expected": {"decision": "auto_update", "value": "Apache-2.0", "reason": "two independent T1 groups agree after normalization", "gate_version": "v0"}
+      "expected": {
+        "decision": "auto_update",
+        "value": "Apache-2.0",
+        "reason": "two independent T1 groups agree after normalization",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-16",
       "claim_text": "Bifrost 使用 Apache-2.0 许可证",
       "claim_key": "bifrost 使用 # 许可证",
       "temporal_sensitivity": "slow",
-      "anchor": {"url": "https://github.com/maximhq/bifrost", "source_tier": 1, "value": "AGPL-3.0", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-b1"},
+      "anchor": {
+        "url": "https://github.com/maximhq/bifrost",
+        "source_tier": 1,
+        "value": "AGPL-3.0",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-b1"
+      },
       "observations": [
-        {"url": "https://github.com/maximhq/bifrost", "source_tier": 1, "independent_group": "bifrost-github", "value": "Apache-2.0", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-b1"},
-        {"url": "https://docs.getbifrost.ai/overview", "source_tier": 1, "independent_group": "bifrost-docs", "value": "AGPL-3.0", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-b2"}
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "source_tier": 1,
+          "independent_group": "bifrost-github",
+          "value": "Apache-2.0",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-b1"
+        },
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "source_tier": 1,
+          "independent_group": "bifrost-docs",
+          "value": "AGPL-3.0",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-b2"
+        }
       ],
-      "expected": {"decision": "review", "reason": "authoritative conflict", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "authoritative conflict",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-17",
       "claim_text": "Bifrost 使用 AGPL-3.0 许可证",
       "claim_key": "bifrost 使用 # 许可证",
       "temporal_sensitivity": "slow",
-      "anchor": {"url": "https://github.com/maximhq/bifrost", "source_tier": 1, "value": "Apache-2.0", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-b1"},
+      "anchor": {
+        "url": "https://github.com/maximhq/bifrost",
+        "source_tier": 1,
+        "value": "Apache-2.0",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-b1"
+      },
       "observations": [
-        {"url": "https://some-blog.example/bifrost", "source_tier": 4, "independent_group": "some-blog", "value": "AGPL-3.0", "published_at": "2026-10-01T00:00:00Z", "content_hash": "blog1"}
+        {
+          "url": "https://some-blog.example/bifrost",
+          "source_tier": 4,
+          "independent_group": "some-blog",
+          "value": "AGPL-3.0",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "blog1"
+        }
       ],
-      "expected": {"decision": "reject", "reason": "low-authority source only", "gate_version": "v0"}
+      "expected": {
+        "decision": "reject",
+        "reason": "low-authority source only",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-18",
       "claim_text": "HTTP 200 表示 OK",
       "claim_key": "http # 表示 ok",
       "temporal_sensitivity": "stable",
-      "anchor": {"url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200", "source_tier": 1, "value": "OK", "published_at": "2024-01-01T00:00:00Z", "content_hash": "old-h1"},
+      "anchor": {
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200",
+        "source_tier": 1,
+        "value": "OK",
+        "published_at": "2024-01-01T00:00:00Z",
+        "content_hash": "old-h1"
+      },
       "observations": [
-        {"url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200", "source_tier": 1, "independent_group": "mdn", "value": "OK", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-h1"},
-        {"url": "https://en.wikipedia.org/wiki/List_of_HTTP_status_codes", "source_tier": 2, "independent_group": "wikipedia", "value": "OK", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-h2"}
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200",
+          "source_tier": 1,
+          "independent_group": "mdn",
+          "value": "OK",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-h1"
+        },
+        {
+          "url": "https://en.wikipedia.org/wiki/List_of_HTTP_status_codes",
+          "source_tier": 2,
+          "independent_group": "wikipedia",
+          "value": "OK",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-h2"
+        }
       ],
-      "expected": {"decision": "no_change", "reason": "same stable value", "gate_version": "v0"}
+      "expected": {
+        "decision": "no_change",
+        "reason": "same stable value",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-19",
       "claim_text": "Tavily 学生计划每月提供 4,000 credits",
       "claim_key": "tavily 学生计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://help.tavily.com/articles/6606514713-student-account", "source_tier": 1, "value": "1000", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-s1"},
+      "anchor": {
+        "url": "https://help.tavily.com/articles/6606514713-student-account",
+        "source_tier": 1,
+        "value": "1000",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-s1"
+      },
       "observations": [
-        {"url": "https://help.tavily.com/articles/6606514713-student-account", "source_tier": 1, "independent_group": "tavily-help", "value": "4000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-s1"},
-        {"url": "https://docs.tavily.com/documentation/student-plan", "source_tier": 1, "independent_group": "tavily-docs", "value": "4,000", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-s2"}
+        {
+          "url": "https://help.tavily.com/articles/6606514713-student-account",
+          "source_tier": 1,
+          "independent_group": "tavily-help",
+          "value": "4000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-s1"
+        },
+        {
+          "url": "https://docs.tavily.com/documentation/student-plan",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "4,000",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-s2"
+        }
       ],
-      "expected": {"decision": "auto_update", "value": "4000", "reason": "two independent T1 groups agree", "gate_version": "v0"}
+      "expected": {
+        "decision": "auto_update",
+        "value": "4000",
+        "reason": "two independent T1 groups agree",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-20",
       "claim_text": "Tavily 学生计划每月提供 4,000 credits",
       "claim_key": "tavily 学生计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://help.tavily.com/articles/6606514713-student-account", "source_tier": 1, "value": "1000", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-s1"},
+      "anchor": {
+        "url": "https://help.tavily.com/articles/6606514713-student-account",
+        "source_tier": 1,
+        "value": "1000",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-s1"
+      },
       "observations": [
-        {"url": "https://help.tavily.com/articles/6606514713-student-account", "source_tier": 1, "independent_group": "tavily-help", "value": "4000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-s1"}
+        {
+          "url": "https://help.tavily.com/articles/6606514713-student-account",
+          "source_tier": 1,
+          "independent_group": "tavily-help",
+          "value": "4000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-s1"
+        }
       ],
-      "expected": {"decision": "review", "reason": "only one authoritative group", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-21",
       "claim_text": "DeepSeek V4.1-Flash 高峰输入 $0.30 / 百万 token",
       "claim_key": "deepseek v# flash 高峰输入 $# 百万 token",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://api-docs.deepseek.com/quick_start/pricing", "source_tier": 1, "value": "0.20", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-d1"},
+      "anchor": {
+        "url": "https://api-docs.deepseek.com/quick_start/pricing",
+        "source_tier": 1,
+        "value": "0.20",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-d1"
+      },
       "observations": [
-        {"url": "https://api-docs.deepseek.com/quick_start/pricing", "source_tier": 1, "independent_group": "deepseek-docs", "value": "0.30", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-d1"},
-        {"url": "https://platform.deepseek.com/api-docs/pricing", "source_tier": 1, "independent_group": "deepseek-platform", "value": "$0.30", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-d2"}
+        {
+          "url": "https://api-docs.deepseek.com/quick_start/pricing",
+          "source_tier": 1,
+          "independent_group": "deepseek-docs",
+          "value": "0.30",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-d1"
+        },
+        {
+          "url": "https://platform.deepseek.com/api-docs/pricing",
+          "source_tier": 1,
+          "independent_group": "deepseek-platform",
+          "value": "$0.30",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-d2"
+        }
       ],
-      "expected": {"decision": "auto_update", "value": "0.30", "reason": "two independent T1 groups agree after currency normalization", "gate_version": "v0"}
+      "expected": {
+        "decision": "auto_update",
+        "value": "0.30",
+        "reason": "two independent T1 groups agree after currency normalization",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-22",
       "claim_text": "DeepSeek V4.1-Flash 高峰输入 $0.30 / 百万 token",
       "claim_key": "deepseek v# flash 高峰输入 $# 百万 token",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://api-docs.deepseek.com/quick_start/pricing", "source_tier": 1, "value": "0.20", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-d1"},
+      "anchor": {
+        "url": "https://api-docs.deepseek.com/quick_start/pricing",
+        "source_tier": 1,
+        "value": "0.20",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-d1"
+      },
       "observations": [
-        {"url": "https://api-docs.deepseek.com/quick_start/pricing", "source_tier": 1, "independent_group": "deepseek-docs", "value": "0.30", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-d1"},
-        {"url": "https://api-docs.deepseek.com/quick_start/pricing-v2", "source_tier": 1, "independent_group": "deepseek-docs", "value": "0.50", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-d2"}
+        {
+          "url": "https://api-docs.deepseek.com/quick_start/pricing",
+          "source_tier": 1,
+          "independent_group": "deepseek-docs",
+          "value": "0.30",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-d1"
+        },
+        {
+          "url": "https://api-docs.deepseek.com/quick_start/pricing-v2",
+          "source_tier": 1,
+          "independent_group": "deepseek-docs",
+          "value": "0.50",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-d2"
+        }
       ],
-      "expected": {"decision": "review", "reason": "authoritative conflict inside same group", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "authoritative conflict inside same group",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-23",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "1000", "published_at": "2026-09-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "1000",
+        "published_at": "2026-09-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a0"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "500",
+          "published_at": "2025-01-01T00:00:00Z",
+          "content_hash": "old-a0"
+        }
       ],
-      "expected": {"decision": "reject", "reason": "observation older than anchor; do not overwrite with stale evidence", "gate_version": "v0"}
+      "expected": {
+        "decision": "reject",
+        "reason": "observation older than anchor; do not overwrite with stale evidence",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-24",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1.000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1"},
-        {"url": "https://github.com/tavily-ai/tavily-python", "source_tier": 2, "independent_group": "tavily-github", "value": "1.000", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-a2"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1.000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1"
+        },
+        {
+          "url": "https://github.com/tavily-ai/tavily-python",
+          "source_tier": 2,
+          "independent_group": "tavily-github",
+          "value": "1.000",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-a2"
+        }
       ],
-      "expected": {"decision": "review", "reason": "thousand-separator ambiguity (1.000 could be 1 or 1000)", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "thousand-separator ambiguity (1.000 could be 1 or 1000)",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-25",
       "claim_text": "YAI Agent Core 当前版本是 0.25.0",
       "claim_key": "yai agent core 当前版本是 #",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://github.com/Gi-Tuu/yai-agent-core/releases", "source_tier": 2, "value": "0.24.0", "published_at": "2026-10-27T08:11:51Z", "content_hash": "old-y1"},
+      "anchor": {
+        "url": "https://github.com/Gi-Tuu/yai-agent-core/releases",
+        "source_tier": 2,
+        "value": "0.24.0",
+        "published_at": "2026-10-27T08:11:51Z",
+        "content_hash": "old-y1"
+      },
       "observations": [
-        {"url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0", "source_tier": 2, "independent_group": "github-yai", "value": "v0.25.0", "published_at": "2026-10-31T04:09:06Z", "content_hash": "new-y1"},
-        {"url": "https://pypi.org/project/yai-agent-core/", "source_tier": 1, "independent_group": "pypi", "value": "0.25.0", "published_at": "2026-10-31T05:00:00Z", "content_hash": "new-y2"}
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "source_tier": 2,
+          "independent_group": "github-yai",
+          "value": "v0.25.0",
+          "published_at": "2026-10-31T04:09:06Z",
+          "content_hash": "new-y1"
+        },
+        {
+          "url": "https://pypi.org/project/yai-agent-core/",
+          "source_tier": 1,
+          "independent_group": "pypi",
+          "value": "0.25.0",
+          "published_at": "2026-10-31T05:00:00Z",
+          "content_hash": "new-y2"
+        }
       ],
-      "expected": {"decision": "auto_update", "value": "0.25.0", "reason": "version v-prefix normalized; two independent groups agree", "gate_version": "v0"}
+      "expected": {
+        "decision": "auto_update",
+        "value": "0.25.0",
+        "reason": "version v-prefix normalized; two independent groups agree",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-26",
       "claim_text": "Geek Room Global AI Hackathon 截止日期为 2026-11-15 23:59 IST",
       "claim_key": "geek room global ai hackathon 截止日期为 #",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://hackculture.io/hackathons/ai-global-hackathon", "source_tier": 1, "value": "2026-11-15T23:59:00+05:30", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-g1"},
+      "anchor": {
+        "url": "https://hackculture.io/hackathons/ai-global-hackathon",
+        "source_tier": 1,
+        "value": "2026-11-15T23:59:00+05:30",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-g1"
+      },
       "observations": [
-        {"url": "https://hackculture.io/hackathons/ai-global-hackathon", "source_tier": 1, "independent_group": "hackculture", "value": "2026-11-15", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-g1"},
-        {"url": "https://www.tavily.com/community", "source_tier": 2, "independent_group": "tavily-community", "value": "2026-11-15", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-g2"}
+        {
+          "url": "https://hackculture.io/hackathons/ai-global-hackathon",
+          "source_tier": 1,
+          "independent_group": "hackculture",
+          "value": "2026-11-15",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-g1"
+        },
+        {
+          "url": "https://www.tavily.com/community",
+          "source_tier": 2,
+          "independent_group": "tavily-community",
+          "value": "2026-11-15",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-g2"
+        }
       ],
-      "expected": {"decision": "review", "reason": "date without timezone and cross-day ambiguity", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "date without timezone and cross-day ambiguity",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-27",
       "claim_text": "Tavily basic extract 每 5 个成功 URL 消耗 1 credit",
       "claim_key": "tavily basic extract 每 # 个成功 url 消耗 # credit",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "1", "published_at": "2026-01-01T00:00:00Z", "content_hash": "old-e1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "1",
+        "published_at": "2026-01-01T00:00:00Z",
+        "content_hash": "old-e1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-e1"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-e1"
+        }
       ],
-      "expected": {"decision": "no_change", "reason": "same value after update", "gate_version": "v0"}
+      "expected": {
+        "decision": "no_change",
+        "reason": "same value after update",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-28",
       "claim_text": "Bifrost 自托管默认监听 8080 端口",
       "claim_key": "bifrost 自托管默认监听 # 端口",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.getbifrost.ai/overview", "source_tier": 1, "value": "8080", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-p1"},
+      "anchor": {
+        "url": "https://docs.getbifrost.ai/overview",
+        "source_tier": 1,
+        "value": "8080",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-p1"
+      },
       "observations": [
-        {"url": "https://docs.getbifrost.ai/overview", "source_tier": 1, "independent_group": "bifrost-docs", "value": "", "published_at": "2026-10-01T00:00:00Z", "content_hash": "empty", "reachable": false}
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "source_tier": 1,
+          "independent_group": "bifrost-docs",
+          "value": "",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "empty",
+          "reachable": false
+        }
       ],
-      "expected": {"decision": "reject", "reason": "source unreachable/empty; no update", "gate_version": "v0"}
+      "expected": {
+        "decision": "reject",
+        "reason": "source unreachable/empty; no update",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-29",
       "claim_text": "Tavily 免费计划每月提供 1,000 credits",
       "claim_key": "tavily 免费计划每月提供 # credits",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "value": "500", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-a1"},
+      "anchor": {
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "source_tier": 1,
+        "value": "500",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-a1"
+      },
       "observations": [
-        {"url": "https://docs.tavily.com/documentation/api-credits", "source_tier": 1, "independent_group": "tavily-docs", "value": "1000", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-a1"},
-        {"url": "https://docs.tavily.com/documentation/api-credits-v2", "source_tier": 1, "independent_group": "tavily-docs", "value": "500", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-a2"}
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-a1"
+        },
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits-v2",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "500",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-a2"
+        }
       ],
-      "expected": {"decision": "review", "reason": "same group reports conflicting values", "gate_version": "v0"}
+      "expected": {
+        "decision": "review",
+        "reason": "same group reports conflicting values",
+        "gate_version": "v0"
+      }
     },
     {
       "id": "AG-30",
       "claim_text": "Bifrost 自托管默认监听 8080 端口",
       "claim_key": "bifrost 自托管默认监听 # 端口",
       "temporal_sensitivity": "sensitive",
-      "anchor": {"url": "https://docs.getbifrost.ai/overview", "source_tier": 1, "value": "8000", "published_at": "2025-01-01T00:00:00Z", "content_hash": "old-p1"},
+      "anchor": {
+        "url": "https://docs.getbifrost.ai/overview",
+        "source_tier": 1,
+        "value": "8000",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-p1"
+      },
       "observations": [
-        {"url": "https://docs.getbifrost.ai/overview", "source_tier": 1, "independent_group": "bifrost-docs", "value": "8080", "published_at": "2026-10-01T00:00:00Z", "content_hash": "new-p1"},
-        {"url": "https://github.com/maximhq/bifrost", "source_tier": 2, "independent_group": "bifrost-github", "value": "8080", "published_at": "2026-10-02T00:00:00Z", "content_hash": "new-p2"}
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "source_tier": 1,
+          "independent_group": "bifrost-docs",
+          "value": "8080",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-p1"
+        },
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "source_tier": 2,
+          "independent_group": "bifrost-github",
+          "value": "8080",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-p2"
+        }
       ],
-      "expected": {"decision": "auto_update", "value": "8080", "reason": "two independent T1/T2 groups agree", "gate_version": "v0"}
+      "expected": {
+        "decision": "auto_update",
+        "value": "8080",
+        "reason": "two independent T1/T2 groups agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-31",
+      "claim_text": "Tavily map 每 10 个页面消耗 1 credit",
+      "claim_key": "tavily map 每 # 个页面消耗 # credit",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "5",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-31-0",
+          "reachable": true
+        },
+        {
+          "url": "https://github.com/tavily-ai/tavily-python",
+          "source_tier": 2,
+          "independent_group": "tavily-github",
+          "value": "1",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-31-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "1",
+        "reason": "two independent T1/T2 agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-32",
+      "claim_text": "Tavily basic extract 每 5 个成功 URL 消耗 1 credit",
+      "claim_key": "tavily basic extract 每 # 个成功 url 消耗 # credit",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "2",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-32-0",
+          "reachable": true
+        },
+        {
+          "url": "https://github.com/tavily-ai/tavily-python",
+          "source_tier": 2,
+          "independent_group": "tavily-github",
+          "value": "1",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-32-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "1",
+        "reason": "two independent T1/T2 agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-33",
+      "claim_text": "Bifrost 自托管默认监听 8080 端口",
+      "claim_key": "bifrost 自托管默认监听 # 端口",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "8000",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "source_tier": 1,
+          "independent_group": "bifrost-docs",
+          "value": "8080",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-33-0",
+          "reachable": true
+        },
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "source_tier": 2,
+          "independent_group": "bifrost-github",
+          "value": "8080",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-33-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "8080",
+        "reason": "two independent T1/T2 agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-34",
+      "claim_text": "DeepSeek V4.1-Flash 高峰输入 $0.30 / 百万 token",
+      "claim_key": "deepseek v# flash 高峰输入 $# 百万 token",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "0.20",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://api-docs.deepseek.com/quick_start/pricing",
+          "source_tier": 1,
+          "independent_group": "deepseek-docs",
+          "value": "0.30",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-34-0",
+          "reachable": true
+        },
+        {
+          "url": "https://platform.deepseek.com/api-docs/pricing",
+          "source_tier": 1,
+          "independent_group": "deepseek-platform",
+          "value": "$0.30",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-34-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "0.30",
+        "reason": "two independent T1 groups agree after currency normalization",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-35",
+      "claim_text": "Claude Haiku 5.5 输出 $0.50 / 百万 token",
+      "claim_key": "claude haiku # 输出 $# 百万 token",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "0.80",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://platform.claude.com/docs/en/about-claude/pricing",
+          "source_tier": 1,
+          "independent_group": "anthropic-docs",
+          "value": "0.50",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-35-0",
+          "reachable": true
+        },
+        {
+          "url": "https://docs.anthropic.com/en/docs/about-claude/models",
+          "source_tier": 2,
+          "independent_group": "anthropic-docs-v2",
+          "value": "0.50",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-35-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "0.50",
+        "reason": "two independent T1/T2 agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-36",
+      "claim_text": "YAI Agent Core 当前版本是 0.25.0",
+      "claim_key": "yai agent core 当前版本是 #",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "0.24.0",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "source_tier": 2,
+          "independent_group": "github-yai",
+          "value": "v0.25.0",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-36-0",
+          "reachable": true
+        },
+        {
+          "url": "https://pypi.org/project/yai-agent-core/",
+          "source_tier": 1,
+          "independent_group": "pypi",
+          "value": "0.25.0",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-36-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "0.25.0",
+        "reason": "v-prefix normalized; two groups agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-37",
+      "claim_text": "Python 3.13 于 2024 年发布",
+      "claim_key": "python # # 于 # 年发布",
+      "temporal_sensitivity": "stable",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "2023",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.python.org/3.13/whatsnew/3.13.html",
+          "source_tier": 1,
+          "independent_group": "python-docs",
+          "value": "2024",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-37-0",
+          "reachable": true
+        },
+        {
+          "url": "https://en.wikipedia.org/wiki/CPython",
+          "source_tier": 2,
+          "independent_group": "wikipedia",
+          "value": "2024",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-37-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "2024",
+        "reason": "two independent T1/T2 agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-38",
+      "claim_text": "HTTP 404 表示 Not Found",
+      "claim_key": "http # 表示 not found",
+      "temporal_sensitivity": "stable",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "410 Gone",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "source_tier": 1,
+          "independent_group": "mdn",
+          "value": "Not Found",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-38-0",
+          "reachable": true
+        },
+        {
+          "url": "https://en.wikipedia.org/wiki/List_of_HTTP_status_codes",
+          "source_tier": 2,
+          "independent_group": "wikipedia",
+          "value": "Not Found",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-38-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "Not Found",
+        "reason": "two independent T1/T2 agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-39",
+      "claim_text": "Tavily 学生计划每月提供 4,000 credits",
+      "claim_key": "tavily 学生计划每月提供 # credits",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "1000",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://help.tavily.com/articles/6606514713-student-account",
+          "source_tier": 1,
+          "independent_group": "tavily-help",
+          "value": "4000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-39-0",
+          "reachable": true
+        },
+        {
+          "url": "https://docs.tavily.com/documentation/student-plan",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "4,000",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-39-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "4000",
+        "reason": "two independent T1 groups agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-40",
+      "claim_text": "Bifrost 使用 MIT 许可证",
+      "claim_key": "bifrost 使用 # 许可证",
+      "temporal_sensitivity": "slow",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "Apache-2.0",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "source_tier": 1,
+          "independent_group": "bifrost-github",
+          "value": "MIT",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-40-0",
+          "reachable": true
+        },
+        {
+          "url": "https://opensource.org/license/mit",
+          "source_tier": 1,
+          "independent_group": "opensource-org",
+          "value": "MIT",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-40-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "auto_update",
+        "value": "MIT",
+        "reason": "two independent T1 groups agree",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-41",
+      "claim_text": "Tavily map 每 10 个页面消耗 1 credit",
+      "claim_key": "tavily map 每 # 个页面消耗 # credit",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "5",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-41-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-42",
+      "claim_text": "Tavily basic extract 每 5 个成功 URL 消耗 1 credit",
+      "claim_key": "tavily basic extract 每 # 个成功 url 消耗 # credit",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "2",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-42-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-43",
+      "claim_text": "Bifrost 自托管默认监听 8080 端口",
+      "claim_key": "bifrost 自托管默认监听 # 端口",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "8000",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "source_tier": 1,
+          "independent_group": "bifrost-docs",
+          "value": "8080",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-43-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-44",
+      "claim_text": "DeepSeek V4.1-Flash 高峰输入 $0.30 / 百万 token",
+      "claim_key": "deepseek v# flash 高峰输入 $# 百万 token",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "0.20",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://api-docs.deepseek.com/quick_start/pricing",
+          "source_tier": 1,
+          "independent_group": "deepseek-docs",
+          "value": "0.30",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-44-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-45",
+      "claim_text": "Claude Haiku 5.5 输出 $0.50 / 百万 token",
+      "claim_key": "claude haiku # 输出 $# 百万 token",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "0.80",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://platform.claude.com/docs/en/about-claude/pricing",
+          "source_tier": 1,
+          "independent_group": "anthropic-docs",
+          "value": "0.50",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-45-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-46",
+      "claim_text": "YAI Agent Core 当前版本是 0.25.0",
+      "claim_key": "yai agent core 当前版本是 #",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "0.24.0",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "source_tier": 2,
+          "independent_group": "github-yai",
+          "value": "0.25.0",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-46-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-47",
+      "claim_text": "Python 3.13 于 2024 年发布",
+      "claim_key": "python # # 于 # 年发布",
+      "temporal_sensitivity": "stable",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "2023",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.python.org/3.13/whatsnew/3.13.html",
+          "source_tier": 1,
+          "independent_group": "python-docs",
+          "value": "2024",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-47-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "only one authoritative group",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-48",
+      "claim_text": "HTTP 404 表示 Not Found",
+      "claim_key": "http # 表示 not found",
+      "temporal_sensitivity": "stable",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "410 Gone",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "source_tier": 1,
+          "independent_group": "mdn",
+          "value": "Not Found",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-48-0",
+          "reachable": true
+        },
+        {
+          "url": "https://cdn.developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "source_tier": 1,
+          "independent_group": "mdn",
+          "value": "Not Found",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-48-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "mirror is same independent group",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-49",
+      "claim_text": "Tavily 学生计划每月提供 4,000 credits",
+      "claim_key": "tavily 学生计划每月提供 # credits",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "1000",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://help.tavily.com/articles/6606514713-student-account",
+          "source_tier": 1,
+          "independent_group": "tavily-help",
+          "value": "4000",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-49-0",
+          "reachable": true
+        },
+        {
+          "url": "https://help.tavily.com/wiki/student-plan",
+          "source_tier": 1,
+          "independent_group": "tavily-help",
+          "value": "4000",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-49-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "same independent group",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-50",
+      "claim_text": "Bifrost 自托管默认监听 8080 端口",
+      "claim_key": "bifrost 自托管默认监听 # 端口",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "8000",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "source_tier": 1,
+          "independent_group": "bifrost-docs",
+          "value": "8080",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-50-0",
+          "reachable": true
+        },
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "source_tier": 2,
+          "independent_group": "bifrost-github",
+          "value": "8000",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-50-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "review",
+        "value": "",
+        "reason": "authoritative observations conflict",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-51",
+      "claim_text": "Tavily map 每 10 个页面消耗 1 credit",
+      "claim_key": "tavily map 每 # 个页面消耗 # credit",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "5",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://some-blog.example/tavily-map",
+          "source_tier": 3,
+          "independent_group": "some-blog",
+          "value": "1",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-51-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "reject",
+        "value": "",
+        "reason": "low-authority source only",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-52",
+      "claim_text": "Tavily basic extract 每 5 个成功 URL 消耗 1 credit",
+      "claim_key": "tavily basic extract 每 # 个成功 url 消耗 # credit",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "2",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://forum.example/tavily-extract",
+          "source_tier": 4,
+          "independent_group": "forum",
+          "value": "1",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-52-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "reject",
+        "value": "",
+        "reason": "low-authority source only",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-53",
+      "claim_text": "Bifrost 自托管默认监听 8080 端口",
+      "claim_key": "bifrost 自托管默认监听 # 端口",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "8080",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "source_tier": 1,
+          "independent_group": "bifrost-docs",
+          "value": "8000",
+          "published_at": "2024-01-01T00:00:00Z",
+          "content_hash": "new-AG-53-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "reject",
+        "value": "",
+        "reason": "observation older than anchor",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-54",
+      "claim_text": "Claude Haiku 5.5 输出 $0.50 / 百万 token",
+      "claim_key": "claude haiku # 输出 $# 百万 token",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "0.80",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://platform.claude.com/docs/en/about-claude/pricing",
+          "source_tier": 1,
+          "independent_group": "anthropic-docs",
+          "value": "",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-54-0",
+          "reachable": false
+        }
+      ],
+      "expected": {
+        "decision": "reject",
+        "value": "",
+        "reason": "source unreachable/empty",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-55",
+      "claim_text": "Python 3.13 于 2024 年发布",
+      "claim_key": "python # # 于 # 年发布",
+      "temporal_sensitivity": "stable",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "2023",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://some-blog.example/python-313",
+          "source_tier": 3,
+          "independent_group": "some-blog",
+          "value": "2024",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-55-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "reject",
+        "value": "",
+        "reason": "low-authority source only",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-56",
+      "claim_text": "Tavily map 每 10 个页面消耗 1 credit",
+      "claim_key": "tavily map 每 # 个页面消耗 # credit",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "1",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-56-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "no_change",
+        "value": "",
+        "reason": "same value",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-57",
+      "claim_text": "Tavily basic extract 每 5 个成功 URL 消耗 1 credit",
+      "claim_key": "tavily basic extract 每 # 个成功 url 消耗 # credit",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "1",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "source_tier": 1,
+          "independent_group": "tavily-docs",
+          "value": "1",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-57-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "no_change",
+        "value": "",
+        "reason": "same value",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-58",
+      "claim_text": "Bifrost 自托管默认监听 8080 端口",
+      "claim_key": "bifrost 自托管默认监听 # 端口",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "8080",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "source_tier": 1,
+          "independent_group": "bifrost-docs",
+          "value": "8080",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-58-0",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "no_change",
+        "value": "",
+        "reason": "same value",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-59",
+      "claim_text": "DeepSeek V4.1-Flash 高峰输入 $0.30 / 百万 token",
+      "claim_key": "deepseek v# flash 高峰输入 $# 百万 token",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "0.30",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://api-docs.deepseek.com/quick_start/pricing",
+          "source_tier": 1,
+          "independent_group": "deepseek-docs",
+          "value": "$0.30",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-59-0",
+          "reachable": true
+        },
+        {
+          "url": "https://platform.deepseek.com/api-docs/pricing",
+          "source_tier": 1,
+          "independent_group": "deepseek-platform",
+          "value": "0.30",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-59-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "no_change",
+        "value": "",
+        "reason": "same value after normalization",
+        "gate_version": "v0"
+      }
+    },
+    {
+      "id": "AG-60",
+      "claim_text": "YAI Agent Core 当前版本是 0.25.0",
+      "claim_key": "yai agent core 当前版本是 #",
+      "temporal_sensitivity": "sensitive",
+      "anchor": {
+        "url": "https://docs.example.com/source",
+        "source_tier": 1,
+        "value": "0.25.0",
+        "published_at": "2025-01-01T00:00:00Z",
+        "content_hash": "old-hash"
+      },
+      "observations": [
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "source_tier": 2,
+          "independent_group": "github-yai",
+          "value": "v0.25.0",
+          "published_at": "2026-10-01T00:00:00Z",
+          "content_hash": "new-AG-60-0",
+          "reachable": true
+        },
+        {
+          "url": "https://pypi.org/project/yai-agent-core/",
+          "source_tier": 1,
+          "independent_group": "pypi",
+          "value": "0.25.0",
+          "published_at": "2026-10-02T00:00:00Z",
+          "content_hash": "new-AG-60-1",
+          "reachable": true
+        }
+      ],
+      "expected": {
+        "decision": "no_change",
+        "value": "",
+        "reason": "same value after version normalization",
+        "gate_version": "v0"
+      }
     }
   ]
 }

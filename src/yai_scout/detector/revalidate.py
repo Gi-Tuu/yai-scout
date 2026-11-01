@@ -15,6 +15,7 @@ from ..domain.models import Anchor, AnchorObservation
 from ..sources.anchor import replay_anchor_result
 from ..store import Store
 from .anchor_policy import needs_revalidation
+from .candidates import create_candidate_from_observations, extract_value_hint
 
 AnchorResultFetcher = Callable[[Anchor, str], Awaitable[object | None]]
 
@@ -54,6 +55,7 @@ async def revalidate_anchor(
         )
     else:
         observed_hash = str(getattr(result, "content_hash", "") or "")
+        content = str(getattr(result, "content", "") or "")
         changed = bool(
             anchor.content_hash and observed_hash and anchor.content_hash != observed_hash
         )
@@ -63,6 +65,11 @@ async def revalidate_anchor(
             status="changed" if changed else "verified",
             content_changed=changed,
             observed_hash=observed_hash,
+            url=anchor.url,
+            source_tier=anchor.source_tier,
+            independent_group=anchor.url,
+            value=extract_value_hint(content, anchor.last_value),
+            published_at=str(getattr(result, "published_date", "") or "") or None,
         )
     store.save_anchor_observation(observation)
     return observation
@@ -74,11 +81,16 @@ async def revalidate_due(
     fetcher: AnchorResultFetcher | None = None,
     now: datetime | None = None,
     limit: int = 100,
+    auto_update: bool = False,
 ) -> list[AnchorObservation]:
     observations = []
     for anchor in due_anchors(store, now=now, limit=limit):
-        observations.append(
-            await revalidate_anchor(store, anchor, fetcher=fetcher, now=now)
-        )
+        observation = await revalidate_anchor(store, anchor, fetcher=fetcher, now=now)
+        observations.append(observation)
+        if observation.content_changed and observation.value:
+            create_candidate_from_observations(
+                store, anchor, [observation], auto_update=auto_update
+            )
     return observations
+
 

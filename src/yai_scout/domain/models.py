@@ -183,6 +183,11 @@ class AnchorObservation(BaseModel):
     content_changed: bool = False
     observed_hash: str = ""
     observed_at: str = Field(default_factory=utcnow_iso)
+    url: str = ""
+    source_tier: int = 3
+    independent_group: str = ""
+    value: str = ""
+    published_at: str | None = None
     note: str = ""
 
 
@@ -377,6 +382,7 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
 
 
 
