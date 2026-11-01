@@ -1,0 +1,41 @@
+# 密钥与本地数据（不要提交）
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+.tavily/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node / 前端
+node_modules/
+web/dist/
+.vite/
+
+# 运行时数据（证据快照、SQLite、缓存）
+data/
+runs/
+snapshots/
+*.sqlite
+*.sqlite3
+*.db
+
+# 编辑器/系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
