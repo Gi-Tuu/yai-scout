@@ -30,7 +30,7 @@
 
 - [ ] 3-minute demo video: stale answer → claims → Tavily evidence → correction; show Bifrost log.
 - [ ] Public repo (README, setup, architecture, both integrations).
-- [ ] Working demo link (note Render cold start).
+- [ ] Working demo link (note Render cold start).\n- [x] Editable deck: `deliverables/YAI_Scout_Submission.pptx` (`scripts/build_submission_deck.py`).
 - [ ] Problem statement selected + requirement mapping (this file).
 - [ ] Measurements: replay FRESH/STALE, benchmark appendix, accuracy caveat.
 - [ ] `AUTO_UPDATE=false` and no overclaiming.
@@ -41,3 +41,4 @@
 - Do **not** claim independent human ground truth: labeler 001 matched the hidden key; call it “rule-consistent labeling”.
 - Public Render demo uses direct model fallback unless a public Bifrost deployment is added; video/local demo shows Bifrost.
 - Benchmark is supporting evaluation evidence, not the primary submission.
+
