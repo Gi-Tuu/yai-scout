@@ -10,6 +10,31 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ### Added
 
+- Engineering governance v1.0 (`docs/governance/engineering-governance-v1.md`), ADR-0003, P1 backlog and a read-only audit report.
+- Experiment Manifest for benchmark runs: dataset/task hashes, agent manifests, model/protocol/tool/budget/timeout config, evaluator/policy/weights/prompt versions, code commit, dependency-lock hash, snapshot IDs, `config_hash` and `result_hash`.
+- `GET /benchmark/runs/{id}/verify` to recompute and compare the stored result hash.
+- `supersedes` revision link for benchmark sessions.
+- Governance tests: manifest determinism/sensitivity/redaction, hidden isolation, stable metric, version consistency, legacy migration, immutability, private execution, revisions.
+
+### Changed
+
+- Hidden tasks are marked `compromised` (they were committed to public history); public loaders/API no longer expose them and the insecure `include_hidden` parameter is removed.
+- Freshness policy/weights versions now come from a single source (`detector/versions.py`); reports missing versions load as `unknown` instead of being silently assigned the current version.
+- Python support is now truthful for 3.11 and 3.12 (PEP 695 generic removed, Ruff/Mypy target 3.11, CI matrix).
+- Benchmark sessions are append-only after completion; config hash cannot be rewritten.
+
+### Fixed
+
+- `stable_fact_integrity` now counts only genuinely STABLE claims, joined by claim ID; returns `null` when no stable claim is evaluable.
+- Benchmark manifests redact secrets with sha256 fingerprints (changes remain hash-sensitive, plaintext never stored).
+
+### Security
+
+- Hidden dataset isolation is enforced in both loader and runner; no public endpoint can execute hidden tasks.
+- Credential fingerprints are recorded instead of keys; no secrets in manifests.
+
+### Added (previous)
+
 - Public demo deployment: <https://yai-scout.onrender.com> (Render free tier, `SCOUT_MODE=all`); online smoke checks pass for health, all pages and dataset, plus live freshness and benchmark runs.
 - `scripts/smoke_online.py` for post-deploy verification.
 - Snapshot bundle `benchmarks/snapshots.json` (32 real GitHub-release snapshots, 117 KB) exported via `scripts/export_snapshots.py` and seeded at startup, so stateless containers can run real replay; verified in a fresh container (`snapshots=32`, STALE 24 → FRESH 88).

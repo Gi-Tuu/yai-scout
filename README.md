@@ -6,7 +6,7 @@ Two independent hackathon projects sharing one evidence core.
 [![CI](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Gi-Tuu/yai-scout?include_prereleases&label=release)](https://github.com/Gi-Tuu/yai-scout/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](pyproject.toml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 
 > *We benchmark not just whether agents are right, but whether their evidence is still current.*
 
@@ -84,7 +84,7 @@ flowchart LR
 | Evidence inspector | claim → sources → timestamps → relation → score breakdown → suggestion |
 | Temporal replay | **real**: GitHub Releases official history; example: YAI version `0.25.0` is **STALE at 2026-10-28** and **FRESH at 2026-11-01** |
 | Deployment | `Dockerfile` + two-container compose, `SCOUT_MODE` isolation verified |
-| Quality gates | 73 tests, ruff, mypy strict; CI runs lint + types + tests + Docker build |
+| Quality gates | 93 tests on Python 3.11 and 3.12, ruff, mypy strict; CI matrix runs lint + types + tests + Docker build |
 
 ## Honest limits
 
@@ -119,12 +119,13 @@ docs/              charters, specs, evaluation, demo script
 - [Project charters](docs/charter-benchmark.md) · [Freshness charter](docs/charter-freshness.md)
 - [Differentiation spec](docs/differentiation-spec.md) · [Freshness scoring spec](docs/spec-freshness-scoring.md)
 - [Adapter & dataset spec](docs/spec-benchmark-adapter.md) · [Temporal replay spec](docs/spec-temporal-replay.md)
-- [Evaluation](docs/freshness-eval.md) · [Demo script](docs/demo-script.md) · [Hackathon rules report](docs/hackathon-rules-report.md)
+- [Evaluation](docs/freshness-eval.md) · [Demo script](docs/demo-script.md) · [Hackathon rules report](docs/hackathon-rules-report.md)\n- [Engineering governance v1.0](docs/governance/engineering-governance-v1.md) · [ADR-0003](docs/adr/0003-engineering-governance.md) · [P1 governance backlog](docs/governance/p1-backlog.md) · [Governance audit](docs/governance/audit-2026-11-01.md)
 - [YAI reuse & license audit](docs/yai-reuse.md) · [API resources](docs/api-resources.md) · [Changelog](CHANGELOG.md)
 
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
+
 
 
 
