@@ -51,10 +51,11 @@
 | E2 | Golden dataset for hidden/private eval (outside public repo) | P1-now | P0-2 | private loader only; no leakage in CI logs | next |
 | E3 | Precision / Recall / F1 for conflict detection | P1-later | E1/E2 | metrics on labelled set | post-event |
 | E4 | Retrieval recall + source relevance eval | P1-later | E2 | recall@k and relevance judged on sample | post-event |
-| E5 | Reproducibility test: rerun same manifest → same result_hash | P1-now | P0-1/P0-6 | CI test with mock adapters (deterministic) | next |
+| E5 | Reproducibility test: rerun same manifest → same result_hash | **done** | P0-1/P0-6 | `test_same_manifest_and_results_are_reproducible` | v0.2.1 |
 | E6 | Full evidence-graph hash (beyond TaskResult summary) | P1-later | E5 | evidence included in result hash with version | post-event |
 
 ## Suggested sequencing
 
 1. **Now**: A4, C1–C4, R1–R3, E1, E2, E5 (submission safety and reproducibility).
 2. **After event**: A2/A3/A5, D2–D4, C5/C6, R5, E3/E4/E6.
+

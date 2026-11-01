@@ -302,6 +302,26 @@ async def _wait_done(store: Store, session_id: str) -> BenchSession:
     raise AssertionError("session did not finish")
 
 
+async def test_same_manifest_and_results_are_reproducible():
+    store = Store(":memory:")
+    runner = BenchmarkRunner(
+        store,
+        {"mock_good": MockAdapter("mock_good", "Mock")},
+        None,
+        cfg=_settings(),
+        detect_freshness=False,
+    )
+    first = runner.start(["mock_good"], ["b_tavily_free_credits"])
+    done_first = await _wait_done(store, first.id)
+    second = runner.start(["mock_good"], ["b_tavily_free_credits"])
+    done_second = await _wait_done(store, second.id)
+    assert done_first.manifest is not None
+    assert done_second.manifest is not None
+    assert done_first.manifest.config_hash == done_second.manifest.config_hash
+    assert done_first.result_hash == done_second.result_hash
+    store.close()
+
+
 async def test_private_hidden_execution_requires_explicit_context():
     store = Store(":memory:")
     runner = BenchmarkRunner(
@@ -337,5 +357,6 @@ async def test_revision_session_records_supersedes():
     assert loaded.supersedes == first.id
     assert loaded.id != first.id
     store.close()
+
 
 

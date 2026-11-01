@@ -20,6 +20,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ### Added
 
+- Reproducibility regression test: same manifest + deterministic mock agents produce the same `config_hash` and `result_hash` in CI.
 - Public-demo cost guard: global + per-IP per-minute limits and daily caps for detector/benchmark endpoints, with `429`/`Retry-After` and usage in `/api/healthz` (configurable; in-memory, resets on restart).
 
 ### Fixed
@@ -138,6 +139,7 @@ evidence core.
 [Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
 [0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+
 
 
 
