@@ -8,44 +8,67 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ## [Unreleased]
 
-### Added
-
-- Organizer reply recorded (`research/organizer-reply-2026-11-01.md`), submission playbook with combined vs dual-submission options, and updated rules/cluster docs.
-- Engineering governance v1.0 (`docs/governance/engineering-governance-v1.md`), ADR-0003, P1 backlog and a read-only audit report.
-- Experiment Manifest for benchmark runs: dataset/task hashes, agent manifests, model/protocol/tool/budget/timeout config, evaluator/policy/weights/prompt versions, code commit, dependency-lock hash, snapshot IDs, `config_hash` and `result_hash`.
-- `GET /benchmark/runs/{id}/verify` to recompute and compare the stored result hash.
-- `supersedes` revision link for benchmark sessions.
-- Governance tests: manifest determinism/sensitivity/redaction, hidden isolation, stable metric, version consistency, legacy migration, immutability, private execution, revisions.
-
-### Changed
-
-- Hidden tasks are marked `compromised` (they were committed to public history); public loaders/API no longer expose them and the insecure `include_hidden` parameter is removed.
-- Freshness policy/weights versions now come from a single source (`detector/versions.py`); reports missing versions load as `unknown` instead of being silently assigned the current version.
-- Python support is now truthful for 3.11 and 3.12 (PEP 695 generic removed, Ruff/Mypy target 3.11, CI matrix).
-- Benchmark sessions are append-only after completion; config hash cannot be rewritten.
-
-### Fixed
-
-- `stable_fact_integrity` now counts only genuinely STABLE claims, joined by claim ID; returns `null` when no stable claim is evaluable.
-- Benchmark manifests redact secrets with sha256 fingerprints (changes remain hash-sensitive, plaintext never stored).
-
-### Security
-
-- Hidden dataset isolation is enforced in both loader and runner; no public endpoint can execute hidden tasks.
-- Credential fingerprints are recorded instead of keys; no secrets in manifests.
-
-### Added (previous)
-
-- Public demo deployment: <https://yai-scout.onrender.com> (Render free tier, `SCOUT_MODE=all`); online smoke checks pass for health, all pages and dataset, plus live freshness and benchmark runs.
-- `scripts/smoke_online.py` for post-deploy verification.
-- Snapshot bundle `benchmarks/snapshots.json` (32 real GitHub-release snapshots, 117 KB) exported via `scripts/export_snapshots.py` and seeded at startup, so stateless containers can run real replay; verified in a fresh container (`snapshots=32`, STALE 24 → FRESH 88).
-
 ### Planned
 
 - 60 human-scored claims for freshness calibration (current: 20 rule-labelled).
 - Real web-archive snapshots (Wayback or manual HTML) for pricing/leaderboard facts.
+- API rate limiting and cost protection for the public demo (P1 R1/R3).
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Final submission package: two project READMEs, slides, demo video.
+
+## [0.2.0-hackathon] - 2026-11-01
+
+Engineering governance adoption and P0 hardening. No change to freshness scoring rules or
+benchmark ranking weights.
+
+### Added
+
+- Engineering governance v1.0 (`docs/governance/engineering-governance-v1.md`), ADR-0003,
+  P1 backlog and a read-only audit report.
+- Experiment Manifest for benchmark runs: dataset/task hashes, agent manifests,
+  model/protocol/tool/budget/timeout config, evaluator/policy/weights/prompt versions,
+  code commit, dependency-lock hash, snapshot IDs, `config_hash` and `result_hash`.
+- `GET /benchmark/runs/{id}/verify` to recompute and compare the stored result hash.
+- `supersedes` revision link for benchmark sessions.
+- Governance tests: manifest determinism/sensitivity/redaction, hidden isolation, stable metric,
+  version consistency, legacy migration, immutability, private execution, revisions.
+- Organizer reply recorded (`research/organizer-reply-2026-11-01.md`), submission playbook with
+  combined vs dual-submission options, and updated rules/plan docs.
+- Public demo deployment <https://yai-scout.onrender.com> with bundled snapshot replay and
+  `scripts/smoke_online.py` (these landed after v0.1.0 and are included here).
+
+### Changed
+
+- Hidden tasks are marked `compromised` (they were committed to public history); public loaders/API
+  no longer expose them and the insecure `include_hidden` parameter is removed.
+- Freshness policy/weights versions now come from a single source (`detector/versions.py`);
+  reports missing versions load as `unknown` instead of being silently assigned the current version.
+- Python support is now truthful for 3.11 and 3.12 (PEP 695 generic removed, Ruff/Mypy target 3.11,
+  CI matrix with both versions).
+- Benchmark sessions are append-only after completion; config hash cannot be rewritten.
+- Dataset version bumped to `freshness-bench/0.2.1` for compromised metadata; hidden task content
+  is unchanged.
+
+### Fixed
+
+- `stable_fact_integrity` now counts only genuinely STABLE claims, joined by claim ID; returns
+  `null` when no stable claim is evaluable.
+- Benchmark manifests redact secrets with sha256 fingerprints (changes remain hash-sensitive,
+  plaintext never stored).
+
+### Security
+
+- Hidden dataset isolation is enforced in both loader and runner; no public endpoint can execute
+  hidden tasks.
+- Credential fingerprints are recorded instead of keys; no secrets in manifests.
+
+### Verification
+
+- 93 tests on Python 3.11 and 3.12; ruff and mypy strict clean; Docker image builds.
+- Real replay example unchanged: YAI `0.25.0` — STALE (24) at as_of 2026-10-28, FRESH (88) at
+  as_of 2026-11-01.
+- Render deploy `2e6ad02` served `snapshots=32` with build marker; latest release commit deployed
+  after this changelog entry.
 
 ## [0.1.0-hackathon] - 2026-11-01
 
@@ -102,6 +125,7 @@ evidence core.
 - Real replay example: YAI `0.25.0` — **STALE (24) at as_of 2026-10-28**, **FRESH (88) at as_of 2026-11-01**.
 - CI run on the release commit: success (test + docker).
 
-[Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.1.0-hackathon...HEAD
+[Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
+[0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
 

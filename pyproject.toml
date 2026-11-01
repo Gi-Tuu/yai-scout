@@ -1,6 +1,6 @@
 [project]
 name = "yai-scout"
-version = "0.1.0"
+version = "0.2.0"
 description = "YAI Scout — an evidence-first, auditable research agent"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -47,4 +47,5 @@ python_version = "3.11"
 strict = true
 packages = ["yai_scout"]
 mypy_path = "src"
+
 
