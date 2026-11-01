@@ -655,6 +655,39 @@ def create_app(
         store.update_anchor_candidate(updated)
         return updated.model_dump(mode="json")
 
+    @app.get("/admin/anchors")
+    async def admin_list_anchors(request: Request) -> dict[str, Any]:
+        if not cfg.admin_token:
+            raise HTTPException(status_code=404, detail="admin endpoint disabled")
+        if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
+            raise HTTPException(status_code=401, detail="unauthorized")
+        anchors = store.list_anchors(active_only=False, limit=500)
+        return {"anchors": [anchor.model_dump(mode="json") for anchor in anchors]}
+
+    @app.post("/admin/anchors/{anchor_id}/rollback")
+    async def admin_rollback_anchor(
+        anchor_id: str, request: Request
+    ) -> dict[str, Any]:
+        if not cfg.admin_token:
+            raise HTTPException(status_code=404, detail="admin endpoint disabled")
+        if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
+            raise HTTPException(status_code=401, detail="unauthorized")
+        anchor = store.get_anchor(anchor_id)
+        if anchor is None:
+            raise HTTPException(status_code=404, detail="anchor not found")
+        if anchor.status != "active" or not anchor.supersedes:
+            raise HTTPException(
+                status_code=409, detail="anchor is not an active replacement"
+            )
+        result = store.rollback_anchor(anchor_id)
+        if result is None:
+            raise HTTPException(status_code=409, detail="rollback failed")
+        restored, rolled_back = result
+        return {
+            "restored": restored.model_dump(mode="json"),
+            "rolled_back": rolled_back.model_dump(mode="json"),
+        }
+
     @app.get("/freshness/compare")
     async def compare_freshness_reports(left_id: str, right_id: str) -> dict[str, Any]:
         left = store.get_detector_report(left_id)
@@ -753,6 +786,7 @@ def create_app(
     landing_page = static_dir / "landing.html" if static_dir.is_dir() else None
     inspector_page = static_dir / "inspector.html" if static_dir.is_dir() else None
     compare_page = static_dir / "compare.html" if static_dir.is_dir() else None
+    admin_page = static_dir / "admin-anchors.html" if static_dir.is_dir() else None
 
     @app.get("/detector", include_in_schema=False)
     @app.get("/freshness", include_in_schema=False)
@@ -774,6 +808,12 @@ def create_app(
         if inspector_page is None or not inspector_page.is_file():
             raise HTTPException(status_code=404, detail="inspector page not found")
         return FileResponse(inspector_page)
+
+    @app.get("/admin", include_in_schema=False)
+    async def admin_page_route() -> FileResponse:
+        if admin_page is None or not admin_page.is_file():
+            raise HTTPException(status_code=404, detail="admin page not found")
+        return FileResponse(admin_page)
 
     @app.get("/compare", include_in_schema=False)
     async def compare_page_route() -> FileResponse:
@@ -803,6 +843,8 @@ def create_app(
 
 
 app = create_app()
+
+
 
 
 

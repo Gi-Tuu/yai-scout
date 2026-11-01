@@ -10,12 +10,15 @@ from __future__ import annotations
 import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
+from urllib.parse import urlsplit
 
-from ..domain.models import Anchor, AnchorObservation
+from ..domain.models import Anchor, AnchorObservation, Claim
+from ..retrieval.quality import classify_source
 from ..sources.anchor import replay_anchor_result
 from ..store import Store
 from .anchor_policy import needs_revalidation
 from .candidates import create_candidate_from_observations, extract_value_hint
+from .verify import Searcher, build_query
 
 AnchorResultFetcher = Callable[[Anchor, str], Awaitable[object | None]]
 
@@ -75,10 +78,21 @@ async def revalidate_anchor(
     return observation
 
 
+def _independent_group(url: str) -> str:
+    host = (urlsplit(url).hostname or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    parts = host.split(".")
+    if len(parts) >= 2:
+        return ".".join(parts[-2:])
+    return host
+
+
 async def revalidate_due(
     store: Store,
     *,
     fetcher: AnchorResultFetcher | None = None,
+    discovery: Searcher | None = None,
     now: datetime | None = None,
     limit: int = 100,
     auto_update: bool = False,
@@ -87,10 +101,44 @@ async def revalidate_due(
     for anchor in due_anchors(store, now=now, limit=limit):
         observation = await revalidate_anchor(store, anchor, fetcher=fetcher, now=now)
         observations.append(observation)
-        if observation.content_changed and observation.value:
-            create_candidate_from_observations(
-                store, anchor, [observation], auto_update=auto_update
-            )
+        if not observation.content_changed or not observation.value:
+            continue
+        candidates = [observation]
+        if discovery is not None:
+            claim = Claim(id=anchor.id, text=anchor.claim_text)
+            try:
+                results, _ = await discovery.search(
+                    build_query(claim), max_results=3
+                )
+            except Exception:  # noqa: BLE001 - discovery failure must not break revalidation
+                results = []
+            seen = {anchor.url}
+            for result in results:
+                if result.url in seen:
+                    continue
+                value = extract_value_hint(result.content, anchor.last_value)
+                if not value:
+                    continue
+                seen.add(result.url)
+                tier, _ = classify_source(result.url)
+                candidates.append(
+                    AnchorObservation(
+                        id=f"obs_{uuid.uuid4().hex[:10]}",
+                        anchor_id=anchor.id,
+                        status="changed",
+                        content_changed=True,
+                        observed_hash=result.content_hash,
+                        url=result.url,
+                        source_tier=tier,
+                        independent_group=_independent_group(result.url),
+                        value=value,
+                        published_at=result.published_date,
+                    )
+                )
+        create_candidate_from_observations(
+            store, anchor, candidates, auto_update=auto_update
+        )
     return observations
+
 
 

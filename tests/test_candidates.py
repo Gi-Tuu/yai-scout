@@ -162,3 +162,38 @@ def test_auto_update_flag_applies_immediately():
         assert store.list_anchors()[0].last_value in {"1000", "1,000"}
     store.close()
 
+
+def test_approved_candidate_can_be_rolled_back():
+    store = Store(":memory:")
+    anchor = _anchor(store)
+    app = _app(store)
+    with TestClient(app) as client:
+        created = client.post(
+            f"/admin/anchors/{anchor.id}/candidates",
+            json={"observations": _observations()},
+            headers=AUTH,
+        )
+        candidate = created.json()
+        client.post(
+            f"/admin/anchors/candidates/{candidate['id']}/approve", headers=AUTH
+        )
+        active = store.list_anchors()
+        replacement = active[0]
+
+        rolled = client.post(
+            f"/admin/anchors/{replacement.id}/rollback", headers=AUTH
+        )
+        assert rolled.status_code == 200
+        assert rolled.json()["restored"]["id"] == anchor.id
+        assert store.get_anchor(anchor.id).status == "active"  # type: ignore[union-attr]
+        assert store.get_anchor(replacement.id).status == "rolled_back"  # type: ignore[union-attr]
+        assert [item.id for item in store.list_anchors()] == [anchor.id]
+    store.close()
+
+
+def test_admin_page_is_served():
+    store = Store(":memory:")
+    app = _app(store)
+    with TestClient(app) as client:
+        assert client.get("/admin").status_code == 200
+    store.close()

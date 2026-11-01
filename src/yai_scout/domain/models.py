@@ -173,7 +173,7 @@ class Anchor(BaseModel):
     valid_from: str | None = None
     temporal_sensitivity: TemporalSensitivity | None = None
     supersedes: str | None = None
-    status: Literal["active", "superseded", "unreachable"] = "active"
+    status: Literal["active", "superseded", "unreachable", "rolled_back"] = "active"
 
 
 class AnchorObservation(BaseModel):
@@ -382,6 +382,7 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
 
 
 

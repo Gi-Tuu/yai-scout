@@ -660,6 +660,38 @@ class Store:
             rows = self._conn.execute(query, vals).fetchall()
         return [AnchorCandidate.model_validate_json(row["payload_json"]) for row in rows]
 
+    def update_anchor(self, anchor: Anchor) -> Anchor:
+        with self._lock:
+            self._conn.execute(
+                "UPDATE anchor SET payload_json = ? WHERE id = ?",
+                (anchor.model_dump_json(), anchor.id),
+            )
+            self._conn.commit()
+        return anchor
+
+    def rollback_anchor(self, anchor_id: str) -> tuple[Anchor, Anchor] | None:
+        new_anchor = self.get_anchor(anchor_id)
+        if new_anchor is None or not new_anchor.supersedes:
+            return None
+        old_anchor = self.get_anchor(new_anchor.supersedes)
+        if old_anchor is None:
+            return None
+        rolled_back = new_anchor.model_copy(update={"status": "rolled_back"})
+        restored = old_anchor.model_copy(
+            update={"status": "active", "superseded_by": None}
+        )
+        with self._lock:
+            self._conn.execute(
+                "UPDATE anchor SET payload_json = ? WHERE id = ?",
+                (rolled_back.model_dump_json(), rolled_back.id),
+            )
+            self._conn.execute(
+                "UPDATE anchor SET payload_json = ? WHERE id = ?",
+                (restored.model_dump_json(), restored.id),
+            )
+            self._conn.commit()
+        return restored, rolled_back
+
     def supersede_anchor(self, old_id: str, new_id: str) -> None:
         anchor = self.get_anchor(old_id)
         if anchor is None:
@@ -788,6 +820,7 @@ def _parse_detector_report(payload: str) -> DetectorReport:
         if status in {"uncertain", "unverifiable"}:
             verdict["status"] = "insufficient"
     return DetectorReport.model_validate(data)
+
 
 
 
