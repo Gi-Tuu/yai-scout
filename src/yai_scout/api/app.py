@@ -10,11 +10,12 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from ..benchmark.dataset import load_tasks
+from ..benchmark.adapters import HttpAdapter
+from ..benchmark.dataset import load_dataset
 from ..benchmark.registry import DEFAULT_AGENT_SPECS, build_adapters
 from ..benchmark.runner import BenchmarkRunner
 from ..benchmark.scoring import leaderboard as build_leaderboard
@@ -73,9 +74,20 @@ def create_app(
         model=cfg.llm_model,
     )
     detector = StaleAnswerDetector(
-        tavily, as_of=cfg.default_as_of, max_claims=6, concurrency=3, llm=llm
+        tavily,
+        as_of=cfg.default_as_of,
+        max_claims=6,
+        concurrency=3,
+        llm=llm,
     )
-    runner = BenchmarkRunner(store, build_adapters(tavily, llm), detector)
+    adapters = build_adapters(tavily, llm)
+    if cfg.http_agent_url:
+        adapters["external_http"] = HttpAdapter(
+            "external_http", "External HTTP Agent", cfg.http_agent_url
+        )
+    runner = BenchmarkRunner(store, adapters, detector)
+    benchmark_enabled = cfg.scout_mode in {"all", "benchmark"}
+    freshness_enabled = cfg.scout_mode in {"all", "freshness"}
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
@@ -88,6 +100,15 @@ def create_app(
 
     app = FastAPI(title=cfg.app_name, version=cfg.app_version, lifespan=lifespan)
 
+    @app.middleware("http")
+    async def mode_guard(request: Request, call_next: Any) -> Any:
+        path = request.url.path
+        if not benchmark_enabled and path.startswith(("/benchmark", "/api/benchmark")):
+            return JSONResponse({"detail": "benchmark mode disabled"}, status_code=404)
+        if not freshness_enabled and path.startswith(("/freshness", "/api/detector")):
+            return JSONResponse({"detail": "freshness mode disabled"}, status_code=404)
+        return await call_next(request)
+
     # ------------------------------------------------------------------ meta
     @app.get("/api/healthz")
     async def healthz() -> dict[str, Any]:
@@ -95,6 +116,7 @@ def create_app(
             "status": "ok",
             "app": cfg.app_name,
             "version": cfg.app_version,
+            "mode": cfg.scout_mode,
             "tavily": {"mode": tavily.mode, "authenticated": tavily.authenticated},
             "llm": {"available": llm.available, "model": cfg.llm_model},
         }
@@ -186,6 +208,7 @@ def create_app(
 
     # ------------------------------------------------------------------ detector
     @app.post("/api/detector")
+    @app.post("/freshness/verify")
     async def detect(payload: DetectRequest) -> dict[str, Any]:
         report = await detector.detect(
             payload.answer,
@@ -196,6 +219,7 @@ def create_app(
         return report.model_dump(mode="json")
 
     @app.get("/api/detector/{report_id}")
+    @app.get("/freshness/reports/{report_id}")
     async def get_detector_report(report_id: str) -> dict[str, Any]:
         report = store.get_detector_report(report_id)
         if report is None:
@@ -204,14 +228,32 @@ def create_app(
 
     # ------------------------------------------------------------------ benchmark
     @app.get("/api/benchmark/tasks")
+    @app.get("/benchmark/tasks")
     async def benchmark_tasks() -> dict[str, Any]:
-        return {"tasks": [task.model_dump(mode="json") for task in load_tasks()]}
+        version, tasks = load_dataset()
+        return {
+            "dataset_version": version,
+            "tasks": [task.model_dump(mode="json") for task in tasks],
+        }
 
     @app.get("/api/benchmark/agents")
+    @app.get("/benchmark/agents")
     async def benchmark_agents() -> dict[str, Any]:
-        return {"agents": [spec.model_dump(mode="json") for spec in DEFAULT_AGENT_SPECS]}
+        specs = [spec.model_dump(mode="json") for spec in DEFAULT_AGENT_SPECS]
+        if cfg.http_agent_url:
+            specs.append(
+                {
+                    "id": "external_http",
+                    "name": "External HTTP Agent",
+                    "kind": "http",
+                    "description": f"scout-adapter/1.0 → {cfg.http_agent_url}",
+                    "config": {"endpoint": cfg.http_agent_url},
+                }
+            )
+        return {"agents": specs}
 
     @app.post("/api/benchmark/run", status_code=202)
+    @app.post("/benchmark/runs", status_code=202)
     async def benchmark_run(payload: BenchmarkRequest) -> dict[str, Any]:
         try:
             session = runner.start(payload.agent_ids, payload.task_ids)
@@ -220,6 +262,7 @@ def create_app(
         return {"session": session.model_dump(mode="json")}
 
     @app.get("/api/benchmark/sessions/{session_id}")
+    @app.get("/benchmark/runs/{session_id}")
     async def benchmark_session(session_id: str) -> dict[str, Any]:
         session = store.get_bench_session(session_id)
         if session is None:
@@ -232,6 +275,7 @@ def create_app(
         }
 
     @app.get("/api/benchmark/leaderboard")
+    @app.get("/benchmark/leaderboard")
     async def benchmark_leaderboard(session_id: str) -> dict[str, Any]:
         session = store.get_bench_session(session_id)
         if session is None:
@@ -246,14 +290,17 @@ def create_app(
     # ------------------------------------------------------------------ pages
     detector_page = static_dir / "detector.html" if static_dir.is_dir() else None
     bench_page = static_dir / "bench.html" if static_dir.is_dir() else None
+    landing_page = static_dir / "landing.html" if static_dir.is_dir() else None
 
     @app.get("/detector", include_in_schema=False)
+    @app.get("/freshness", include_in_schema=False)
     async def detector_page_route() -> FileResponse:
         if detector_page is None or not detector_page.is_file():
             raise HTTPException(status_code=404, detail="detector page not found")
         return FileResponse(detector_page)
 
     @app.get("/bench", include_in_schema=False)
+    @app.get("/benchmark", include_in_schema=False)
     async def bench_page_route() -> FileResponse:
         if bench_page is None or not bench_page.is_file():
             raise HTTPException(status_code=404, detail="bench page not found")
@@ -265,6 +312,14 @@ def create_app(
 
     @app.get("/", include_in_schema=False)
     async def index_page() -> FileResponse:
+        if landing_page is not None and landing_page.is_file():
+            return FileResponse(landing_page)
+        if not index_file.is_file():
+            raise HTTPException(status_code=404, detail="web UI not built")
+        return FileResponse(index_file)
+
+    @app.get("/research", include_in_schema=False)
+    async def research_page() -> FileResponse:
         if not index_file.is_file():
             raise HTTPException(status_code=404, detail="web UI not built")
         return FileResponse(index_file)

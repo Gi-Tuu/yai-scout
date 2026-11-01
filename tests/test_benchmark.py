@@ -84,7 +84,9 @@ async def test_runner_completes_with_mock_adapters():
     runner = BenchmarkRunner(
         store, adapters, detector=None, concurrency=2, detect_freshness=False
     )
-    session = runner.start(["mock_good", "mock_stale"], ["tavily_free_credits", "bifrost_port"])
+    session = runner.start(
+        ["mock_good", "mock_stale"], ["b_tavily_free_credits", "b_bifrost_license"]
+    )
     assert isinstance(session, BenchSession)
 
     current = session

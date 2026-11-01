@@ -37,18 +37,15 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 
 **输入问题 → 规则计划 → Tavily 多查询检索 → 归一化/域名分级 → SSE 实时进度 → 来源清单 + 报告桩**
 
-已实现：
-- FastAPI + SSE 事件流（断线可按 `Last-Event-ID` 重放），单页研究控制台；
-- SQLite 持久化（任务/计划/来源/事件/成本），来源按 canonical URL 去重；
-- Tavily REST 适配器：有 key 走 Bearer，无 key 自动 keyless（有限速）；
-- credits 记账、单 run 预算（默认 32 credits）与墙钟降级；
-- **Stale-answer Detector**（Tavily-01）：LLM claim 抽取（规则兜底）→ Tavily 实时核验 → Freshness Score + 逐条证据 + 修正建议；
-- **Benchmark**（Bifrost-02）：13 题数据集 + Agent Adapter 协议 + Runner + 排行榜（合成/检索基线/LLM 单轮 RAG）；
-- LLM 已接入：`deepseek/deepseek-v4.1-flash-1017`（OpenAI 兼容端点），无 key 时自动降级规则版；
-- 46 个测试 + ruff + mypy(strict) 全绿。
+已实现（P0，2026-11-01）：
+- **两个独立入口**：`/benchmark`（B2）、`/freshness`（T1），统一 landing 在 `/`；旧入口 `/bench`、`/detector` 保留别名；`SCOUT_MODE=benchmark|freshness` 可单开。
+- **Freshness（T1）**：LLM claim 抽取 + 规则兜底、时间敏感性四档分类、Tavily 实时核验、关系（supports/contradicts/mentions）、状态机（FRESH/STALE/CONFLICTED/INSUFFICIENT/UNKNOWN）、可空分数 + breakdown + confidence、修正建议。
+- **Benchmark（B2）**：12 题四类数据集（stable / time_sensitive / changed / conflicting）、`scout-adapter/1.0` HTTP 协议（`/manifest` + `/run`）、外部示例 Agent、Runner、多维排行榜（准确率/Freshness/Stale/证据质量/Claim 覆盖/成本/时延）、`config_hash` 可复现。
+- Tavily REST（key 模式）+ DeepSeek LLM（`deepseek-v4.1-flash-1017`），无 key 时自动降级。
+- **59 个测试 + ruff + mypy(strict) 全绿**。
 
-页面：`/` 研究控制台 · `/detector` 时效检测器 · `/bench` 排行榜。
-未实现（下一轮）：LLM 版 claim 抽取与关系判定、HTTP 外部 Agent 接入、更多题目与去污染。详见 [docs/benchmark.md](docs/benchmark.md)。
+页面：`/benchmark` 榜单 · `/freshness` 检测器 · `/research` 旧研究控制台。
+未实现（P1）：Evidence Inspector、Pareto 可视化、24 题、Wayback 历史快照与漂移对比、更多 Adapter。详见 [differentiation-spec.md](docs/differentiation-spec.md)。
 
 ### 本地运行
 

@@ -1,5 +1,9 @@
 # Benchmark & Stale-answer Detector（实现说明）
 
+> **v2 状态（2026-11-01，P0 已落地）**：数据模型加入 Temporal Sensitivity / target_time / 快照；Freshness 改为新状态机与可空分数；Benchmark 数据集改为四类 12 题；新增 `scout-adapter/1.0` HTTP 协议与外部 Agent 示例；两个入口拆为 `/benchmark` 与 `/freshness`。
+> 详细规格见 [`differentiation-spec.md`](differentiation-spec.md)、[`spec-freshness-scoring.md`](spec-freshness-scoring.md)、[`spec-benchmark-adapter.md`](spec-benchmark-adapter.md)。
+> 下文保留为 demo v0 的说明，数字与状态以 v2 规格为准。
+
 > 对应赛题：Bifrost-02（Agent Benchmarking Platform）+ Tavily-01（Stale-answer Detector）
 > 当前状态：可运行的最小闭环（demo v0），规则版检测器 + 合成/检索基线；LLM 抽取与更多适配器在路线图里。
 

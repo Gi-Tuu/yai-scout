@@ -6,12 +6,18 @@ import asyncio
 import re
 from typing import Literal, Protocol
 
-from ..domain.models import Claim, ClaimType, EvidenceRef, FreshnessStatus, FreshnessVerdict
+from ..domain.models import (
+    Claim,
+    ClaimType,
+    EvidenceRef,
+    FreshnessStatus,
+    FreshnessVerdict,
+)
 from ..llm import LLMClient
 from ..retrieval.quality import classify_source
 from ..retrieval.tavily import SearchResult, TavilyError
 from .claims import extract_numbers
-from .freshness import as_of_datetime, score_claim
+from .freshness import as_of_datetime, parse_published, score_claim
 
 VERIFY_QUERY_LIMIT = 380
 VERIFY_TIMEOUT_S = 20.0
@@ -23,12 +29,12 @@ UNIT_TOKENS = (
 
 
 def build_query(claim: Claim) -> str:
-    """把 claim 变成检索查询：去掉"旧资料显示"这类前缀与答案值，保留主题词。"""
+    """生成检索查询：去掉"旧资料显示"这类前缀与答案值，保留主题词。"""
     text = PREAMBLE_RE.sub("", claim.text).strip()
     if " 为 " in text:
         text = text.split(" 为 ", 1)[0]
     text = text.strip("，,。 .")
-    return (text or claim.text)[:VERIFY_QUERY_LIMIT] + " latest 2026"
+    return (text or claim.text)[:VERIFY_QUERY_LIMIT] + " latest official 2026"
 
 
 class Searcher(Protocol):
@@ -61,6 +67,7 @@ class ClaimVerifier:
         timeout_s: float = VERIFY_TIMEOUT_S,
         llm: LLMClient | None = None,
         use_llm_relations: bool = True,
+        mode: Literal["live", "replay"] = "live",
     ) -> None:
         self.searcher = searcher
         self.as_of = as_of_datetime(as_of)
@@ -68,6 +75,7 @@ class ClaimVerifier:
         self.timeout_s = timeout_s
         self.llm = llm
         self.use_llm_relations = use_llm_relations
+        self.mode = mode
 
     async def verify(self, claim: Claim) -> tuple[FreshnessVerdict, float, float]:
         query = build_query(claim)
@@ -79,11 +87,19 @@ class ClaimVerifier:
         except (TimeoutError, TavilyError) as exc:
             verdict = FreshnessVerdict(
                 claim_id=claim.id,
-                status=FreshnessStatus.UNVERIFIABLE,
-                score=0,
+                status=FreshnessStatus.INSUFFICIENT,
+                score=None,
                 rationale=f"检索失败：{type(exc).__name__}",
             )
             return verdict, 0.0, 0.0
+
+        if self.mode == "replay":
+            target = as_of_datetime(claim.target_time or self.as_of.isoformat())
+            results = [
+                item
+                for item in results
+                if (parse_published(item.published_date) or target) <= target
+            ]
 
         evidence = [self._to_evidence(claim, item) for item in results[: self.max_results]]
         llm_cost = 0.0
@@ -91,9 +107,20 @@ class ClaimVerifier:
         if self._should_use_llm(claim, evidence):
             relation, reason, llm_cost = await self._llm_relation(claim, evidence)
             if relation is not None:
-                evidence[0].relation = relation
+                evidence[0] = evidence[0].model_copy(
+                    update={
+                        "relation": relation,
+                        "relation_reason": reason,
+                        "relation_confidence": 0.8,
+                    }
+                )
                 llm_reason = reason
-        verdict = score_claim(claim, evidence, as_of=self.as_of)
+        verdict = score_claim(
+            claim,
+            evidence,
+            as_of=self.as_of,
+            allow_future=self.mode == "live",
+        )
         if llm_reason:
             verdict.rationale = f"{verdict.rationale}（LLM 判定：{llm_reason}）"
         return verdict, credits, llm_cost
@@ -131,14 +158,21 @@ class ClaimVerifier:
     def _to_evidence(self, claim: Claim, result: SearchResult) -> EvidenceRef:
         tier, _ = classify_source(result.url)
         relation = self._relation(claim, result)
+        reason = "规则：值匹配" if relation == "supports" else (
+            "规则：值不一致" if relation == "contradicts" else "规则：仅提及"
+        )
         return EvidenceRef(
             url=result.url,
             title=result.title,
             domain=self._domain(result.url),
             published_at=result.published_date,
+            updated_at=None,
+            retrieved_at=result.published_date,
             tier=tier,
             snippet=result.content[:400],
             relation=relation,
+            relation_reason=reason,
+            relation_confidence=0.7 if relation != "mentions" else 0.4,
         )
 
     @staticmethod

@@ -38,7 +38,7 @@
 <header>
   <h1>YAI <span>Scout</span> · Benchmark</h1>
   <div class="tag">Bifrost-02 · 研究型 Agent 评测：答案对不对 + 信息新不新 + 证据硬不硬</div>
-  <div style="margin-left:auto"><a href="/">研究控制台</a> · <a href="/detector">Detector</a></div>
+  <div style="margin-left:auto"><a href="/">首页</a> · <a href="/freshness">Freshness</a></div>
 </header>
 <main>
   <div class="panel">
@@ -121,16 +121,16 @@ async function poll() {
 function renderBoard(rows) {
   if (!rows.length) { $("board").innerHTML = ""; return; }
   $("board").innerHTML =
-    `<tr><th>#</th><th>Agent</th><th>综合分</th><th>数字准确率</th><th>引用率</th><th>陈旧率</th><th>freshness</th><th>时延</th></tr>` +
+    `<tr><th>#</th><th>Agent</th><th>加权视图</th><th>准确率</th><th>Freshness</th><th>Stale率</th><th>证据质量</th><th>Claim覆盖</th><th>成本</th><th>时延</th></tr>` +
     rows.map((r, i) => `<tr>
       <td class="num">${i + 1}</td>
       <td>${esc(r.agent_id)}</td>
       <td><div class="row"><span class="num">${r.score}</span><span class="bar" style="width:120px"><i style="width:${Math.round(r.score * 100)}%"></i></span></div></td>
       <td class="num">${r.numeric_accuracy}</td>
-      <td class="num">${r.citation_rate}</td>
+      <td class="num">${r.freshness_score ?? "-"}</td>
       <td class="num" style="color:${r.stale_rate > 0.3 ? "#f87171" : "inherit"}">${r.stale_rate}</td>
-      <td class="num">${r.freshness_score}</td>
-      <td class="num">${r.avg_latency_s}s</td>
+      <td class="num">${r.evidence_quality ?? "-"}</td>
+      <td class="num">${r.claim_coverage ?? "-"}</td><td class="num">${r.avg_cost_usd ?? "-"}</td><td class="num">${r.avg_latency_s}s</td>
     </tr>`).join("");
 }
 
@@ -153,3 +153,4 @@ function renderDetail(results) {
 </script>
 </body>
 </html>
+

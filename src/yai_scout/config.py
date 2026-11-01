@@ -23,6 +23,10 @@ class Settings(BaseSettings):
 
     app_name: str = "YAI Scout"
     app_version: str = "0.1.0"
+    # all | benchmark | freshness —— 用于独立部署/独立入口
+    scout_mode: str = "all"
+    # 可选：外部 Agent（scout-adapter/1.0）的 base URL
+    http_agent_url: str = ""
 
     # --- Tavily ---
     tavily_api_key: str = ""

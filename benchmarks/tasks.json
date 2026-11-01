@@ -1,111 +1,169 @@
 {
-  "version": 1,
+  "version": "freshness-bench/0.1",
   "as_of": "2026-11-01",
-  "description": "AI 开发者生态事实基准（demo v0）：13 道题，全部有官方/一手来源，适合做 freshness 敏感评测。",
+  "description": "四类新鲜度评测集（P0 12 题）：stable / time_sensitive / changed / conflicting。金标均可核验，题目限定 AI 开发者生态与通用稳定事实。",
   "tasks": [
     {
-      "id": "tavily_free_credits",
+      "id": "a_stable_math_mile",
+      "question": "1 英里等于多少公里？",
+      "category": "stable",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "1 英里约等于 1.60934 公里", "claim_type": "statistic", "temporal_sensitivity": "stable", "expected_relation": "supports", "gold_values": ["1.60934"]}
+      ],
+      "reference_evidence": ["https://en.wikipedia.org/wiki/Mile"],
+      "gold_values": ["1.60934"],
+      "gold_sources": ["https://en.wikipedia.org/wiki/Mile"],
+      "notes": "稳定换算；测系统不因来源旧而误判"
+    },
+    {
+      "id": "a_stable_python_release",
+      "question": "Python 3.12 于哪一年发布？",
+      "category": "stable",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "Python 3.12 于 2023 年发布", "claim_type": "date", "temporal_sensitivity": "stable", "expected_relation": "supports", "gold_values": ["2023"]}
+      ],
+      "reference_evidence": ["https://docs.python.org/3.12/whatsnew/3.12.html"],
+      "gold_values": ["2023"],
+      "gold_sources": ["https://docs.python.org/3.12/whatsnew/3.12.html"],
+      "notes": "历史事实；2023 来源仍有效"
+    },
+    {
+      "id": "a_stable_http_404",
+      "question": "HTTP 404 状态码的含义是什么？",
+      "category": "stable",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "HTTP 404 表示 Not Found（未找到）", "claim_type": "other", "temporal_sensitivity": "stable", "expected_relation": "supports", "gold_values": ["Not Found"]}
+      ],
+      "reference_evidence": ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"],
+      "gold_values": ["Not Found"],
+      "gold_sources": ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"],
+      "notes": "标准定义；稳定事实"
+    },
+    {
+      "id": "b_tavily_free_credits",
       "question": "Tavily 免费计划每月包含多少 API credits？",
-      "category": "pricing",
+      "category": "time_sensitive",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "Tavily 免费计划每月 1,000 credits", "claim_type": "pricing", "temporal_sensitivity": "sensitive", "expected_relation": "supports", "gold_values": ["1000"]}
+      ],
+      "reference_evidence": ["https://docs.tavily.com/documentation/api-credits"],
       "gold_values": ["1000", "1,000"],
       "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
-      "notes": "官方：1,000 free API Credits every month"
+      "notes": "价格类；Tavily 官方 docs"
     },
     {
-      "id": "tavily_advanced_cost",
+      "id": "b_tavily_advanced_cost",
       "question": "Tavily advanced search 每次请求消耗多少 credits？",
-      "category": "pricing",
+      "category": "time_sensitive",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "advanced search 每次 2 credits", "claim_type": "pricing", "temporal_sensitivity": "sensitive", "expected_relation": "supports", "gold_values": ["2"]}
+      ],
+      "reference_evidence": ["https://docs.tavily.com/documentation/api-credits"],
       "gold_values": ["2"],
       "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
-      "notes": "advanced search = 2 credits"
+      "notes": "价格类"
     },
     {
-      "id": "tavily_extract_cost",
-      "question": "Tavily basic extract 每 5 个成功 URL 消耗多少 credits？",
-      "category": "pricing",
-      "gold_values": ["1"],
-      "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
-      "notes": "basic extract = 1 credit / 5 URLs"
-    },
-    {
-      "id": "tavily_research_min",
-      "question": "Tavily Research model=mini 单次请求最少消耗多少 credits？",
-      "category": "pricing",
-      "gold_values": ["4"],
-      "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
-      "notes": "mini 最少 4 credits"
-    },
-    {
-      "id": "tavily_student_plan",
-      "question": "Tavily 学生计划每月提供多少 credits？",
-      "category": "pricing",
-      "gold_values": ["4000", "4,000"],
-      "gold_sources": ["https://help.tavily.com/articles/6606514713-student-account"],
-      "notes": "Project 档 4,000 credits/月，免费 4 个月"
-    },
-    {
-      "id": "tavily_paygo_price",
-      "question": "Tavily pay-as-you-go 每个 credit 的价格是多少美元？",
-      "category": "pricing",
-      "gold_values": ["0.008"],
-      "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
-      "notes": "$0.008 / credit"
-    },
-    {
-      "id": "deepseek_flash_input_price",
+      "id": "b_deepseek_flash_price",
       "question": "DeepSeek V4.1-Flash 每百万输入 token 的高峰价格是多少美元？",
-      "category": "pricing",
+      "category": "time_sensitive",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "V4.1-Flash 高峰输入 $0.30 / 百万 token", "claim_type": "pricing", "temporal_sensitivity": "sensitive", "expected_relation": "supports", "gold_values": ["0.30"]}
+      ],
+      "reference_evidence": ["https://api-docs.deepseek.com/quick_start/pricing"],
       "gold_values": ["0.30"],
       "gold_sources": ["https://api-docs.deepseek.com/quick_start/pricing"],
-      "notes": "高峰 $0.30 / 百万输入 token；低谷 $0.15"
+      "notes": "价格类；注意高峰/低谷"
     },
     {
-      "id": "claude_haiku_output_price",
-      "question": "Claude Haiku 5.5 每百万输出 token 的价格是多少美元？",
-      "category": "pricing",
-      "gold_values": ["0.50"],
-      "gold_sources": ["https://platform.claude.com/docs/en/about-claude/pricing"],
-      "notes": "$0.50 / 百万输出 token"
-    },
-    {
-      "id": "bifrost_license",
+      "id": "b_bifrost_license",
       "question": "Bifrost 开源 AI Gateway 使用什么许可证？",
-      "category": "law",
+      "category": "time_sensitive",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "Bifrost 使用 Apache-2.0 许可证", "claim_type": "law", "temporal_sensitivity": "slow", "expected_relation": "supports", "gold_values": ["Apache-2.0"]}
+      ],
+      "reference_evidence": ["https://github.com/maximhq/bifrost"],
       "gold_values": ["Apache-2.0", "Apache 2.0"],
       "gold_sources": ["https://github.com/maximhq/bifrost"],
-      "notes": "Apache-2.0"
+      "notes": "许可证类；官方仓库为准"
     },
     {
-      "id": "bifrost_port",
-      "question": "Bifrost 自托管默认监听哪个端口？",
-      "category": "version",
-      "gold_values": ["8080"],
-      "gold_sources": ["https://docs.getbifrost.ai/overview"],
-      "notes": "默认 8080"
-    },
-    {
-      "id": "yai_version",
+      "id": "c_yai_version",
       "question": "YAI Agent Core 当前发布版本号是多少？",
-      "category": "version",
+      "category": "changed",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "YAI Agent Core 当前版本 0.25.0", "claim_type": "version", "temporal_sensitivity": "sensitive", "expected_relation": "supports", "gold_values": ["0.25.0"]}
+      ],
+      "reference_evidence": ["https://github.com/Gi-Tuu/yai-agent-core/releases"],
       "gold_values": ["0.25.0"],
-      "gold_sources": ["https://github.com/Gi-Tuu/yai-agent-core"],
-      "notes": "v0.25.0"
+      "gold_sources": ["https://github.com/Gi-Tuu/yai-agent-core/releases"],
+      "notes": "已知变化：0.24.0 → 0.25.0（2026-10-31）"
     },
     {
-      "id": "geekroom_deadline",
+      "id": "c_yai_license",
+      "question": "YAI Agent Core 当前使用什么开源许可证？",
+      "category": "changed",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "YAI Agent Core 使用 MIT 许可证", "claim_type": "law", "temporal_sensitivity": "slow", "expected_relation": "supports", "gold_values": ["MIT"]}
+      ],
+      "reference_evidence": ["https://github.com/Gi-Tuu/yai-agent-core"],
+      "gold_values": ["MIT"],
+      "gold_sources": ["https://github.com/Gi-Tuu/yai-agent-core"],
+      "notes": "已知变化：曾被误传为 AGPL-3.0，实际 MIT"
+    },
+    {
+      "id": "c_tavily_student_plan",
+      "question": "Tavily 学生计划每月提供多少 credits？",
+      "category": "changed",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "Tavily 学生计划 4,000 credits/月，共 4 个月", "claim_type": "pricing", "temporal_sensitivity": "sensitive", "expected_relation": "supports", "gold_values": ["4000"]}
+      ],
+      "reference_evidence": ["https://help.tavily.com/articles/6606514713-student-account"],
+      "gold_values": ["4000", "4,000"],
+      "gold_sources": ["https://help.tavily.com/articles/6606514713-student-account"],
+      "notes": "学生计划条目；官方帮助中心"
+    },
+    {
+      "id": "d_geekroom_deadline",
       "question": "Geek Room Global AI Hackathon 的原型提交截止日期（IST）是哪一天？",
-      "category": "date",
+      "category": "conflicting",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "截止日期为 2026-11-15 23:59 IST", "claim_type": "date", "temporal_sensitivity": "sensitive", "expected_relation": "supports", "gold_values": ["2026-11-15"]}
+      ],
+      "reference_evidence": [
+        "https://hackculture.io/hackathons/ai-global-hackathon",
+        "https://www.tavily.com/community"
+      ],
       "gold_values": ["2026-11-15", "11-15"],
       "gold_sources": ["https://hackculture.io/hackathons/ai-global-hackathon"],
-      "notes": "2026-11-15 23:59 IST"
+      "notes": "冲突来源：HackCulture 11/15 vs Tavily 社区页 Nov 1–22"
     },
     {
-      "id": "omnidimension_free",
-      "question": "Omnidimension 的免费额度是多少分钟？",
-      "category": "pricing",
-      "gold_values": ["20"],
-      "gold_sources": ["https://omnidim.io/pricing"],
-      "notes": "免费 20 分钟"
+      "id": "d_bifrost_license_conflict",
+      "question": "Bifrost 的许可证是 Apache-2.0 还是 AGPL-3.0？",
+      "category": "conflicting",
+      "target_time": "2026-11-01",
+      "expected_claims": [
+        {"text": "Bifrost 使用 Apache-2.0 许可证", "claim_type": "law", "temporal_sensitivity": "slow", "expected_relation": "supports", "gold_values": ["Apache-2.0"]}
+      ],
+      "reference_evidence": [
+        "https://github.com/maximhq/bifrost",
+        "https://docs.getbifrost.ai/overview"
+      ],
+      "gold_values": ["Apache-2.0", "Apache 2.0"],
+      "gold_sources": ["https://github.com/maximhq/bifrost"],
+      "notes": "冲突来源：官方仓库 Apache-2.0 vs 部分二手文章误写 AGPL"
     }
   ]
 }

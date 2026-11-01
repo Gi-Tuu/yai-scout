@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from yai_scout.detector.freshness import (
     as_of_datetime,
@@ -11,27 +11,51 @@ from yai_scout.domain.models import (
     ClaimType,
     EvidenceRef,
     FreshnessStatus,
+    TemporalSensitivity,
 )
 
+TARGET = "2026-11-01"
 
-def claim(value: str = "500") -> Claim:
+
+def claim(
+    text: str = "Tavily 免费计划每月提供 500 credits。",
+    claim_type: ClaimType = ClaimType.PRICING,
+    sensitivity: TemporalSensitivity = TemporalSensitivity.SENSITIVE,
+    window: int = 180,
+    numbers: list[str] | None = None,
+) -> Claim:
     return Claim(
         id="c1",
-        text=f"Tavily 免费计划每月提供 {value} credits。",
-        type=ClaimType.PRICING,
-        numbers=[value],
+        text=text,
+        type=claim_type,
+        numbers=numbers if numbers is not None else ["500"],
+        target_time=TARGET,
+        temporal_sensitivity=sensitivity,
+        validity_window_days=window,
     )
 
 
-def evidence(relation: str, days_ago: int, tier: int = 2) -> EvidenceRef:
-    published = datetime.now(UTC).timestamp() - days_ago * 86400
+def evidence(
+    relation: str,
+    days_ago: int,
+    tier: int = 1,
+    *,
+    url: str = "https://example.com/x",
+) -> EvidenceRef:
+    published = datetime(2026, 11, 1, tzinfo=UTC) - timedelta(days=days_ago)
     return EvidenceRef(
-        url="https://example.com/x",
+        url=url,
         title="source",
         domain="example.com",
-        published_at=datetime.fromtimestamp(published, UTC).isoformat(),
+        published_at=published.isoformat(),
         tier=tier,
         relation=relation,  # type: ignore[arg-type]
+    )
+
+
+def score(items: list[EvidenceRef], c: Claim | None = None, *, allow_future: bool = True):
+    return score_claim(
+        c or claim(), items, as_of=as_of_datetime(TARGET), allow_future=allow_future
     )
 
 
@@ -40,48 +64,101 @@ def test_parse_published_handles_rfc2822():
     assert parsed is not None and parsed.year == 2025
 
 
-def test_stale_when_recent_contradiction():
-    verdict = score_claim(
-        claim(), [evidence("contradicts", 3)], as_of=datetime.now(UTC)
+def test_t1_stable_fact_with_old_source_is_fresh():
+    c = claim(
+        "Python 3.12 于 2023 年发布。",
+        ClaimType.DATE,
+        TemporalSensitivity.STABLE,
+        3650,
+        ["2023"],
     )
-    assert verdict.status is FreshnessStatus.STALE
-    assert verdict.score < 45
-
-
-def test_fresh_when_recent_support():
-    verdict = score_claim(
-        claim(), [evidence("supports", 2, tier=1)], as_of=datetime.now(UTC)
-    )
+    verdict = score([evidence("supports", 1000, tier=1)], c)
     assert verdict.status is FreshnessStatus.FRESH
-    assert verdict.score >= 65
+    assert verdict.score is not None and verdict.score >= 65
 
 
-def test_pricing_claim_with_only_weak_sources_is_uncertain():
-    verdict = score_claim(
-        claim(), [evidence("supports", 2, tier=4)], as_of=datetime.now(UTC)
-    )
-    assert verdict.status is FreshnessStatus.UNCERTAIN
-    assert verdict.score <= 60
+def test_t2_weak_source_only_is_insufficient():
+    verdict = score([evidence("supports", 2, tier=4)])
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
 
 
-def test_stale_when_old_but_authoritative_contradiction():
-    verdict = score_claim(
-        claim(), [evidence("contradicts", 400, tier=1)], as_of=datetime.now(UTC)
-    )
+def test_t3_mentions_only_is_insufficient():
+    verdict = score([evidence("mentions", 2, tier=1)])
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
+    assert verdict.score is None
+
+
+def test_t4_authoritative_contradiction_is_stale():
+    verdict = score([evidence("contradicts", 3, tier=1)])
     assert verdict.status is FreshnessStatus.STALE
-    assert verdict.score < 55
+    assert verdict.score is not None and verdict.score < 55
 
 
-def test_unverifiable_without_evidence():
-    verdict = score_claim(claim(), [], as_of=datetime.now(UTC))
-    assert verdict.status is FreshnessStatus.UNVERIFIABLE
+def test_t5_authoritative_conflict_is_conflicted():
+    verdict = score(
+        [evidence("supports", 3, tier=1), evidence("contradicts", 4, tier=1)]
+    )
+    assert verdict.status is FreshnessStatus.CONFLICTED
 
 
-def test_overall_score_average():
-    v1 = score_claim(claim(), [evidence("supports", 1)], as_of=datetime.now(UTC))
-    v2 = score_claim(claim("900"), [evidence("contradicts", 1)], as_of=datetime.now(UTC))
-    assert overall_score([v1, v2]) == round((v1.score + v2.score) / 2)
+def test_t6_no_evidence_is_insufficient_with_null_score():
+    verdict = score([])
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
+    assert verdict.score is None
+    assert verdict.confidence <= 0.3
 
 
-def test_as_of_datetime_defaults():
-    assert as_of_datetime("2026-11-01").year == 2026
+def test_slow_law_with_weak_support_is_insufficient():
+    c = claim(
+        "Bifrost 使用 AGPL-3.0 许可证。",
+        ClaimType.LAW,
+        TemporalSensitivity.SLOW,
+        730,
+        [],
+    )
+    verdict = score([evidence("supports", 2, tier=4)], c)
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
+
+
+def test_t7_support_is_fresh_and_explainable():
+    verdict = score([evidence("supports", 1, tier=1)])
+    assert verdict.status is FreshnessStatus.FRESH
+    assert set(verdict.breakdown) == {"relation", "recency", "authority", "coverage"}
+    assert 0 <= verdict.confidence <= 1
+
+
+def test_t8_version_mismatch_is_stale():
+    c = claim(
+        "YAI Agent Core 当前版本是 0.25.0。",
+        ClaimType.VERSION,
+        TemporalSensitivity.SENSITIVE,
+        180,
+        ["0.25.0"],
+    )
+    verdict = score([evidence("contradicts", 2, tier=1)], c)
+    assert verdict.status is FreshnessStatus.STALE
+
+
+def test_t9_replay_excludes_future_evidence():
+    future = evidence("supports", -10, tier=1)  # published after target
+    verdict = score([future], allow_future=False)
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
+
+
+def test_t10_stable_fact_old_support_not_penalized():
+    c = claim(
+        "光速约为 299792 km/s。",
+        ClaimType.STATISTIC,
+        TemporalSensitivity.STABLE,
+        3650,
+        ["299792"],
+    )
+    verdict = score([evidence("supports", 2000, tier=2)], c)
+    assert verdict.status is FreshnessStatus.FRESH
+
+
+def test_overall_score_ignores_nulls():
+    c = claim()
+    fresh = score([evidence("supports", 1, tier=1)], c)
+    unknown = score([], c)
+    assert overall_score([fresh, unknown]) == fresh.score

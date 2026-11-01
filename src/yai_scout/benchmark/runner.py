@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import time
 import uuid
 
@@ -13,12 +15,13 @@ from ..domain.models import (
     BenchmarkTask,
     BenchSession,
     TaskResult,
+    TemporalSensitivity,
     utcnow_iso,
 )
 from ..store import Store
 from .adapters import AgentAdapter
-from .dataset import load_tasks
-from .scoring import composite_score, numeric_accuracy
+from .dataset import load_dataset
+from .scoring import claim_coverage, evidence_metrics, expected_accuracy, weighted_view
 
 DEFAULT_AGENT_SPECS: list[AgentSpec] = [
     AgentSpec(
@@ -70,17 +73,37 @@ class BenchmarkRunner:
         if agent_ids and not chosen_agents:
             raise ValueError(f"unknown agent ids: {agent_ids}")
         if not chosen_agents:
-            chosen_agents = [spec.id for spec in DEFAULT_AGENT_SPECS if spec.id in self.adapters]
-        all_tasks = {task.id: task for task in load_tasks()}
+            chosen_agents = [
+                spec.id
+                for spec in DEFAULT_AGENT_SPECS
+                if spec.id in self.adapters and spec.kind != "http"
+            ]
+        dataset_version, all_task_list = load_dataset()
+        all_tasks = {task.id: task for task in all_task_list}
         chosen_tasks = task_ids or list(all_tasks)
         missing = [task_id for task_id in chosen_tasks if task_id not in all_tasks]
         if missing:
             raise ValueError(f"unknown task ids: {missing}")
+        config_hash = hashlib.sha256(
+            json.dumps(
+                {
+                    "agents": chosen_agents,
+                    "tasks": chosen_tasks,
+                    "dataset": dataset_version,
+                    "target_time": [
+                        all_tasks[t].as_of for t in chosen_tasks
+                    ],
+                },
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()[:16]
         session = BenchSession(
             id=f"bench_{uuid.uuid4().hex[:10]}",
             status="running",
             agent_ids=chosen_agents,
             task_ids=chosen_tasks,
+            dataset_version=dataset_version,
+            config_hash=config_hash,
         )
         self.store.create_bench_session(session)
         job = asyncio.create_task(
@@ -107,21 +130,45 @@ class BenchmarkRunner:
                     except Exception as exc:  # noqa: BLE001 - 单个 Agent 失败不应中断整场评测
                         answer = AgentAnswer(text="", error=f"{type(exc).__name__}: {exc}")
 
-                    freshness: int | None = None
+                    freshness: float | None = None
                     stale_rate: float | None = None
+                    metrics: dict[str, float | None] = {}
+                    report = None
                     if self.detector is not None and self.detect_freshness and answer.text:
                         try:
                             report = await self.detector.detect(
-                                answer.text, max_claims=self.max_claims
+                                answer.text, as_of=task.as_of, max_claims=self.max_claims
                             )
                             freshness = report.overall_score
-                            stale_rate = (
-                                report.stale_claims / len(report.claims) if report.claims else 0.0
-                            )
+                            temporal = [
+                                c
+                                for c in report.claims
+                                if c.temporal_sensitivity
+                                in {TemporalSensitivity.SENSITIVE, TemporalSensitivity.VOLATILE}
+                            ]
+                            if temporal:
+                                stale_rate = round(
+                                    sum(
+                                        1
+                                        for v in report.verdicts
+                                        if v.claim_id
+                                        in {c.id for c in temporal}
+                                        and v.status.value == "stale"
+                                    )
+                                    / len(temporal),
+                                    3,
+                                )
+                            metrics = evidence_metrics(report)
                         except Exception:  # noqa: BLE001 - freshness 失败不影响主分
                             freshness = None
 
-                    numeric = numeric_accuracy(task.gold_values, answer.text)
+                    numeric = expected_accuracy(task, answer.text)
+                    coverage = claim_coverage(task, answer.text)
+                    stable_integrity = (
+                        metrics.get("stable_fact_integrity")
+                        if task.category.value == "stable"
+                        else None
+                    )
                     result = TaskResult(
                         task_id=task.id,
                         agent_id=agent_id,
@@ -131,12 +178,18 @@ class BenchmarkRunner:
                         citation_count=len(answer.citations),
                         freshness_score=freshness,
                         stale_claim_rate=stale_rate,
-                        score=composite_score(
-                            numeric=numeric,
-                            has_citations=bool(answer.citations),
+                        claim_coverage=coverage,
+                        supported_claim_rate=metrics.get("supported_claim_rate"),
+                        stable_fact_integrity=stable_integrity,
+                        evidence_quality=metrics.get("evidence_quality"),
+                        score=weighted_view(
+                            accuracy=numeric,
+                            freshness=freshness,
                             stale_rate=stale_rate,
-                            completed=bool(answer.text),
+                            evidence_quality=metrics.get("evidence_quality"),
+                            completion=1.0 if answer.text else 0.0,
                             cost_usd=answer.cost_usd,
+                            latency_s=answer.latency_s,
                         ),
                         error=answer.error,
                     )
@@ -165,4 +218,6 @@ class BenchmarkRunner:
             job.cancel()
         if jobs:
             await asyncio.gather(*jobs, return_exceptions=True)
+
+
 

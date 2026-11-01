@@ -31,7 +31,12 @@ async def generate_suggestions(
         (by_id[v.claim_id], v)
         for v in verdicts
         if v.claim_id in by_id
-        and v.status in {FreshnessStatus.STALE, FreshnessStatus.UNCERTAIN}
+        and v.status
+        in {
+            FreshnessStatus.STALE,
+            FreshnessStatus.CONFLICTED,
+            FreshnessStatus.INSUFFICIENT,
+        }
         and v.evidence
     ][:MAX_TARGETS]
     if not targets:

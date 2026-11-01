@@ -29,35 +29,33 @@ class FakeSearcher:
         return self.results, 1.0
 
 
-async def test_detector_flags_stale_pricing_claim():
-    results = [
+def _results(value: str = "1,000") -> list[SearchResult]:
+    return [
         SearchResult(
             title="Tavily Credits & Pricing",
             url="https://docs.tavily.com/documentation/api-credits",
-            content="You get 1,000 free API Credits every month. Advanced search costs 2 credits.",
+            content=f"You get {value} free API Credits every month.",
             score=0.9,
             published_date="Tue, 28 Oct 2026 00:00:00 GMT",
         )
     ]
-    detector = StaleAnswerDetector(FakeSearcher(results), as_of="2026-11-01", max_claims=3)
+
+
+async def test_detector_flags_stale_pricing_claim():
+    detector = StaleAnswerDetector(FakeSearcher(_results()), as_of="2026-11-01", max_claims=3)
     report = await detector.detect("Tavily 免费计划每月提供 500 credits。")
     assert report.claims
+    assert report.claims[0].temporal_sensitivity is not None
     assert report.verdicts
     assert any(v.status is FreshnessStatus.STALE for v in report.verdicts)
     assert report.credits == 1.0
 
 
 async def test_detector_fresh_when_value_matches():
-    results = [
-        SearchResult(
-            title="Tavily Credits & Pricing",
-            url="https://docs.tavily.com/documentation/api-credits",
-            content="You get 1,000 free API Credits every month.",
-            score=0.9,
-            published_date="Tue, 28 Oct 2026 00:00:00 GMT",
-        )
-    ]
-    detector = StaleAnswerDetector(FakeSearcher(results), as_of="2026-11-01", max_claims=3)
+    detector = StaleAnswerDetector(FakeSearcher(_results()), as_of="2026-11-01", max_claims=3)
     report = await detector.detect("Tavily 免费计划每月提供 1,000 credits。")
-    assert report.verdicts[0].status in {FreshnessStatus.FRESH, FreshnessStatus.UNCERTAIN}
-    assert report.verdicts[0].score >= 50
+    assert report.verdicts[0].status in {
+        FreshnessStatus.FRESH,
+        FreshnessStatus.INSUFFICIENT,
+    }
+    assert report.verdicts[0].score is None or report.verdicts[0].score >= 50

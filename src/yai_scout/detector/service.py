@@ -1,4 +1,4 @@
-"""Stale-answer Detector 门面：答案 → claim → 核验 → Freshness 报告。"""
+"""Stale-answer Detector 门面：答案 → claim → 时间敏感性 → 核验 → Freshness 报告。"""
 
 from __future__ import annotations
 
@@ -9,8 +9,9 @@ from ..domain.models import DetectorReport, FreshnessStatus, FreshnessVerdict
 from ..llm import LLMClient
 from .claims import extract_claims
 from .extract_llm import extract_claims_llm
-from .freshness import overall_score
+from .freshness import WEIGHTS_VERSION, overall_score
 from .suggest import generate_suggestions
+from .temporal import POLICY_VERSION, apply_temporal_classification
 from .verify import ClaimVerifier, Searcher
 
 
@@ -23,12 +24,14 @@ class StaleAnswerDetector:
         max_claims: int = 6,
         concurrency: int = 3,
         llm: LLMClient | None = None,
+        mode: str = "live",
     ) -> None:
         self.searcher = searcher
         self.as_of = as_of
         self.max_claims = max_claims
         self.concurrency = concurrency
         self.llm = llm
+        self.mode = "replay" if mode == "replay" else "live"
 
     async def detect(
         self,
@@ -48,8 +51,16 @@ class StaleAnswerDetector:
                 claims, llm_cost = extracted
         if not claims:
             claims = extract_claims(answer, max_claims=limit)
+        claims = [
+            apply_temporal_classification(claim, target_time=effective_as_of) for claim in claims
+        ]
 
-        verifier = ClaimVerifier(self.searcher, as_of=effective_as_of, llm=self.llm)
+        verifier = ClaimVerifier(
+            self.searcher,
+            as_of=effective_as_of,
+            llm=self.llm,
+            mode="replay" if self.mode == "replay" else "live",
+        )
         semaphore = asyncio.Semaphore(self.concurrency)
 
         async def one(claim_index: int) -> tuple[FreshnessVerdict, float, float]:
@@ -71,7 +82,9 @@ class StaleAnswerDetector:
                 for v in verdicts
             ]
 
-        stale = sum(1 for v in verdicts if v.status is FreshnessStatus.STALE)
+        def count(status: FreshnessStatus) -> int:
+            return sum(1 for v in verdicts if v.status is status)
+
         return DetectorReport(
             id=f"det_{uuid.uuid4().hex[:12]}",
             answer=answer,
@@ -79,7 +92,11 @@ class StaleAnswerDetector:
             claims=claims,
             verdicts=verdicts,
             overall_score=overall_score(verdicts),
-            stale_claims=stale,
+            stale_claims=count(FreshnessStatus.STALE),
+            conflicted_claims=count(FreshnessStatus.CONFLICTED),
+            insufficient_claims=count(FreshnessStatus.INSUFFICIENT),
             credits=round(credits, 2),
             llm_cost_usd=round(llm_cost, 6),
+            policy_version=POLICY_VERSION,
+            weights_version=WEIGHTS_VERSION,
         )

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>YAI Scout — Freshness-aware Agent Benchmarking</title>
+<style>
+  :root{--bg:#0b0f14;--panel:#121821;--line:#1f2a37;--text:#e6e9ef;--muted:#8b98a9;
+        --accent:#f5a524;--ok:#34d399;--mono:ui-monospace,"Cascadia Code",Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--text);
+       background:radial-gradient(1200px 700px at 20% -10%,#16202c 0%,var(--bg) 55%);
+       font:15px/1.7 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  main{max-width:1040px;margin:0 auto;padding:64px 28px 80px}
+  h1{font-size:30px;margin:0 0 8px;letter-spacing:.3px}
+  h1 span{color:var(--accent)}
+  .tag{color:var(--muted);font-family:var(--mono);font-size:12px}
+  .lead{color:var(--muted);max-width:720px;margin:16px 0 34px}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:820px){.cards{grid-template-columns:1fr}}
+  .card{display:block;text-decoration:none;color:inherit;background:var(--panel);
+        border:1px solid var(--line);border-radius:16px;padding:22px;transition:.15s}
+  .card:hover{border-color:#7a5314;transform:translateY(-2px)}
+  .card .k{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em}
+  .card h2{font-size:20px;margin:8px 0 6px}
+  .card p{color:var(--muted);font-size:13px;margin:0 0 12px}
+  .card .meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .foot{margin-top:42px;color:var(--muted);font-size:12px;line-height:1.9}
+  .foot a{color:var(--muted)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;
+         border:1px solid var(--line);border-radius:999px;margin-right:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>YAI <span>Scout</span></h1>
+  <div class="tag">Evidence first · Freshness-aware · Two independent tracks</div>
+  <p class="lead">
+    We benchmark not just whether agents are right, but whether their evidence is still current.
+    两个独立参赛作品，共享同一套 Claim / Evidence / Snapshot 底座。
+  </p>
+
+  <div class="cards">
+    <a class="card" href="/benchmark">
+      <div class="k">PROJECT A · BIFROST-02</div>
+      <h2>Benchmark</h2>
+      <p>接入不同架构的 Agent，在同一批任务上比较正确率、新鲜度、证据质量、成本与延迟。</p>
+      <div class="meta">/benchmark · leaderboard · Pareto</div>
+    </a>
+    <a class="card" href="/freshness">
+      <div class="k">PROJECT B · TAVILY-01</div>
+      <h2>Freshness</h2>
+      <p>把任意 LLM 答案拆成 claim，逐条实时核验，给出 Freshness Score、证据与修正建议。</p>
+      <div class="meta">/freshness · claim inspector</div>
+    </a>
+  </div>
+
+  <div class="foot">
+    <span class="badge">YAI Agent Core v0.25.0</span>
+    <span class="badge">Tavily Search</span>
+    <span class="badge">DeepSeek v4.1 flash</span><br/>
+    研究控制台（旧入口）：<a href="/research">/research</a> ·
+    健康检查：<a href="/api/healthz">/api/healthz</a>
+  </div>
+</main>
+</body>
+</html>

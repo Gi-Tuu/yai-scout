@@ -114,11 +114,19 @@ class ClaimType(StrEnum):
     OTHER = "other"
 
 
+class TemporalSensitivity(StrEnum):
+    STABLE = "stable"
+    SLOW = "slow"
+    SENSITIVE = "sensitive"
+    VOLATILE = "volatile"
+
+
 class FreshnessStatus(StrEnum):
     FRESH = "fresh"
     STALE = "stale"
-    UNCERTAIN = "uncertain"
-    UNVERIFIABLE = "unverifiable"
+    CONFLICTED = "conflicted"
+    INSUFFICIENT = "insufficient"
+    UNKNOWN = "unknown"
 
 
 class EvidenceRef(BaseModel):
@@ -126,9 +134,14 @@ class EvidenceRef(BaseModel):
     title: str = ""
     domain: str = ""
     published_at: str | None = None
+    updated_at: str | None = None
+    retrieved_at: str | None = None
     tier: int = 3
     snippet: str = ""
-    relation: Literal["supports", "contradicts", "mentions"] = "mentions"
+    relation: Literal["supports", "contradicts", "mentions", "insufficient"] = "mentions"
+    relation_reason: str = ""
+    relation_confidence: float = 0.5
+    snapshot_id: str | None = None
 
 
 class Claim(BaseModel):
@@ -137,14 +150,19 @@ class Claim(BaseModel):
     type: ClaimType = ClaimType.OTHER
     numbers: list[str] = Field(default_factory=list)
     signals: list[str] = Field(default_factory=list)
+    target_time: str | None = None
+    temporal_sensitivity: TemporalSensitivity | None = None
+    validity_window_days: int | None = None
 
 
 class FreshnessVerdict(BaseModel):
     claim_id: str
     status: FreshnessStatus
-    score: int = Field(ge=0, le=100)
+    score: int | None = Field(default=None, ge=0, le=100)
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     rationale: str = ""
     suggestion: str = ""
+    breakdown: dict[str, float] = Field(default_factory=dict)
     evidence: list[EvidenceRef] = Field(default_factory=list)
     checked_at: str = Field(default_factory=utcnow_iso)
 
@@ -155,22 +173,61 @@ class DetectorReport(BaseModel):
     as_of: str
     claims: list[Claim] = Field(default_factory=list)
     verdicts: list[FreshnessVerdict] = Field(default_factory=list)
-    overall_score: int = Field(default=0, ge=0, le=100)
+    overall_score: float | None = None
     stale_claims: int = 0
+    conflicted_claims: int = 0
+    insufficient_claims: int = 0
     credits: float = 0.0
     llm_cost_usd: float = 0.0
+    policy_version: str = "2026-11-01"
+    weights_version: str = "rubric-v1"
     created_at: str = Field(default_factory=utcnow_iso)
 
 
+class EvidenceSnapshot(BaseModel):
+    id: str
+    url: str
+    canonical_url: str = ""
+    title: str = ""
+    origin: Literal["wayback", "manual", "official_history", "live"] = "live"
+    content_hash: str = ""
+    raw_path: str = ""
+    text_path: str = ""
+    published_at: str | None = None
+    updated_at: str | None = None
+    fetched_at: str = Field(default_factory=utcnow_iso)
+    tier: int = 3
+    notes: str = ""
+
+
 # --------------------------------------------------------------------------- benchmark
+class TaskCategory(StrEnum):
+    STABLE = "stable"
+    TIME_SENSITIVE = "time_sensitive"
+    CHANGED = "changed"
+    CONFLICTING = "conflicting"
+
+
+class ExpectedClaim(BaseModel):
+    text: str
+    claim_type: ClaimType = ClaimType.OTHER
+    temporal_sensitivity: TemporalSensitivity | None = None
+    expected_relation: Literal["supports", "contradicts", "mentions", "insufficient"] = "supports"
+    gold_values: list[str] = Field(default_factory=list)
+    notes: str = ""
+
+
 class BenchmarkTask(BaseModel):
     id: str
     question: str
     as_of: str
-    category: ClaimType = ClaimType.OTHER
+    category: TaskCategory = TaskCategory.TIME_SENSITIVE
+    expected_claims: list[ExpectedClaim] = Field(default_factory=list)
+    reference_evidence: list[str] = Field(default_factory=list)
     gold_values: list[str] = Field(default_factory=list)
     gold_sources: list[str] = Field(default_factory=list)
     notes: str = ""
+
 
 
 class AgentSpec(BaseModel):
@@ -185,8 +242,15 @@ class AgentAnswer(BaseModel):
     text: str
     citations: list[str] = Field(default_factory=list)
     tokens: int = 0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    model: str = ""
+    provider: str = ""
+    price_table_version: str = ""
+    estimated: bool = True
     latency_s: float = 0.0
     cost_usd: float = 0.0
+    trace: list[dict[str, Any]] = Field(default_factory=list)
     error: str | None = None
 
 
@@ -197,8 +261,12 @@ class TaskResult(BaseModel):
     numeric_accuracy: float = 0.0
     has_citations: bool = False
     citation_count: int = 0
-    freshness_score: int | None = None
+    freshness_score: float | None = None
     stale_claim_rate: float | None = None
+    claim_coverage: float = 0.0
+    supported_claim_rate: float | None = None
+    stable_fact_integrity: float | None = None
+    evidence_quality: float | None = None
     score: float = 0.0
     error: str | None = None
 
@@ -208,6 +276,8 @@ class BenchSession(BaseModel):
     status: Literal["running", "done", "failed"] = "running"
     agent_ids: list[str] = Field(default_factory=list)
     task_ids: list[str] = Field(default_factory=list)
+    dataset_version: str = ""
+    config_hash: str = ""
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None

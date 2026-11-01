@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Protocol
+import uuid
+from typing import Protocol
 
 import httpx
 
@@ -11,18 +12,24 @@ from ..domain.models import AgentAnswer, BenchmarkTask
 from ..llm import LLMClient
 from ..pipeline.planning import build_plan
 from ..retrieval.tavily import SearchResult, TavilyClient
+from .protocol import (
+    AdapterExecution,
+    AdapterManifest,
+    AdapterRunRequest,
+    AdapterTask,
+    validate_run_response,
+)
 
 # demo 用的"过期知识"：用于展示 detector 与排行榜的差异
 STALE_VALUES: dict[str, str] = {
-    "tavily_free_credits": "500",
-    "tavily_student_plan": "2000",
-    "tavily_paygo_price": "0.010",
-    "deepseek_flash_input_price": "0.15",
-    "claude_haiku_output_price": "0.40",
-    "bifrost_port": "8000",
-    "yai_version": "0.24.0",
-    "geekroom_deadline": "2026-11-22",
-    "omnidimension_free": "10",
+    "b_tavily_free_credits": "500",
+    "b_tavily_advanced_cost": "1",
+    "b_tavily_student_plan": "2000",
+    "b_deepseek_flash_price": "0.15",
+    "b_bifrost_license": "AGPL-3.0",
+    "c_yai_version": "0.24.0",
+    "c_yai_license": "AGPL-3.0",
+    "d_geekroom_deadline": "2026-11-22",
 }
 
 
@@ -183,28 +190,75 @@ class LLMAgentAdapter:
 
 
 class HttpAdapter:
-    """外部 Agent：POST {question, as_of} → {answer, citations, tokens}。"""
+    """外部 Agent：实现 scout-adapter/1.0（GET /manifest + POST /run）。"""
 
-    def __init__(self, spec_id: str, name: str, endpoint: str, *, timeout_s: float = 90.0) -> None:
+    def __init__(
+        self,
+        spec_id: str,
+        name: str,
+        endpoint: str,
+        *,
+        timeout_s: float = 120.0,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
         self.id = spec_id
         self.name = name
         self.description = f"http adapter → {endpoint}"
-        self.endpoint = endpoint
+        self.endpoint = endpoint.rstrip("/")
         self.timeout_s = timeout_s
+        self.transport = transport
+
+    async def manifest(self) -> AdapterManifest:
+        async with httpx.AsyncClient(
+            timeout=self.timeout_s, transport=self.transport
+        ) as client:
+            resp = await client.get(f"{self.endpoint}/manifest")
+            resp.raise_for_status()
+            return AdapterManifest.model_validate(resp.json())
 
     async def answer(self, task: BenchmarkTask) -> AgentAnswer:
         started = time.monotonic()
-        async with httpx.AsyncClient(timeout=self.timeout_s) as client:
-            resp = await client.post(
-                self.endpoint, json={"question": task.question, "as_of": task.as_of}
+        request = AdapterRunRequest(
+            run_id=f"run_{uuid.uuid4().hex[:8]}",
+            task=AdapterTask(
+                task_id=task.id,
+                question=task.question,
+                target_time=task.as_of,
+                category=task.category.value,
+            ),
+            execution=AdapterExecution(
+                deadline_s=int(self.timeout_s),
+                tools_allowed=["web_search", "read_url"],
+            ),
+        )
+        try:
+            async with httpx.AsyncClient(
+                timeout=self.timeout_s, transport=self.transport
+            ) as client:
+                resp = await client.post(
+                    f"{self.endpoint}/run", json=request.model_dump(mode="json")
+                )
+                resp.raise_for_status()
+                response = validate_run_response(resp.json())
+        except Exception as exc:  # noqa: BLE001 - 协议/网络错误统一转成失败结果
+            return AgentAnswer(
+                text="",
+                latency_s=round(time.monotonic() - started, 2),
+                error=f"{type(exc).__name__}: {exc}",
             )
-            resp.raise_for_status()
-            data: dict[str, Any] = resp.json()
         return AgentAnswer(
-            text=str(data.get("answer") or ""),
-            citations=[str(c) for c in (data.get("citations") or [])],
-            tokens=int(data.get("tokens") or 0),
-            latency_s=round(time.monotonic() - started, 2),
-            cost_usd=float(data.get("cost_usd") or 0.0),
+            text=response.answer,
+            citations=list(response.citations),
+            tokens=response.usage.prompt_tokens + response.usage.completion_tokens,
+            prompt_tokens=response.usage.prompt_tokens,
+            completion_tokens=response.usage.completion_tokens,
+            model=response.usage.model,
+            provider=response.usage.provider,
+            price_table_version=response.cost.price_table_version,
+            estimated=response.cost.estimated,
+            latency_s=round(response.latency_ms / 1000 or time.monotonic() - started, 2),
+            cost_usd=float(response.cost.estimated_usd or 0.0),
+            trace=list(response.trace),
+            error=response.error,
         )
 

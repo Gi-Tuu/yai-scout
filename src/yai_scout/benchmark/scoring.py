@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import re
 
-from ..domain.models import TaskResult
+from ..domain.models import BenchmarkTask, DetectorReport, FreshnessStatus, TaskResult
 
 NUMBER_TOKEN = re.compile(r"\d+(?:\.\d+)?")
+TIER_WEIGHTS = {1: 1.0, 2: 0.8, 3: 0.5, 4: 0.25}
 
 
 def normalize(text: str) -> str:
@@ -45,6 +46,20 @@ def numeric_accuracy(gold_values: list[str], answer: str) -> float:
     return round(hits / len(gold_values), 3)
 
 
+def expected_accuracy(task: BenchmarkTask, answer: str) -> float:
+    """按 expected_claims 逐条匹配（金标为 alternatives，命中任一即可）。"""
+    if not task.expected_claims:
+        return numeric_accuracy(task.gold_values, answer)
+    hits = 0
+    for expected in task.expected_claims:
+        if expected.gold_values:
+            if any(match_gold(gold, answer) for gold in expected.gold_values):
+                hits += 1
+        elif normalize(expected.text)[:24] in normalize(answer):
+            hits += 1
+    return round(hits / len(task.expected_claims), 3)
+
+
 def composite_score(
     *,
     numeric: float,
@@ -66,14 +81,99 @@ def composite_score(
     return round(score, 4)
 
 
-def leaderboard(results: list[TaskResult]) -> list[dict[str, float | str]]:
-    """按 agent 聚合：均分、数字准确率、陈旧率、引用率、时延。"""
+def claim_coverage(task: BenchmarkTask, answer: str) -> float:
+    """金标 expected_claims 在答案中的覆盖比例。"""
+    if not task.expected_claims:
+        return 0.0
+    normalized_answer = normalize(answer)
+    hits = 0
+    for expected in task.expected_claims:
+        if expected.gold_values and any(
+            match_gold(gold, answer) for gold in expected.gold_values
+        ) or normalize(expected.text)[:24] in normalized_answer:
+            hits += 1
+    return round(hits / len(task.expected_claims), 3)
+
+
+def evidence_metrics(report: DetectorReport | None) -> dict[str, float | None]:
+    """从 Freshness 报告提取证据质量 / 支持率 / 稳定事实完整性 / 权威度。"""
+    if report is None or not report.claims:
+        return {
+            "evidence_quality": None,
+            "supported_claim_rate": None,
+            "stable_fact_integrity": None,
+            "authority": None,
+        }
+    verdicts = report.verdicts
+    with_evidence = [
+        v
+        for v in verdicts
+        if v.evidence and any(e.relation in {"supports", "contradicts"} for e in v.evidence)
+    ]
+    supported = [
+        v for v in verdicts if any(e.relation == "supports" for e in v.evidence)
+    ]
+    tiers = [
+        TIER_WEIGHTS.get(e.tier, 0.25)
+        for v in verdicts
+        for e in v.evidence
+        if e.relation in {"supports", "contradicts"}
+    ]
+    authority = sum(tiers) / len(tiers) if tiers else 0.0
+    coverage = len(with_evidence) / len(verdicts) if verdicts else 0.0
+    supported_rate = len(supported) / len(with_evidence) if with_evidence else 0.0
+    evidence_quality = coverage * (0.6 * supported_rate + 0.4 * authority)
+    stable = [
+        v
+        for v in verdicts
+        if v.status in {FreshnessStatus.FRESH, FreshnessStatus.STALE, FreshnessStatus.CONFLICTED}
+    ]
+    stable_fresh = [v for v in stable if v.status is FreshnessStatus.FRESH]
+    return {
+        "evidence_quality": round(evidence_quality, 3),
+        "supported_claim_rate": round(supported_rate, 3),
+        "stable_fact_integrity": round(len(stable_fresh) / len(stable), 3) if stable else None,
+        "authority": round(authority, 3),
+    }
+
+
+def weighted_view(
+    *,
+    accuracy: float,
+    freshness: float | None,
+    stale_rate: float | None,
+    evidence_quality: float | None,
+    completion: float,
+    cost_usd: float,
+    latency_s: float,
+) -> float:
+    """可解释的加权视图（非默认排名依据；权重显式展示）。"""
+    freshness_component = (freshness or 0.0) / 100.0
+    evidence_component = evidence_quality or 0.0
+    stale_component = 1.0 - (stale_rate or 0.0)
+    cost_component = 1.0 / (1.0 + max(cost_usd, 0.0) * 20.0)
+    latency_component = 1.0 / (1.0 + max(latency_s, 0.0) / 30.0)
+    score = (
+        0.35 * accuracy
+        + 0.20 * freshness_component
+        + 0.15 * evidence_component
+        + 0.10 * stale_component
+        + 0.10 * completion
+        + 0.05 * cost_component
+        + 0.05 * latency_component
+    )
+    return round(score, 4)
+
+
+def leaderboard(results: list[TaskResult]) -> list[dict[str, float | str | None]]:
+    """按 agent 聚合：多维指标（不隐藏单一总分）。"""
     grouped: dict[str, list[TaskResult]] = {}
     for result in results:
         grouped.setdefault(result.agent_id, []).append(result)
-    rows: list[dict[str, float | str]] = []
+    rows: list[dict[str, float | str | None]] = []
     for agent_id, items in grouped.items():
         count = len(items)
+        freshness_values = [i.freshness_score for i in items if i.freshness_score is not None]
         rows.append(
             {
                 "agent_id": agent_id,
@@ -84,13 +184,32 @@ def leaderboard(results: list[TaskResult]) -> list[dict[str, float | str]]:
                 "stale_rate": round(
                     sum(i.stale_claim_rate or 0.0 for i in items) / count, 3
                 ),
-                "freshness_score": round(
-                    sum(i.freshness_score or 0 for i in items) / count, 1
+                "freshness_score": round(sum(freshness_values) / len(freshness_values), 1)
+                if freshness_values
+                else None,
+                "evidence_quality": round(
+                    sum(i.evidence_quality or 0.0 for i in items) / count, 3
+                ),
+                "claim_coverage": round(sum(i.claim_coverage for i in items) / count, 3),
+                "stable_fact_integrity": round(
+                    sum(i.stable_fact_integrity or 0.0 for i in items) / count, 3
                 ),
                 "avg_latency_s": round(sum(i.answer.latency_s for i in items) / count, 2),
                 "avg_tokens": round(sum(i.answer.tokens for i in items) / count, 0),
+                "avg_tokens_in": round(
+                    sum(i.answer.prompt_tokens for i in items) / count, 0
+                ),
+                "avg_tokens_out": round(
+                    sum(i.answer.completion_tokens for i in items) / count, 0
+                ),
+                "avg_cost_usd": round(sum(i.answer.cost_usd for i in items) / count, 6),
                 "errors": sum(1 for i in items if i.error or i.answer.error),
             }
         )
-    rows.sort(key=lambda row: (-float(row["score"]), str(row["agent_id"])))
+    rows.sort(
+        key=lambda row: (
+            -(row["score"] if isinstance(row["score"], float) else 0.0),
+            str(row["agent_id"]),
+        )
+    )
     return rows
