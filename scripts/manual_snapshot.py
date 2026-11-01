@@ -4,8 +4,10 @@
 HTML 到本地，再用本脚本入库；这样 replay 使用的仍是**真实历史页面**，不是伪造数据。
 
 用法：
-    python scripts/manual_snapshot.py --url https://example.com --file saved.html --published-at 2025-06-01
-    python scripts/manual_snapshot.py --url https://example.com --text saved.txt --published-at 2025-06-01
+    python scripts/manual_snapshot.py --url https://example.com \
+        --file saved.html --published-at 2025-06-01
+    python scripts/manual_snapshot.py --url https://example.com \
+        --text saved.txt --published-at 2025-06-01
 """
 
 from __future__ import annotations
