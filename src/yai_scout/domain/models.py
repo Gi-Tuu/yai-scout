@@ -234,7 +234,7 @@ class BenchmarkTask(BaseModel):
 class AgentSpec(BaseModel):
     id: str
     name: str
-    kind: Literal["mock", "retrieval_baseline", "scout", "http", "llm"] = "mock"
+    kind: Literal["mock", "retrieval_baseline", "scout", "http", "llm", "python", "cli"] = "mock"
     description: str = ""
     config: dict[str, Any] = Field(default_factory=dict)
 
@@ -282,3 +282,4 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+

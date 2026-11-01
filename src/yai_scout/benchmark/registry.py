@@ -7,9 +7,11 @@ from ..llm import LLMClient
 from ..retrieval.tavily import TavilyClient
 from .adapters import (
     AgentAdapter,
+    CLIAdapter,
     HttpAdapter,
     LLMAgentAdapter,
     MockAdapter,
+    PythonAdapter,
     RetrievalAdapter,
     ScoutAdapter,
 )
@@ -46,7 +48,18 @@ def adapter_from_spec(
         if not endpoint:
             raise ValueError("http adapter requires config.endpoint")
         return HttpAdapter(spec.id, spec.name, endpoint)
+    if spec.kind == "python":
+        target = str(spec.config.get("target") or "")
+        if not target:
+            raise ValueError("python adapter requires config.target")
+        return PythonAdapter(spec.id, spec.name, target)
+    if spec.kind == "cli":
+        command = spec.config.get("command")
+        if not isinstance(command, list) or not command:
+            raise ValueError("cli adapter requires config.command")
+        return CLIAdapter(spec.id, spec.name, [str(part) for part in command])
     raise ValueError(f"unknown agent kind: {spec.kind}")
 
 
 __all__ = ["DEFAULT_AGENT_SPECS", "adapter_from_spec", "build_adapters"]
+

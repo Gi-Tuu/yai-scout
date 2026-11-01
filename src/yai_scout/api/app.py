@@ -227,6 +227,60 @@ def create_app(
             raise HTTPException(status_code=404, detail="report not found")
         return report.model_dump(mode="json")
 
+    @app.get("/freshness/reports")
+    async def list_detector_reports(limit: int = 20) -> dict[str, Any]:
+        reports = store.list_detector_reports(limit=limit)
+        return {
+            "reports": [
+                {
+                    "id": report.id,
+                    "as_of": report.as_of,
+                    "overall_score": report.overall_score,
+                    "stale_claims": report.stale_claims,
+                    "claims": len(report.claims),
+                    "created_at": report.created_at,
+                }
+                for report in reports
+            ]
+        }
+
+    @app.get("/freshness/reports/{report_id}/export")
+    async def export_detector_report(report_id: str) -> dict[str, Any]:
+        report = store.get_detector_report(report_id)
+        if report is None:
+            raise HTTPException(status_code=404, detail="report not found")
+        lines = [
+            f"# Freshness Report {report.id}",
+            "",
+            f"- as_of: {report.as_of}",
+            f"- overall: {report.overall_score}",
+            f"- claims: {len(report.claims)} / stale: {report.stale_claims}",
+            f"- policy: {report.policy_version} / weights: {report.weights_version}",
+            "",
+        ]
+        verdicts = {v.claim_id: v for v in report.verdicts}
+        for claim in report.claims:
+            verdict = verdicts.get(claim.id)
+            lines.append(f"## {claim.text}")
+            lines.append(
+                f"- type: {claim.type} / sensitivity: {claim.temporal_sensitivity}"
+            )
+            if verdict:
+                lines.append(
+                    f"- status: {verdict.status} / score: {verdict.score} "
+                    f"/ confidence: {verdict.confidence}"
+                )
+                lines.append(f"- rationale: {verdict.rationale}")
+                if verdict.suggestion:
+                    lines.append(f"- suggestion: {verdict.suggestion}")
+                for ev in verdict.evidence:
+                    lines.append(
+                        f"  - [{ev.relation}] {ev.title or ev.url} "
+                        f"({ev.published_at or 'unknown'}, T{ev.tier})"
+                    )
+            lines.append("")
+        return {"markdown": "\n".join(lines)}
+
     # ------------------------------------------------------------------ benchmark
     @app.get("/api/benchmark/tasks")
     @app.get("/benchmark/tasks")
@@ -296,6 +350,7 @@ def create_app(
     detector_page = static_dir / "detector.html" if static_dir.is_dir() else None
     bench_page = static_dir / "bench.html" if static_dir.is_dir() else None
     landing_page = static_dir / "landing.html" if static_dir.is_dir() else None
+    inspector_page = static_dir / "inspector.html" if static_dir.is_dir() else None
 
     @app.get("/detector", include_in_schema=False)
     @app.get("/freshness", include_in_schema=False)
@@ -310,6 +365,13 @@ def create_app(
         if bench_page is None or not bench_page.is_file():
             raise HTTPException(status_code=404, detail="bench page not found")
         return FileResponse(bench_page)
+
+    @app.get("/inspector", include_in_schema=False)
+    @app.get("/inspector/{report_id}", include_in_schema=False)
+    async def inspector_page_route(report_id: str | None = None) -> FileResponse:
+        if inspector_page is None or not inspector_page.is_file():
+            raise HTTPException(status_code=404, detail="inspector page not found")
+        return FileResponse(inspector_page)
 
     # ------------------------------------------------------------------ static UI
     if static_dir.is_dir():

@@ -16,6 +16,7 @@ from .domain.models import (
     BenchSession,
     CostEntry,
     DetectorReport,
+    EvidenceSnapshot,
     Plan,
     ResearchTask,
     RunEvent,
@@ -100,6 +101,20 @@ CREATE TABLE IF NOT EXISTS bench_result (
     agent_id TEXT NOT NULL,
     payload_json TEXT NOT NULL,
     score REAL NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS snapshot (
+    id TEXT PRIMARY KEY,
+    url TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    origin TEXT NOT NULL DEFAULT 'live',
+    content_hash TEXT NOT NULL DEFAULT '',
+    raw_path TEXT NOT NULL DEFAULT '',
+    text_path TEXT NOT NULL DEFAULT '',
+    published_at TEXT,
+    updated_at TEXT,
+    fetched_at TEXT NOT NULL,
+    tier INTEGER NOT NULL DEFAULT 3,
+    notes TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_bench_result_session ON bench_result(session_id);
 """
@@ -332,12 +347,20 @@ class Store:
             self._conn.commit()
         return report
 
+    def list_detector_reports(self, limit: int = 20) -> list[DetectorReport]:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT payload_json FROM detector_report ORDER BY created_at DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        return [_parse_detector_report(row["payload_json"]) for row in rows]
+
     def get_detector_report(self, report_id: str) -> DetectorReport | None:
         with self._lock:
             row = self._conn.execute(
                 "SELECT payload_json FROM detector_report WHERE id = ?", (report_id,)
             ).fetchone()
-        return DetectorReport.model_validate_json(row["payload_json"]) if row else None
+        return _parse_detector_report(row["payload_json"]) if row else None
 
     # ------------------------------------------------------------------ benchmark
     def create_bench_session(self, session: BenchSession) -> BenchSession:
@@ -425,6 +448,52 @@ class Store:
             ).fetchall()
         return [TaskResult.model_validate_json(r["payload_json"]) for r in rows]
 
+    # ------------------------------------------------------------------ snapshots
+    def save_snapshot(self, snapshot: EvidenceSnapshot) -> EvidenceSnapshot:
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO snapshot
+                   (id, url, title, origin, content_hash, raw_path, text_path,
+                    published_at, updated_at, fetched_at, tier, notes)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(id) DO UPDATE SET
+                     content_hash = excluded.content_hash,
+                     text_path = excluded.text_path,
+                     fetched_at = excluded.fetched_at""",
+                (
+                    snapshot.id,
+                    snapshot.url,
+                    snapshot.title,
+                    snapshot.origin,
+                    snapshot.content_hash,
+                    snapshot.raw_path,
+                    snapshot.text_path,
+                    snapshot.published_at,
+                    snapshot.updated_at,
+                    snapshot.fetched_at,
+                    snapshot.tier,
+                    snapshot.notes,
+                ),
+            )
+            self._conn.commit()
+        return snapshot
+
+    def get_snapshot(self, snapshot_id: str) -> EvidenceSnapshot | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM snapshot WHERE id = ?", (snapshot_id,)
+            ).fetchone()
+        if row is None:
+            return None
+        return _row_to_snapshot(row)
+
+    def list_snapshots(self, limit: int = 50) -> list[EvidenceSnapshot]:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM snapshot ORDER BY fetched_at DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [_row_to_snapshot(row) for row in rows]
+
 
 # ---------------------------------------------------------------------- row mappers
 def _row_to_task(row: sqlite3.Row) -> ResearchTask:
@@ -468,4 +537,32 @@ def _row_to_event(row: sqlite3.Row) -> RunEvent:
         payload=json.loads(row["payload_json"] or "{}"),
         ts=row["ts"],
     )
+
+
+def _row_to_snapshot(row: sqlite3.Row) -> EvidenceSnapshot:
+    return EvidenceSnapshot(
+        id=row["id"],
+        url=row["url"],
+        title=row["title"],
+        origin=row["origin"],
+        content_hash=row["content_hash"],
+        raw_path=row["raw_path"],
+        text_path=row["text_path"],
+        published_at=row["published_at"],
+        updated_at=row["updated_at"],
+        fetched_at=row["fetched_at"],
+        tier=row["tier"],
+        notes=row["notes"],
+    )
+
+
+def _parse_detector_report(payload: str) -> DetectorReport:
+    """兼容旧报告：uncertain/unverifiable → insufficient。"""
+    data = json.loads(payload)
+    for verdict in data.get("verdicts", []):
+        status = str(verdict.get("status") or "")
+        if status in {"uncertain", "unverifiable"}:
+            verdict["status"] = "insufficient"
+    return DetectorReport.model_validate(data)
+
 

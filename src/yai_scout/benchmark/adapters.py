@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
+import inspect
+import json
+import subprocess
 import time
 import uuid
-from typing import Protocol
+from typing import Any, Protocol
 
 import httpx
 
@@ -187,6 +191,112 @@ class LLMAgentAdapter:
             latency_s=round(time.monotonic() - started, 2),
             cost_usd=round(result.cost_usd + credits * 0.008, 6),
         )
+
+
+class PythonAdapter:
+    """进程内 Agent：module:function 接收请求 dict，返回响应 dict（协议同 HTTP）。"""
+
+    def __init__(self, spec_id: str, name: str, target: str) -> None:
+        self.id = spec_id
+        self.name = name
+        self.target = target
+        self.description = f"python adapter → {target}"
+
+    async def answer(self, task: BenchmarkTask) -> AgentAnswer:
+        started = time.monotonic()
+        request = AdapterRunRequest(
+            run_id=f"run_{uuid.uuid4().hex[:8]}",
+            task=AdapterTask(
+                task_id=task.id,
+                question=task.question,
+                target_time=task.as_of,
+                category=task.category.value,
+            ),
+            execution=AdapterExecution(deadline_s=120),
+        )
+        try:
+            module_name, _, func_name = self.target.partition(":")
+            if not func_name:
+                module_name, _, func_name = self.target.rpartition(".")
+            module = __import__(module_name, fromlist=[func_name])
+            func = getattr(module, func_name)
+            payload = request.model_dump(mode="json")
+            if inspect.iscoroutinefunction(func):
+                result = await func(payload)
+            else:
+                result = await asyncio.to_thread(func, payload)
+            response = validate_run_response(result)
+        except Exception as exc:  # noqa: BLE001
+            return AgentAnswer(
+                text="",
+                latency_s=round(time.monotonic() - started, 2),
+                error=f"{type(exc).__name__}: {exc}",
+            )
+        return _response_to_answer(response, started)
+
+
+class CLIAdapter:
+    """子进程 Agent：stdin 收请求 JSON，stdout 返回响应 JSON。"""
+
+    def __init__(
+        self, spec_id: str, name: str, command: list[str], *, timeout_s: float = 120.0
+    ) -> None:
+        self.id = spec_id
+        self.name = name
+        self.command = command
+        self.timeout_s = timeout_s
+        self.description = f"cli adapter → {' '.join(command[:2])}"
+
+    async def answer(self, task: BenchmarkTask) -> AgentAnswer:
+        started = time.monotonic()
+        request = AdapterRunRequest(
+            run_id=f"run_{uuid.uuid4().hex[:8]}",
+            task=AdapterTask(
+                task_id=task.id,
+                question=task.question,
+                target_time=task.as_of,
+                category=task.category.value,
+            ),
+            execution=AdapterExecution(deadline_s=int(self.timeout_s)),
+        )
+        try:
+            result = await asyncio.to_thread(
+                subprocess.run,
+                self.command,
+                input=request.model_dump_json(),
+                capture_output=True,
+                text=True,
+                timeout=self.timeout_s,
+                check=False,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"exit {result.returncode}: {result.stderr[:200]}")
+            response = validate_run_response(json.loads(result.stdout))
+        except Exception as exc:  # noqa: BLE001
+            return AgentAnswer(
+                text="",
+                latency_s=round(time.monotonic() - started, 2),
+                error=f"{type(exc).__name__}: {exc}",
+            )
+        return _response_to_answer(response, started)
+
+
+def _response_to_answer(response: Any, started: float) -> AgentAnswer:
+    return AgentAnswer(
+        text=response.answer,
+        citations=list(response.citations),
+        tokens=response.usage.prompt_tokens + response.usage.completion_tokens,
+        prompt_tokens=response.usage.prompt_tokens,
+        completion_tokens=response.usage.completion_tokens,
+        model=response.usage.model,
+        provider=response.usage.provider,
+        price_table_version=response.cost.price_table_version,
+        estimated=response.cost.estimated,
+        latency_s=round(response.latency_ms / 1000 or time.monotonic() - started, 2),
+        cost_usd=float(response.cost.estimated_usd or 0.0),
+        trace=list(response.trace),
+        error=response.error,
+    )
 
 
 class HttpAdapter:

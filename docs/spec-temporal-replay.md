@@ -114,6 +114,7 @@ result_hash (对结果 JSON 的 sha256)
 
 ## 8. 风险
 
+- **Wayback 不可达（实测 2026-11-01）**：当前环境访问 archive.org 失败（超时/代理），无法自动抓取历史快照 → 演示默认 `simulated`，或换网络环境后用 `scripts/capture_snapshot.py` 补抓；**不得伪造历史证据**。
 - Wayback 无快照 / 被墙 → 换题或标 simulated；
 - 页面结构变化导致抽取失败 → 保存原文，抽取失败标 `unparsed`；
 - 时区/发布日期歧义 → 统一 UTC，记录原始字符串；

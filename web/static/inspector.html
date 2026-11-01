@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>YAI Scout — Evidence Inspector</title>
+<style>
+  :root{--bg:#0b0f14;--panel:#121821;--panel2:#0f141c;--line:#1f2a37;--text:#e6e9ef;--muted:#8b98a9;
+        --accent:#f5a524;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--mono:ui-monospace,"Cascadia Code",Consolas,monospace}
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;color:var(--text);
+    background:radial-gradient(1200px 700px at 20% -10%,#16202c 0%,var(--bg) 55%);
+    font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  header{display:flex;gap:14px;align-items:baseline;padding:18px 26px;border-bottom:1px solid var(--line)}
+  h1{font-size:17px;margin:0} h1 span{color:var(--accent)} .tag{color:var(--muted);font-size:12px}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  main{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:18px 26px 60px;max-width:1240px;margin:0 auto}
+  @media(max-width:900px){main{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .report{display:block;padding:8px;border-radius:8px;cursor:pointer;border:1px solid transparent;color:var(--text)}
+  .report:hover{background:var(--panel2)} .report.on{border-color:#7a5314;background:var(--panel2)}
+  .report .id{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .claim{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--panel2)}
+  .badge{font-family:var(--mono);font-size:11px;padding:1px 8px;border-radius:999px;border:1px solid var(--line)}
+  .badge.fresh{color:var(--ok);border-color:#14532d}.badge.stale{color:var(--bad);border-color:#7f1d1d}
+  .badge.conflicted{color:#fb923c;border-color:#7c2d12}.badge.insufficient{color:var(--warn);border-color:#78350f}
+  .badge.unknown{color:var(--muted)}
+  .ev{border-left:2px solid var(--line);padding-left:10px;margin-top:8px;font-size:12px}
+  .ev .rel{font-family:var(--mono);font-size:10px;margin-right:6px}
+  .muted{color:var(--muted)} .mono{font-family:var(--mono)}
+  .bar{height:6px;background:#1b2430;border-radius:999px;overflow:hidden;margin-top:4px}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#f87171,#fbbf24,#34d399)}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+  .k{font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .sugg{color:var(--warn);border-left:2px solid #78350f;padding-left:8px;margin-top:8px;font-size:12px}
+  .toolbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+  button{background:var(--accent);color:#1b1206;border:0;border-radius:7px;padding:6px 11px;font-weight:600;cursor:pointer;font-size:12px}
+  button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:400}
+  .empty{color:var(--muted);padding:16px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>YAI <span>Scout</span> · Evidence Inspector</h1>
+  <div class="tag">逐条 claim → 证据 → 分数拆解</div>
+  <div style="margin-left:auto"><a href="/">首页</a> · <a href="/freshness">Freshness</a> · <a href="/benchmark">Benchmark</a></div>
+</header>
+<main>
+  <section class="panel">
+    <h2>历史报告</h2>
+    <div id="list"><div class="empty">加载中…</div></div>
+  </section>
+  <section>
+    <div class="panel">
+      <div class="toolbar">
+        <h2 style="margin:0;align-self:center">报告详情</h2>
+        <button class="ghost" id="export">导出 Markdown</button>
+        <button class="ghost" id="copy">复制 JSON</button>
+      </div>
+      <div id="detail"><div class="empty">左侧选择一份报告</div></div>
+    </div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const STATUS = ["fresh", "stale", "conflicted", "insufficient", "unknown"];
+let current = null;
+let filter = "all";
+
+const reportId = (location.pathname.match(/\/inspector\/([^/]+)/) || [])[1] || null;
+
+async function init() {
+  const res = await fetch("/freshness/reports");
+  const data = await res.json();
+  const reports = data.reports || [];
+  $("list").innerHTML = reports.length ? "" : '<div class="empty">还没有报告</div>';
+  reports.forEach((r) => {
+    const el = document.createElement("div");
+    el.className = "report" + (r.id === reportId ? " on" : "");
+    el.innerHTML = `<div class="id">${esc(r.id)}</div>
+      <div>score ${r.overall_score ?? "—"} · ${r.claims} claims · stale ${r.stale_claims}</div>
+      <div class="id">${esc(r.created_at)}</div>`;
+    el.onclick = () => load(r.id);
+    $("list").appendChild(el);
+  });
+  if (reportId) load(reportId);
+  else if (reports[0]) load(reports[0].id);
+}
+
+async function load(id) {
+  const res = await fetch(`/freshness/reports/${id}`);
+  if (!res.ok) { $("detail").innerHTML = '<div class="empty">报告不存在</div>'; return; }
+  current = await res.json();
+  document.querySelectorAll(".report").forEach((el) => el.classList.remove("on"));
+  render();
+}
+
+function render() {
+  const r = current;
+  const verdicts = Object.fromEntries((r.verdicts || []).map((v) => [v.claim_id, v]));
+  const counts = STATUS.map((s) => `${s}: ${(r.verdicts || []).filter((v) => v.status === s).length}`).join(" · ");
+  const head = `<div class="muted" style="font-size:12px">
+    report <span class="mono">${esc(r.id)}</span> · as_of ${esc(r.as_of)} · overall <b>${r.overall_score ?? "—"}</b>
+    · policy ${esc(r.policy_version)} / weights ${esc(r.weights_version)} · ${counts}</div>
+    <div class="toolbar" style="margin-top:10px">
+      ${["all", ...STATUS].map((s) => `<button class="ghost" data-filter="${s}" ${filter === s ? 'style="border-color:#7a5314;color:var(--accent)"' : ""}>${s}</button>`).join("")}
+    </div>`;
+  const claims = (r.claims || []).filter((c) => {
+    if (filter === "all") return true;
+    return (verdicts[c.id] || {}).status === filter;
+  }).map((c) => {
+    const v = verdicts[c.id] || {};
+    const b = v.breakdown || {};
+    const evidence = (v.evidence || []).map((e) => `<div class="ev">
+      <div><span class="rel">${esc(e.relation)}</span><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title || e.url)}</a></div>
+      <div class="muted">${esc(e.domain)} · 发布 ${esc(e.published_at || "unknown")} · T${e.tier} · conf ${e.relation_confidence ?? "-"}</div>
+      <div class="muted">${esc(e.relation_reason || "")}</div>
+      <div>${esc((e.snippet || "").slice(0, 220))}</div>
+    </div>`).join("");
+    return `<div class="claim">
+      <div><span class="badge ${esc(v.status)}">${esc(v.status)}</span>
+        <span class="badge">${esc(c.temporal_sensitivity)}</span>
+        <span class="badge">${esc(c.type)}</span>
+        <b class="mono">${v.score === null || v.score === undefined ? "—" : v.score + "/100"}</b>
+        <span class="muted">conf ${v.confidence ?? "-"}</span></div>
+      <div style="margin-top:6px">${esc(c.text)}</div>
+      <div class="muted" style="font-size:12px">${esc(v.rationale || "")}</div>
+      ${b.relation !== undefined ? `<div class="grid4">
+        <div><div class="k">relation</div><div class="mono">${b.relation}</div><div class="bar"><i style="width:${Math.round((b.relation || 0) * 100)}%"></i></div></div>
+        <div><div class="k">recency</div><div class="mono">${b.recency}</div><div class="bar"><i style="width:${Math.round((b.recency || 0) * 100)}%"></i></div></div>
+        <div><div class="k">authority</div><div class="mono">${b.authority}</div><div class="bar"><i style="width:${Math.round((b.authority || 0) * 100)}%"></i></div></div>
+        <div><div class="k">coverage</div><div class="mono">${b.coverage}</div><div class="bar"><i style="width:${Math.round((b.coverage || 0) * 100)}%"></i></div></div>
+      </div>` : ""}
+      ${v.suggestion ? `<div class="sugg">建议：${esc(v.suggestion)}</div>` : ""}
+      ${evidence || '<div class="muted" style="margin-top:6px">无证据（INSUFFICIENT）</div>'}
+    </div>`;
+  }).join("");
+  $("detail").innerHTML = head + (claims || '<div class="empty">没有匹配的 claim</div>');
+  document.querySelectorAll("[data-filter]").forEach((btn) => {
+    btn.onclick = () => { filter = btn.dataset.filter; render(); };
+  });
+}
+
+$("export").onclick = async () => {
+  if (!current) return;
+  const res = await fetch(`/freshness/reports/${current.id}/export`);
+  const data = await res.json();
+  const blob = new Blob([data.markdown || ""], { type: "text/markdown;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${current.id}.md`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+$("copy").onclick = async () => {
+  if (!current) return;
+  await navigator.clipboard.writeText(JSON.stringify(current, null, 2));
+};
+
+init();
+</script>
+</body>
+</html>
