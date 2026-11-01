@@ -82,18 +82,22 @@
 
 **不做**：为了"统一感"把两个产品合成一个页面流；不在 Landing 上堆功能。
 
-## 6. 提交材料矩阵（平台单次提交时）
+## 6. 提交材料矩阵（2026-11-01 主办方回复后）
 
-| 材料 | Project A | Project B | 合并提交时 |
+> 主办方确认：**允许合并项目**；两轨**分别评审**；15 日前可继续 commit；表单字段即将更新。
+> 默认按"合并项目 + 一次提交"准备，若表单后续支持两次提交再切换到独立提交。
+
+| 材料 | Project A | Project B | 合并提交（默认） |
 |---|---|---|---|
-| GitHub | monorepo 链接 + `apps/benchmark` | monorepo 链接 + `apps/freshness` | 一个链接 + 两个子目录说明 |
-| README | `apps/benchmark/README.md` | `apps/freshness/README.md` | 根 README 导航 |
-| Demo 视频 | 2 分钟（A 脚本） | 2 分钟（B 脚本） | **4 分钟合并版**：前 2 分钟 A、后 2 分钟 B，章节字幕 |
-| PPT | 5 页 A | 5 页 B | 10 页合并（两章） |
+| GitHub | 同一仓库 + `/benchmark` | 同一仓库 + `/freshness` | 一个链接 + 两轨章节 |
+| README | A 入口说明 | B 入口说明 | 根 README 顶部写两轨映射 |
+| Demo 视频 | 2 分钟（A 脚本） | 2 分钟（B 脚本） | **3–4 分钟合并版**：A → B，章节字幕 |
+| PPT | 5 页 A | 5 页 B | 10 页合并（两章 + 共享底座） |
 | 在线 Demo | `/benchmark` | `/freshness` | 同一域名两个路径 |
 | AI 使用说明 | 各自一节 | 各自一节 | 合并文档两节 |
 
-> 若主办方开放两次提交：直接分别提交 A / B，材料无需合并。
+> 若表单更新后开放第二次提交 / Track 字段：分别提交 A / B，材料无需合并。
+> 详细倒排、Go/No-Go 与兜底见 [`docs/submission-playbook.md`](submission-playbook.md)。
 
 ## 7. 风险清单
 

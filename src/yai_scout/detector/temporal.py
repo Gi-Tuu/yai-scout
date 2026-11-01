@@ -11,8 +11,8 @@ import re
 from datetime import UTC, datetime
 
 from ..domain.models import Claim, ClaimType, TemporalSensitivity
+from .versions import POLICY_VERSION as POLICY_VERSION
 
-POLICY_VERSION = "2026-11-01"
 DEFAULT_WINDOWS: dict[TemporalSensitivity, int] = {
     TemporalSensitivity.STABLE: 3650,
     TemporalSensitivity.SLOW: 730,
@@ -107,3 +107,5 @@ def apply_temporal_classification(claim: Claim, *, target_time: str | None = Non
             "validity_window_days": window,
         }
     )
+
+

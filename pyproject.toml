@@ -36,14 +36,15 @@ filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py311"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 strict = true
 packages = ["yai_scout"]
 mypy_path = "src"
+

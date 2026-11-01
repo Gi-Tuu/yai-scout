@@ -17,6 +17,7 @@ from .domain.models import (
     CostEntry,
     DetectorReport,
     EvidenceSnapshot,
+    ExperimentManifest,
     Plan,
     ResearchTask,
     RunEvent,
@@ -90,6 +91,9 @@ CREATE TABLE IF NOT EXISTS bench_session (
     id TEXT PRIMARY KEY,
     status TEXT NOT NULL,
     config_json TEXT NOT NULL DEFAULT '{}',
+    manifest_json TEXT NOT NULL DEFAULT '{}',
+    result_hash TEXT,
+    supersedes TEXT,
     created_at TEXT NOT NULL,
     finished_at TEXT,
     error TEXT
@@ -134,7 +138,24 @@ class Store:
             if self.path != ":memory:":
                 self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.executescript(SCHEMA)
+            self._ensure_bench_columns()
             self._conn.commit()
+
+    def _ensure_bench_columns(self) -> None:
+        """向后兼容迁移：只加列，不重建表，不删除历史数据。"""
+        columns = {
+            row["name"] for row in self._conn.execute("PRAGMA table_info(bench_session)")
+        }
+        additions = {
+            "manifest_json": "TEXT NOT NULL DEFAULT '{}'",
+            "result_hash": "TEXT",
+            "supersedes": "TEXT",
+        }
+        for name, decl in additions.items():
+            if name not in columns:
+                self._conn.execute(
+                    f"ALTER TABLE bench_session ADD COLUMN {name} {decl}"
+                )
 
     # ------------------------------------------------------------------ lifecycle
     def close(self) -> None:
@@ -366,13 +387,17 @@ class Store:
     def create_bench_session(self, session: BenchSession) -> BenchSession:
         with self._lock:
             self._conn.execute(
-                """INSERT INTO bench_session 
-                   (id, status, config_json, created_at, finished_at, error)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
+                """INSERT INTO bench_session
+                   (id, status, config_json, manifest_json, result_hash, supersedes,
+                    created_at, finished_at, error)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     session.id,
                     session.status,
                     session.model_dump_json(),
+                    session.manifest.model_dump_json() if session.manifest else "{}",
+                    session.result_hash,
+                    session.supersedes,
                     session.created_at,
                     session.finished_at,
                     session.error,
@@ -388,39 +413,75 @@ class Store:
         status: str | None = None,
         finished_at: str | None = None,
         error: str | None = None,
+        result_hash: str | None = None,
+        manifest_json: str | None = None,
     ) -> None:
-        sets: list[str] = []
-        vals: list[Any] = []
-        if status is not None:
-            sets.append("status = ?")
-            vals.append(status)
-        if finished_at is not None:
-            sets.append("finished_at = ?")
-            vals.append(finished_at)
-        if error is not None:
-            sets.append("error = ?")
-            vals.append(error)
-        if not sets:
-            return
-        vals.append(session_id)
+        """生命周期更新；完成后不可变。配置 hash 不允许被改写。"""
         with self._lock:
-            self._conn.execute(f"UPDATE bench_session SET {', '.join(sets)} WHERE id = ?", vals)
+            row = self._conn.execute(
+                "SELECT status, result_hash, manifest_json FROM bench_session WHERE id = ?",
+                (session_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"bench session not found: {session_id}")
+            if str(row["status"]) in {"done", "failed"}:
+                raise ValueError("bench session is immutable after completion")
+            if result_hash is not None and row["result_hash"] is not None:
+                if row["result_hash"] != result_hash:
+                    raise ValueError("result_hash already set and differs")
+                result_hash = None
+            if manifest_json is not None:
+                stored = json.loads(row["manifest_json"] or "{}")
+                incoming = json.loads(manifest_json or "{}")
+                if stored.get("config_hash") != incoming.get("config_hash"):
+                    raise ValueError("manifest config_hash is immutable")
+            sets: list[str] = []
+            vals: list[Any] = []
+            if status is not None:
+                sets.append("status = ?")
+                vals.append(status)
+            if finished_at is not None:
+                sets.append("finished_at = ?")
+                vals.append(finished_at)
+            if error is not None:
+                sets.append("error = ?")
+                vals.append(error)
+            if result_hash is not None:
+                sets.append("result_hash = ?")
+                vals.append(result_hash)
+            if manifest_json is not None:
+                sets.append("manifest_json = ?")
+                vals.append(manifest_json)
+            if not sets:
+                return
+            vals.append(session_id)
+            self._conn.execute(
+                f"UPDATE bench_session SET {', '.join(sets)} WHERE id = ?", vals
+            )
             self._conn.commit()
 
     def get_bench_session(self, session_id: str) -> BenchSession | None:
         with self._lock:
             row = self._conn.execute(
-                "SELECT config_json, status, finished_at, error FROM bench_session WHERE id = ?",
+                """SELECT config_json, manifest_json, result_hash, supersedes,
+                          status, finished_at, error
+                   FROM bench_session WHERE id = ?""",
                 (session_id,),
             ).fetchone()
         if row is None:
             return None
         session = BenchSession.model_validate_json(row["config_json"])
+        manifest = None
+        if row["manifest_json"] and row["manifest_json"] != "{}":
+            manifest = ExperimentManifest.model_validate_json(row["manifest_json"])
         return session.model_copy(
             update={
                 "status": row["status"],
                 "finished_at": row["finished_at"],
                 "error": row["error"],
+                "result_hash": row["result_hash"],
+                "supersedes": row["supersedes"],
+                "manifest": manifest,
             }
         )
 
@@ -564,5 +625,7 @@ def _parse_detector_report(payload: str) -> DetectorReport:
         if status in {"uncertain", "unverifiable"}:
             verdict["status"] = "insufficient"
     return DetectorReport.model_validate(data)
+
+
 
 

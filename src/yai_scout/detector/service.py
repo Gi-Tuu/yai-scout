@@ -11,8 +11,9 @@ from .claims import extract_claims
 from .extract_llm import extract_claims_llm
 from .freshness import WEIGHTS_VERSION, overall_score
 from .suggest import generate_suggestions
-from .temporal import POLICY_VERSION, apply_temporal_classification
+from .temporal import apply_temporal_classification
 from .verify import ClaimVerifier, Searcher
+from .versions import POLICY_VERSION
 
 
 class StaleAnswerDetector:
@@ -101,4 +102,5 @@ class StaleAnswerDetector:
             policy_version=POLICY_VERSION,
             weights_version=WEIGHTS_VERSION,
         )
+
 

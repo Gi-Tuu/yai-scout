@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
-import json
 import time
 import uuid
 
+from ..config import Settings
 from ..detector.service import StaleAnswerDetector
+from ..detector.versions import POLICY_VERSION, WEIGHTS_VERSION
 from ..domain.models import (
     AgentAnswer,
     AgentSpec,
@@ -21,6 +21,9 @@ from ..domain.models import (
 from ..store import Store
 from .adapters import AgentAdapter
 from .dataset import load_dataset
+from .manifest import build_manifest
+from .manifest import config_hash as compute_config_hash
+from .manifest import result_hash as compute_result_hash
 from .scoring import claim_coverage, evidence_metrics, expected_accuracy, weighted_view
 
 DEFAULT_AGENT_SPECS: list[AgentSpec] = [
@@ -52,6 +55,8 @@ class BenchmarkRunner:
         adapters: dict[str, AgentAdapter],
         detector: StaleAnswerDetector | None,
         *,
+        cfg: Settings | None = None,
+        agent_specs: dict[str, AgentSpec] | None = None,
         concurrency: int = 2,
         detect_freshness: bool = True,
         max_claims: int = 2,
@@ -60,6 +65,21 @@ class BenchmarkRunner:
         self.store = store
         self.adapters = adapters
         self.detector = detector
+        self.cfg = cfg or Settings()
+        self.agent_specs = agent_specs or {
+            spec.id: spec for spec in DEFAULT_AGENT_SPECS
+        }
+        # 自定义 adapter 也必须出现在 manifest 中；缺失 spec 时用安全的占位描述。
+        for adapter_id, adapter in adapters.items():
+            self.agent_specs.setdefault(
+                adapter_id,
+                AgentSpec(
+                    id=adapter_id,
+                    name=getattr(adapter, "name", adapter_id),
+                    kind="http",
+                    description=type(adapter).__name__,
+                ),
+            )
         self.concurrency = concurrency
         self.detect_freshness = detect_freshness
         self.max_claims = max_claims
@@ -67,7 +87,12 @@ class BenchmarkRunner:
         self._sessions: dict[str, asyncio.Task[None]] = {}
 
     def start(
-        self, agent_ids: list[str] | None = None, task_ids: list[str] | None = None
+        self,
+        agent_ids: list[str] | None = None,
+        task_ids: list[str] | None = None,
+        *,
+        allow_hidden: bool = False,
+        supersedes: str | None = None,
     ) -> BenchSession:
         chosen_agents = [agent_id for agent_id in (agent_ids or []) if agent_id in self.adapters]
         if agent_ids and not chosen_agents:
@@ -85,30 +110,45 @@ class BenchmarkRunner:
         missing = [task_id for task_id in chosen_tasks if task_id not in all_tasks]
         if missing:
             raise ValueError(f"unknown task ids: {missing}")
-        config_hash = hashlib.sha256(
-            json.dumps(
-                {
-                    "agents": chosen_agents,
-                    "tasks": chosen_tasks,
-                    "dataset": dataset_version,
-                    "target_time": [
-                        all_tasks[t].as_of for t in chosen_tasks
-                    ],
-                },
-                sort_keys=True,
-            ).encode("utf-8")
-        ).hexdigest()[:16]
+        hidden = [task_id for task_id in chosen_tasks if all_tasks[task_id].hidden]
+        if hidden and not allow_hidden:
+            raise ValueError("hidden tasks require private execution context")
+        chosen_task_models = [all_tasks[t] for t in chosen_tasks]
+        session_id = f"bench_{uuid.uuid4().hex[:10]}"
+        started_at = utcnow_iso()
+        manifest = build_manifest(
+            experiment_id=session_id,
+            dataset_version=dataset_version,
+            tasks=chosen_task_models,
+            agents=[
+                self.agent_specs[agent_id]
+                for agent_id in chosen_agents
+                if agent_id in self.agent_specs
+            ],
+            cfg=self.cfg,
+            snapshot_ids=[s.id for s in self.store.list_snapshots(limit=1000)],
+            started_at=started_at,
+            policy_version=POLICY_VERSION,
+            weights_version=WEIGHTS_VERSION,
+            agent_timeout_s=self.timeout_s,
+            max_claims=self.max_claims,
+            detect_freshness=self.detect_freshness,
+        )
+        manifest.config_hash = compute_config_hash(manifest)
         session = BenchSession(
-            id=f"bench_{uuid.uuid4().hex[:10]}",
+            id=session_id,
             status="running",
             agent_ids=chosen_agents,
             task_ids=chosen_tasks,
             dataset_version=dataset_version,
-            config_hash=config_hash,
+            config_hash=manifest.config_hash,
+            manifest=manifest,
+            supersedes=supersedes,
+            created_at=started_at,
         )
         self.store.create_bench_session(session)
         job = asyncio.create_task(
-            self._run(session, chosen_agents, [all_tasks[t] for t in chosen_tasks]),
+            self._run(session, chosen_agents, chosen_task_models),
             name=f"benchmark:{session.id}",
         )
         self._sessions[session.id] = job
@@ -200,15 +240,50 @@ class BenchmarkRunner:
             await asyncio.gather(
                 *(run_one(task, agent_id) for task in tasks for agent_id in agent_ids)
             )
+            finished_at = utcnow_iso()
+            results = self.store.list_bench_results(session.id)
+            digest = compute_result_hash(results)
+            final_manifest = None
+            if session.manifest is not None:
+                final_manifest = session.manifest.model_copy(
+                    update={
+                        "finished_at": finished_at,
+                        "status": "done",
+                        "result_hash": digest,
+                    }
+                )
             self.store.update_bench_session(
-                session.id, status="done", finished_at=utcnow_iso()
+                session.id,
+                status="done",
+                finished_at=finished_at,
+                result_hash=digest,
+                manifest_json=(
+                    final_manifest.model_dump_json() if final_manifest else None
+                ),
             )
         except Exception as exc:  # noqa: BLE001 - 顶层兜底
+            finished_at = utcnow_iso()
+            error = f"{type(exc).__name__}: {exc}"
+            results = self.store.list_bench_results(session.id)
+            digest = compute_result_hash(results)
+            final_manifest = None
+            if session.manifest is not None:
+                final_manifest = session.manifest.model_copy(
+                    update={
+                        "finished_at": finished_at,
+                        "status": "failed",
+                        "result_hash": digest,
+                    }
+                )
             self.store.update_bench_session(
                 session.id,
                 status="failed",
-                finished_at=utcnow_iso(),
-                error=f"{type(exc).__name__}: {exc}",
+                finished_at=finished_at,
+                error=error,
+                result_hash=digest,
+                manifest_json=(
+                    final_manifest.model_dump_json() if final_manifest else None
+                ),
             )
         finally:
             _ = time.monotonic() - started
@@ -219,6 +294,9 @@ class BenchmarkRunner:
             job.cancel()
         if jobs:
             await asyncio.gather(*jobs, return_exceptions=True)
+
+
+
 
 
 

@@ -180,8 +180,9 @@ class DetectorReport(BaseModel):
     credits: float = 0.0
     llm_cost_usd: float = 0.0
     mode: Literal["live", "replay"] = "live"
-    policy_version: str = "2026-11-01"
-    weights_version: str = "rubric-v1"
+    # 新建报告由 detector 显式写入实际版本；缺失（历史报告）保持 unknown，不静默回填。
+    policy_version: str = "unknown"
+    weights_version: str = "unknown"
     created_at: str = Field(default_factory=utcnow_iso)
 
 
@@ -228,6 +229,8 @@ class BenchmarkTask(BaseModel):
     gold_values: list[str] = Field(default_factory=list)
     gold_sources: list[str] = Field(default_factory=list)
     hidden: bool = False
+    # 已提交到公开 Git 历史的 hidden 题目必须标记为 compromised（无法再视为保密）。
+    compromised: bool = False
     notes: str = ""
 
 
@@ -273,6 +276,37 @@ class TaskResult(BaseModel):
     error: str | None = None
 
 
+class ExperimentManifest(BaseModel):
+    """一次 Benchmark 实验的完整、可哈希配置快照（不含秘密明文）。"""
+
+    experiment_id: str
+    dataset_id: str = ""
+    dataset_version: str = ""
+    dataset_hash: str = ""
+    task_ids: list[str] = Field(default_factory=list)
+    agent_manifest: list[dict[str, Any]] = Field(default_factory=list)
+    model_provider: str = ""
+    model_name: str = ""
+    model_version: str = ""
+    adapter_protocol_version: str = ""
+    tool_configuration: dict[str, Any] = Field(default_factory=dict)
+    retrieval_configuration: dict[str, Any] = Field(default_factory=dict)
+    budget_configuration: dict[str, Any] = Field(default_factory=dict)
+    timeout_configuration: dict[str, Any] = Field(default_factory=dict)
+    evaluator_version: str = ""
+    policy_version: str = ""
+    weights_version: str = ""
+    prompt_version: str = ""
+    code_commit: str = "unknown"
+    dependency_lock_hash: str = ""
+    snapshot_ids: list[str] = Field(default_factory=list)
+    config_hash: str = ""
+    result_hash: str | None = None
+    started_at: str | None = None
+    finished_at: str | None = None
+    status: str = "running"
+
+
 class BenchSession(BaseModel):
     id: str
     status: Literal["running", "done", "failed"] = "running"
@@ -280,8 +314,13 @@ class BenchSession(BaseModel):
     task_ids: list[str] = Field(default_factory=list)
     dataset_version: str = ""
     config_hash: str = ""
+    manifest: ExperimentManifest | None = None
+    result_hash: str | None = None
+    supersedes: str | None = None
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
+
 
 
