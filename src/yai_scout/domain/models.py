@@ -179,6 +179,7 @@ class DetectorReport(BaseModel):
     insufficient_claims: int = 0
     credits: float = 0.0
     llm_cost_usd: float = 0.0
+    mode: Literal["live", "replay"] = "live"
     policy_version: str = "2026-11-01"
     weights_version: str = "rubric-v1"
     created_at: str = Field(default_factory=utcnow_iso)
@@ -282,4 +283,5 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
 

@@ -35,7 +35,7 @@ class DriftReport(BaseModel):
     right_id: str
     left_as_of: str
     right_as_of: str
-    mode: Literal["live", "simulated"]
+    mode: Literal["live", "replay", "simulated"]
     diffs: list[ClaimDiff] = Field(default_factory=list)
     summary: dict[str, int] = Field(default_factory=dict)
     warning: str = ""
@@ -103,19 +103,24 @@ def compare_reports(left: DetectorReport, right: DetectorReport) -> DriftReport:
         )
         summary[change] += 1
 
-    simulated = left.as_of != right.as_of
+    if left.mode == "replay" and right.mode == "replay":
+        mode: Literal["live", "replay", "simulated"] = "replay"
+        warning = "历史对比基于真实快照（GitHub Releases 官方历史），证据时间可追溯。"
+    elif left.as_of != right.as_of:
+        mode = "simulated"
+        warning = "历史对比为模拟时间场景（无真实历史快照），不代表当时的真实检索结果。"
+    else:
+        mode = "live"
+        warning = ""
     return DriftReport(
         left_id=left.id,
         right_id=right.id,
         left_as_of=left.as_of,
         right_as_of=right.as_of,
-        mode="simulated" if simulated else "live",
+        mode=mode,
         diffs=diffs,
         summary=summary,
-        warning=(
-            "历史对比为模拟时间场景（无真实历史快照），不代表当时的真实检索结果。"
-            if simulated
-            else ""
-        ),
+        warning=warning,
     )
+
 

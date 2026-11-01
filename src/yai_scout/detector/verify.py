@@ -24,7 +24,8 @@ VERIFY_TIMEOUT_S = 20.0
 PREAMBLE_RE = re.compile(r"^(?:旧资料显示|根据[^，,。]*[，,])")
 UNIT_TOKENS = (
     "$", "€", "£", "¥", "usd", "eur", "cny",
-    "credit", "version", "%", "million", "billion",
+    "credit", "version", "版本", "许可证", "端口",
+    "%", "million", "billion",
 )
 
 
@@ -200,5 +201,6 @@ class ClaimVerifier:
             if result_numbers and shares_unit:
                 return "contradicts"
         return "mentions"
+
 
 

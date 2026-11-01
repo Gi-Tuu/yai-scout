@@ -54,6 +54,8 @@ T2_DOMAINS = {
     "caixin.com",
     "thepaper.cn",
     "36kr.com",
+    # 官方代码仓库的 release/license 页面：版本/许可证类 claim 的一手来源
+    "github.com",
 }
 T4_DOMAINS = {
     "reddit.com",
@@ -91,3 +93,4 @@ def classify_source(url: str) -> tuple[int, str]:
     if host in T4_DOMAINS:
         return 4, "用户生成内容/UGC 平台"
     return 3, "未收录域名，默认一般来源"
+

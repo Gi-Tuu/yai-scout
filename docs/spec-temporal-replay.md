@@ -112,6 +112,23 @@ result_hash (对结果 JSON 的 sha256)
 | 4 | 对比引擎 + 漂移报告 API/UI | P1 |
 | 5 | 时间旅行可视化（P2） | P2 |
 
+## 7.5 替代来源：GitHub Releases（official_history）
+
+archive.org 不可达时，用**官方 release 历史**作为真实历史证据：
+
+- 脚本：`scripts/capture_github_history.py --repo Gi-Tuu/yai-agent-core`
+- 每条 release 一个快照，`published_at` = 官方发布时间；`origin=official_history`
+- replay 只使用 `published_at <= target_time` 的快照，且要求快照与 claim 主题相关（URL/关键词）
+
+**实测（2026-11-01）**：
+
+| as_of | 可用最新 release | 判定 |
+|---|---|---|
+| 2026-10-28 | v0.24.0（2026-10-27） | **STALE 24**（claim 0.25.0 与当时最新版本矛盾） |
+| 2026-11-01 | v0.25.0（2026-10-31） | **FRESH 88**（官方 release 支持） |
+
+这是**真实历史证据**（GitHub 官方 API 时间戳），不是伪造的 Wayback 页面；它只覆盖"版本/发布"类事实，不覆盖网页内容快照。
+
 ## 8. 风险
 
 - **Wayback 不可达（实测 2026-11-01）**：当前环境访问 archive.org 失败（超时/代理），无法自动抓取历史快照 → 演示默认 `simulated`，或换网络环境后用 `scripts/capture_snapshot.py` 补抓；**不得伪造历史证据**。
@@ -119,3 +136,4 @@ result_hash (对结果 JSON 的 sha256)
 - 页面结构变化导致抽取失败 → 保存原文，抽取失败标 `unparsed`；
 - 时区/发布日期歧义 → 统一 UTC，记录原始字符串；
 - 演示数据过时 → 赛前 11/12 重新校验快照可用性。
+

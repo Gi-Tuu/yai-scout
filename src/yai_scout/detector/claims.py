@@ -12,7 +12,7 @@ import uuid
 from ..domain.models import Claim, ClaimType
 
 SENTENCE_SPLIT_RE = re.compile(r"(?<!\d)[.!?](?!\d)|[。！？]|\n+")
-NUMBER_RE = re.compile(r"[$€£¥]?\s?\d[\d,]*(?:\.\d+)?")
+NUMBER_RE = re.compile(r"\d+(?:\.\d+)+|\d[\d,]*")
 MAX_CLAIM_CHARS = 400
 MIN_CLAIM_CHARS = 12
 

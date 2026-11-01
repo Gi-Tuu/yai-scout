@@ -7,11 +7,12 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 
 from ..domain.models import (
     Claim,
+    ClaimType,
     EvidenceRef,
     FreshnessStatus,
     FreshnessVerdict,
@@ -92,6 +93,17 @@ def score_claim(
         if age < 0 and not allow_future:
             continue  # 历史回放：未来证据不可用
         usable.append(item)
+
+    # 版本类 claim：只比较"最新一次发布"，旧版本不是矛盾证据。
+    if claim.type is ClaimType.VERSION and usable:
+        dated = [
+            (parse_published(item.updated_at or item.published_at), item) for item in usable
+        ]
+        known = [when for when, _ in dated if when is not None]
+        if known:
+            newest = max(known)
+            cutoff = newest - timedelta(days=1)
+            usable = [item for when, item in dated if when is None or when >= cutoff]
 
     effective = [e for e in usable if e.relation in {"supports", "contradicts"}]
     supports = [e for e in effective if e.relation == "supports"]
@@ -216,5 +228,7 @@ __all__ = [
     "parse_published",
     "score_claim",
 ]
+
+
 
 

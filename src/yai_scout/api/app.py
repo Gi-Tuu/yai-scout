@@ -7,7 +7,7 @@ import json
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
@@ -23,6 +23,7 @@ from ..benchmark.scoring import pareto_frontier
 from ..config import Settings, get_settings
 from ..detector.compare import compare_reports
 from ..detector.service import StaleAnswerDetector
+from ..detector.snapshot_search import SnapshotSearcher
 from ..domain.models import ResearchTask, RunEvent, TaskStatus
 from ..llm import LLMClient
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
@@ -39,6 +40,7 @@ class DetectRequest(BaseModel):
     answer: str = Field(min_length=10, max_length=8000)
     as_of: str | None = None
     max_claims: int = Field(default=6, ge=1, le=12)
+    mode: Literal["live", "replay"] = "live"
 
 
 class BenchmarkRequest(BaseModel):
@@ -119,6 +121,7 @@ def create_app(
             "app": cfg.app_name,
             "version": cfg.app_version,
             "mode": cfg.scout_mode,
+            "snapshots": len(store.list_snapshots(limit=1000)),
             "tavily": {"mode": tavily.mode, "authenticated": tavily.authenticated},
             "llm": {"available": llm.available, "model": cfg.llm_model},
         }
@@ -212,11 +215,23 @@ def create_app(
     @app.post("/api/detector")
     @app.post("/freshness/verify")
     async def detect(payload: DetectRequest) -> dict[str, Any]:
-        report = await detector.detect(
-            payload.answer,
-            as_of=payload.as_of,
-            max_claims=payload.max_claims,
-        )
+        effective_as_of = payload.as_of or cfg.default_as_of
+        if payload.mode == "replay":
+            replay = StaleAnswerDetector(
+                SnapshotSearcher(store, target_time=effective_as_of),
+                as_of=effective_as_of,
+                max_claims=payload.max_claims,
+                concurrency=3,
+                llm=llm,
+                mode="replay",
+            )
+            report = await replay.detect(payload.answer, as_of=effective_as_of)
+        else:
+            report = await detector.detect(
+                payload.answer,
+                as_of=payload.as_of,
+                max_claims=payload.max_claims,
+            )
         store.save_detector_report(report)
         return report.model_dump(mode="json")
 
@@ -411,6 +426,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 

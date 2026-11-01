@@ -97,6 +97,8 @@ class StaleAnswerDetector:
             insufficient_claims=count(FreshnessStatus.INSUFFICIENT),
             credits=round(credits, 2),
             llm_cost_usd=round(llm_cost, 6),
+            mode="replay" if self.mode == "replay" else "live",
             policy_version=POLICY_VERSION,
             weights_version=WEIGHTS_VERSION,
         )
+
