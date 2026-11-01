@@ -32,11 +32,11 @@ jobs:
       - name: Sync dependencies
         run: uv sync --extra dev --python ${{ matrix.python-version }}
       - name: Lint
-        run: uv run ruff check src tests scripts examples
+        run: .venv/bin/ruff check src tests scripts examples
       - name: Type check
-        run: uv run mypy
+        run: .venv/bin/mypy
       - name: Tests
-        run: uv run pytest -q
+        run: .venv/bin/pytest -q
 
   docker:
     runs-on: ubuntu-latest
