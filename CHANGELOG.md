@@ -12,6 +12,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 - Public demo deployment: <https://yai-scout.onrender.com> (Render free tier, `SCOUT_MODE=all`); online smoke checks pass for health, all pages and dataset, plus live freshness and benchmark runs.
 - `scripts/smoke_online.py` for post-deploy verification.
+- Snapshot bundle `benchmarks/snapshots.json` (32 real GitHub-release snapshots, 117 KB) exported via `scripts/export_snapshots.py` and seeded at startup, so stateless containers can run real replay; verified in a fresh container (`snapshots=32`, STALE 24 → FRESH 88).
 
 ### Planned
 

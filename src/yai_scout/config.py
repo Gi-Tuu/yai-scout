@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     # all | benchmark | freshness —— 用于独立部署/独立入口
     scout_mode: str = "all"
+    snapshots_seed: str = "benchmarks/snapshots.json"
     # 可选：外部 Agent（scout-adapter/1.0）的 base URL
     http_agent_url: str = ""
 
@@ -57,3 +58,4 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """返回配置（测试可替换）。"""
     return Settings()
+

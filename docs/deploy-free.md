@@ -5,7 +5,8 @@
 
 > **已部署（2026-11-01）**：<https://yai-scout.onrender.com>
 > healthz `mode=all`、tavily=key、llm=available；`smoke_online.py` 全部通过。
-> 注意：免费层 15 分钟无请求会休眠，首次访问 30–90s；磁盘临时，重启后快照/SQLite 清空（live 模式不受影响）。
+> **镜像内置 32 条真实 GitHub Release 快照**（`benchmarks/snapshots.json`，启动时自动灌入），所以线上 `/compare` 的 replay 也可用。
+> 注意：免费层 15 分钟无请求会休眠，首次访问 30–90s；SQLite 其余数据（历史报告）仍是临时的，重启后只保留内置快照。
 
 ## 0. 三种免费路径对比
 

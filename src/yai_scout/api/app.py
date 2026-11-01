@@ -7,6 +7,7 @@ import json
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request
@@ -20,7 +21,7 @@ from ..benchmark.registry import DEFAULT_AGENT_SPECS, build_adapters
 from ..benchmark.runner import BenchmarkRunner
 from ..benchmark.scoring import leaderboard as build_leaderboard
 from ..benchmark.scoring import pareto_frontier
-from ..config import Settings, get_settings
+from ..config import ROOT, Settings, get_settings
 from ..detector.compare import compare_reports
 from ..detector.service import StaleAnswerDetector
 from ..detector.snapshot_search import SnapshotSearcher
@@ -28,6 +29,7 @@ from ..domain.models import ResearchTask, RunEvent, TaskStatus
 from ..llm import LLMClient
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
 from ..retrieval.tavily import TavilyClient
+from ..sources.seed import seed_snapshots
 from ..store import Store
 
 
@@ -63,6 +65,10 @@ def create_app(
     static_dir = cfg.web_dir / "static"
     index_file = static_dir / "index.html"
     store = store or Store(cfg.db_path)
+    seed_path = Path(cfg.snapshots_seed)
+    if not seed_path.is_absolute():
+        seed_path = ROOT / seed_path
+    seed_snapshots(store, seed_path, Path(cfg.db_path).parent / "snapshots")
     tavily = tavily or TavilyClient(
         cfg.tavily_api_key,
         base_url=cfg.tavily_base_url,
@@ -426,6 +432,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 
