@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "YAI Scout"
-    app_version: str = "0.2.0"
+    app_version: str = "0.2.1"
     # all | benchmark | freshness —— 用于独立部署/独立入口
     scout_mode: str = "all"
     snapshots_seed: str = "benchmarks/snapshots.json"
@@ -64,6 +64,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """返回配置（测试可替换）。"""
     return Settings()
+
 
 
 

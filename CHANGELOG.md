@@ -16,6 +16,16 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Final submission package: two project READMEs, slides, demo video.
 
+## [0.2.1-hackathon] - 2026-11-01
+
+### Added
+
+- Public-demo cost guard: global + per-IP per-minute limits and daily caps for detector/benchmark endpoints, with `429`/`Retry-After` and usage in `/api/healthz` (configurable; in-memory, resets on restart).
+
+### Fixed
+
+- Per-minute cap is enforced globally as well as per client, so rotating `X-Forwarded-For` cannot bypass it.
+
 ## [0.2.0-hackathon] - 2026-11-01
 
 Engineering governance adoption and P0 hardening. No change to freshness scoring rules or
@@ -128,5 +138,6 @@ evidence core.
 [Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
 [0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+
 
 
