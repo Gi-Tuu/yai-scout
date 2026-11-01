@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from .domain.models import (
+    Anchor,
     BenchSession,
     CostEntry,
     DetectorReport,
@@ -106,6 +107,14 @@ CREATE TABLE IF NOT EXISTS bench_result (
     payload_json TEXT NOT NULL,
     score REAL NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS anchor (
+    id TEXT PRIMARY KEY,
+    claim_key TEXT NOT NULL,
+    url TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_anchor_claim ON anchor(claim_key);
 CREATE TABLE IF NOT EXISTS snapshot (
     id TEXT PRIMARY KEY,
     url TEXT NOT NULL,
@@ -509,6 +518,50 @@ class Store:
             ).fetchall()
         return [TaskResult.model_validate_json(r["payload_json"]) for r in rows]
 
+    # ------------------------------------------------------------------ anchors
+    def save_anchor(self, anchor: Anchor) -> Anchor:
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO anchor (id, claim_key, url, payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (
+                    anchor.id,
+                    anchor.claim_key,
+                    anchor.url,
+                    anchor.model_dump_json(),
+                    anchor.last_verified_at,
+                ),
+            )
+            self._conn.commit()
+        return anchor
+
+    def list_anchors(
+        self, claim_key: str | None = None, *, active_only: bool = True, limit: int = 200
+    ) -> list[Anchor]:
+        query = "SELECT payload_json FROM anchor"
+        clauses: list[str] = []
+        vals: list[Any] = []
+        if claim_key is not None:
+            clauses.append("claim_key = ?")
+            vals.append(claim_key)
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        vals.append(limit)
+        with self._lock:
+            rows = self._conn.execute(query, vals).fetchall()
+        anchors = [Anchor.model_validate_json(row["payload_json"]) for row in rows]
+        if active_only:
+            anchors = [anchor for anchor in anchors if anchor.status == "active"]
+        return anchors
+
+    def get_anchor(self, anchor_id: str) -> Anchor | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT payload_json FROM anchor WHERE id = ?", (anchor_id,)
+            ).fetchone()
+        return Anchor.model_validate_json(row["payload_json"]) if row else None
+
     # ------------------------------------------------------------------ snapshots
     def save_snapshot(self, snapshot: EvidenceSnapshot) -> EvidenceSnapshot:
         with self._lock:
@@ -625,6 +678,9 @@ def _parse_detector_report(payload: str) -> DetectorReport:
         if status in {"uncertain", "unverifiable"}:
             verdict["status"] = "insufficient"
     return DetectorReport.model_validate(data)
+
+
+
 
 
 

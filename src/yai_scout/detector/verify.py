@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import re
+from collections.abc import Awaitable, Callable
 from typing import Literal, Protocol
 
 from ..domain.models import (
+    Anchor,
     Claim,
     ClaimType,
     EvidenceRef,
@@ -18,6 +20,8 @@ from ..retrieval.quality import classify_source
 from ..retrieval.tavily import SearchResult, TavilyError
 from .claims import extract_numbers
 from .freshness import as_of_datetime, parse_published, score_claim
+
+AnchorFetcher = Callable[[Anchor, str], Awaitable[SearchResult | None]]
 
 VERIFY_QUERY_LIMIT = 380
 VERIFY_TIMEOUT_S = 20.0
@@ -69,6 +73,7 @@ class ClaimVerifier:
         llm: LLMClient | None = None,
         use_llm_relations: bool = True,
         mode: Literal["live", "replay"] = "live",
+        anchor_fetcher: AnchorFetcher | None = None,
     ) -> None:
         self.searcher = searcher
         self.as_of = as_of_datetime(as_of)
@@ -77,8 +82,22 @@ class ClaimVerifier:
         self.llm = llm
         self.use_llm_relations = use_llm_relations
         self.mode = mode
+        self.anchor_fetcher = anchor_fetcher
 
-    async def verify(self, claim: Claim) -> tuple[FreshnessVerdict, float, float]:
+    async def verify(
+        self, claim: Claim, anchor: Anchor | None = None
+    ) -> tuple[FreshnessVerdict, float, float]:
+        anchor_result: SearchResult | None = None
+        anchor_status: Literal["used", "unreachable", "not_found"] | None = None
+        if anchor is not None:
+            anchor_status = "unreachable"
+            if self.anchor_fetcher is not None:
+                anchor_target = as_of_datetime(
+                    claim.target_time or self.as_of.isoformat()
+                ).isoformat()
+                anchor_result = await self.anchor_fetcher(anchor, anchor_target)
+                if anchor_result is not None:
+                    anchor_status = "used"
         query = build_query(claim)
         try:
             results, credits = await asyncio.wait_for(
@@ -102,7 +121,18 @@ class ClaimVerifier:
                 if (parse_published(item.published_date) or target) <= target
             ]
 
-        evidence = [self._to_evidence(claim, item) for item in results[: self.max_results]]
+        if anchor_result is not None:
+            results = [anchor_result, *results]
+        seen_urls: set[str] = set()
+        unique_results: list[SearchResult] = []
+        for item in results:
+            if item.url in seen_urls:
+                continue
+            seen_urls.add(item.url)
+            unique_results.append(item)
+        evidence = [
+            self._to_evidence(claim, item) for item in unique_results[: self.max_results]
+        ]
         llm_cost = 0.0
         llm_reason = ""
         if self._should_use_llm(claim, evidence):
@@ -124,6 +154,9 @@ class ClaimVerifier:
         )
         if llm_reason:
             verdict.rationale = f"{verdict.rationale}（LLM 判定：{llm_reason}）"
+        if anchor is not None:
+            verdict.anchor_id = anchor.id
+            verdict.anchor_status = anchor_status
         return verdict, credits, llm_cost
 
     def _should_use_llm(self, claim: Claim, evidence: list[EvidenceRef]) -> bool:
@@ -201,6 +234,8 @@ class ClaimVerifier:
             if result_numbers and shares_unit:
                 return "contradicts"
         return "mentions"
+
+
 
 
 

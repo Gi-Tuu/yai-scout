@@ -24,13 +24,14 @@ from ..benchmark.runner import DEFAULT_AGENT_SPECS, BenchmarkRunner
 from ..benchmark.scoring import leaderboard as build_leaderboard
 from ..benchmark.scoring import pareto_frontier
 from ..config import ROOT, Settings, get_settings
-from ..detector.compare import compare_reports
+from ..detector.compare import claim_key, compare_reports
 from ..detector.service import StaleAnswerDetector
 from ..detector.snapshot_search import SnapshotSearcher
-from ..domain.models import AgentSpec, ResearchTask, RunEvent, TaskStatus
+from ..domain.models import AgentSpec, Anchor, ResearchTask, RunEvent, TaskStatus
 from ..llm import LLMClient
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
 from ..retrieval.tavily import TavilyClient
+from ..sources.anchor import replay_anchor_result
 from ..sources.seed import seed_snapshots
 from ..store import Store
 from .limits import UsageLimiter
@@ -46,6 +47,15 @@ class DetectRequest(BaseModel):
     as_of: str | None = None
     max_claims: int = Field(default=6, ge=1, le=12)
     mode: Literal["live", "replay"] = "live"
+    use_anchors: bool = True
+
+
+class AnchorCreate(BaseModel):
+    claim_text: str = Field(min_length=3, max_length=800)
+    url: str = Field(min_length=5, max_length=2000)
+    last_value: str = ""
+    source_tier: int = Field(default=3, ge=1, le=4)
+    published_at: str | None = None
 
 
 class BenchmarkRequest(BaseModel):
@@ -260,7 +270,11 @@ def create_app(
     async def detect(payload: DetectRequest, request: Request) -> dict[str, Any]:
         guard_cost(request, "detector")
         effective_as_of = payload.as_of or cfg.default_as_of
+        anchors = store.list_anchors() if payload.use_anchors else []
         if payload.mode == "replay":
+            async def _anchor_fetcher(anchor: Anchor, target: str) -> Any:
+                return await replay_anchor_result(store, anchor, target)
+
             replay = StaleAnswerDetector(
                 SnapshotSearcher(store, target_time=effective_as_of),
                 as_of=effective_as_of,
@@ -268,13 +282,17 @@ def create_app(
                 concurrency=3,
                 llm=llm,
                 mode="replay",
+                anchor_fetcher=_anchor_fetcher,
             )
-            report = await replay.detect(payload.answer, as_of=effective_as_of)
+            report = await replay.detect(
+                payload.answer, as_of=effective_as_of, anchors=anchors
+            )
         else:
             report = await detector.detect(
                 payload.answer,
                 as_of=payload.as_of,
                 max_claims=payload.max_claims,
+                anchors=anchors,
             )
         store.save_detector_report(report)
         return report.model_dump(mode="json")
@@ -340,6 +358,27 @@ def create_app(
                     )
             lines.append("")
         return {"markdown": "\n".join(lines)}
+
+    @app.post("/freshness/anchors", status_code=201)
+    async def create_anchor(payload: AnchorCreate) -> dict[str, Any]:
+        if not payload.url.startswith(("http://", "https://")):
+            raise HTTPException(status_code=400, detail="anchor url must be http(s)")
+        anchor = Anchor(
+            id=f"anc_{uuid.uuid4().hex[:12]}",
+            claim_key=claim_key(payload.claim_text),
+            claim_text=payload.claim_text,
+            url=payload.url,
+            source_tier=payload.source_tier,
+            last_value=payload.last_value,
+            published_at=payload.published_at,
+        )
+        store.save_anchor(anchor)
+        return anchor.model_dump(mode="json")
+
+    @app.get("/freshness/anchors")
+    async def list_anchors(claim_key: str | None = None) -> dict[str, Any]:
+        anchors = store.list_anchors(claim_key=claim_key)
+        return {"anchors": [anchor.model_dump(mode="json") for anchor in anchors]}
 
     @app.get("/freshness/compare")
     async def compare_freshness_reports(left_id: str, right_id: str) -> dict[str, Any]:
@@ -489,6 +528,8 @@ def create_app(
 
 
 app = create_app()
+
+
 
 
 

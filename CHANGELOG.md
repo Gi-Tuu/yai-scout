@@ -20,6 +20,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ### Added
 
+- Anchor MVP: `Anchor` model + SQLite store, `POST/GET /freshness/anchors`, replay-only anchor evidence injected by claim key, and `anchor_id/anchor_status` on verdicts (scoring unchanged; live URL fetching intentionally disabled to avoid SSRF).
 - Positioning & competitor map (`docs/positioning.md`), anchor-first retrieval design (`docs/spec-anchor-retrieval.md`), and a citation-vs-freshness demo case (`docs/demo-case-citation-vs-freshness.md`).
 - `scripts/demo_citation_not_freshness.py` and `scripts/freshness_ci.py` (Freshness CI gate with configurable fail-on statuses).
 - Tests for Freshness CI status filtering.
@@ -149,6 +150,7 @@ evidence core.
 [Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
 [0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+
 
 
 

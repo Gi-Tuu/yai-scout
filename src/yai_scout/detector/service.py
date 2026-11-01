@@ -5,14 +5,15 @@ from __future__ import annotations
 import asyncio
 import uuid
 
-from ..domain.models import DetectorReport, FreshnessStatus, FreshnessVerdict
+from ..domain.models import Anchor, DetectorReport, FreshnessStatus, FreshnessVerdict
 from ..llm import LLMClient
 from .claims import extract_claims
+from .compare import claim_key
 from .extract_llm import extract_claims_llm
 from .freshness import WEIGHTS_VERSION, overall_score
 from .suggest import generate_suggestions
 from .temporal import apply_temporal_classification
-from .verify import ClaimVerifier, Searcher
+from .verify import AnchorFetcher, ClaimVerifier, Searcher
 from .versions import POLICY_VERSION
 
 
@@ -26,6 +27,7 @@ class StaleAnswerDetector:
         concurrency: int = 3,
         llm: LLMClient | None = None,
         mode: str = "live",
+        anchor_fetcher: AnchorFetcher | None = None,
     ) -> None:
         self.searcher = searcher
         self.as_of = as_of
@@ -33,6 +35,7 @@ class StaleAnswerDetector:
         self.concurrency = concurrency
         self.llm = llm
         self.mode = "replay" if mode == "replay" else "live"
+        self.anchor_fetcher = anchor_fetcher
 
     async def detect(
         self,
@@ -40,6 +43,7 @@ class StaleAnswerDetector:
         *,
         as_of: str | None = None,
         max_claims: int | None = None,
+        anchors: list[Anchor] | None = None,
     ) -> DetectorReport:
         effective_as_of = as_of or self.as_of
         limit = max_claims or self.max_claims
@@ -61,13 +65,20 @@ class StaleAnswerDetector:
             as_of=effective_as_of,
             llm=self.llm,
             mode="replay" if self.mode == "replay" else "live",
+            anchor_fetcher=self.anchor_fetcher,
         )
+        anchors_by_key = {
+            anchor.claim_key: anchor
+            for anchor in (anchors or [])
+            if anchor.status == "active"
+        }
         semaphore = asyncio.Semaphore(self.concurrency)
 
         async def one(claim_index: int) -> tuple[FreshnessVerdict, float, float]:
             claim = claims[claim_index]
             async with semaphore:
-                verdict, credits, relation_cost = await verifier.verify(claim)
+                anchor = anchors_by_key.get(claim_key(claim.text))
+                verdict, credits, relation_cost = await verifier.verify(claim, anchor)
             return verdict, credits, relation_cost
 
         outcomes = await asyncio.gather(*(one(i) for i in range(len(claims))))
@@ -102,5 +113,6 @@ class StaleAnswerDetector:
             policy_version=POLICY_VERSION,
             weights_version=WEIGHTS_VERSION,
         )
+
 
 
