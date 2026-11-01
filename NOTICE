@@ -1,0 +1,27 @@
+YAI Scout
+Copyright (c) 2026 Gi-Tuu
+
+This project is released under the MIT License (see LICENSE).
+
+## Reused open-source components
+
+- YAI Agent Core v0.25.0 (https://github.com/Gi-Tuu/yai-agent-core)
+  - License: MIT
+  - Pinned commit: 614f3106c7237b8bee662b925748b56c4da6d890 (tag v0.25.0)
+  - Used as an embeddable agent kernel / reference agent; not modified.
+
+## Runtime dependencies (declared in pyproject.toml)
+
+- FastAPI — MIT
+- Starlette — BSD-3-Clause
+- Uvicorn — BSD-3-Clause
+- Pydantic / pydantic-settings — MIT
+- httpx — BSD-3-Clause
+- Tavily API — Tavily platform terms (see https://tavily.com)
+- DeepSeek-compatible model API (suanli.cn) — provider terms
+
+## Data and content
+
+Benchmark tasks and snapshots reference public web pages (Tavily docs, GitHub releases,
+Bifrost docs, Python docs, etc.). Each task records its source URL; snapshot text is stored
+only for evaluation/audit. Brand names and trademarks belong to their respective owners.
