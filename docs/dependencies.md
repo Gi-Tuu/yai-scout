@@ -17,6 +17,7 @@
 | 当前启用的 extras | 无（G0 只 import 顶层符号与 `spi.ModelProvider`） |
 | 计划启用的 extras | `[llm,server,openapi,mcp,otel]`（用到哪个开哪个，内核本体零第三方硬依赖） |
 | 安装位置 | `.venv/Lib/site-packages/yai_core`（仓库内**没有**任何 YAI 源码副本） |
+| 一致性校验 | 已用 `git hash-object` 对比：PyPI 0.25.0 的 `__init__.py` / `types.py` / `core.py` / `config.py` / `kernel/loop.py` / `spi/model.py` / `batteries/fastapi_server/app.py` 与本地仓库 tag `v0.25.0` **逐字节一致**；tag 与 HEAD 的差异仅 `docs/IMPLEMENTATION_STATUS.md` 与 `uv.lock`（代码无差异） |
 | 接入面 | 仅 `src/yai_scout/kernel/yai_adapter.py`（约 50 行，只 import `__all__` 公共符号 + `spi.ModelProvider`） |
 | 未修改主仓库 | 是。`E:\Competition\YAI Agent Core` 只读审计；其 3 个未提交改动为本项目开始前既有，与本项目无关 |
 
