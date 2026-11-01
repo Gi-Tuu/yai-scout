@@ -84,7 +84,7 @@ flowchart LR
 | Evidence inspector | claim → sources → timestamps → relation → score breakdown → suggestion |
 | Temporal replay | **real**: GitHub Releases official history; example: YAI version `0.25.0` is **STALE at 2026-10-28** and **FRESH at 2026-11-01** |
 | Deployment | `Dockerfile` + two-container compose, `SCOUT_MODE` isolation verified |
-| Cost guard | per-IP per-minute + global daily limits on detector/benchmark endpoints (429 + Retry-After) |\n| Quality gates | 99 tests on Python 3.11 and 3.12, ruff, mypy strict; CI matrix runs lint + types + tests + Docker build |
+| Cost guard | per-IP per-minute + global daily limits on detector/benchmark endpoints (429 + Retry-After) |\n| Quality gates | 102 tests on Python 3.11 and 3.12, ruff, mypy strict; CI matrix runs lint + types + tests + Docker build |
 
 ## Honest limits
 
@@ -119,12 +119,13 @@ docs/              charters, specs, evaluation, demo script
 - [Project charters](docs/charter-benchmark.md) · [Freshness charter](docs/charter-freshness.md)
 - [Differentiation spec](docs/differentiation-spec.md) · [Freshness scoring spec](docs/spec-freshness-scoring.md)
 - [Adapter & dataset spec](docs/spec-benchmark-adapter.md) · [Temporal replay spec](docs/spec-temporal-replay.md)
-- [Evaluation](docs/freshness-eval.md) · [Demo script](docs/demo-script.md) · [Hackathon rules report](docs/hackathon-rules-report.md)\n- [Engineering governance v1.0](docs/governance/engineering-governance-v1.md) · [ADR-0003](docs/adr/0003-engineering-governance.md) · [P1 governance backlog](docs/governance/p1-backlog.md) · [Governance audit](docs/governance/audit-2026-11-01.md)
+- [Positioning & competitor map](docs/positioning.md) · [Anchor-first retrieval design](docs/spec-anchor-retrieval.md) · [Citation-vs-freshness demo](docs/demo-case-citation-vs-freshness.md)\n- [Evaluation](docs/freshness-eval.md) · [Demo script](docs/demo-script.md) · [Hackathon rules report](docs/hackathon-rules-report.md)\n- [Engineering governance v1.0](docs/governance/engineering-governance-v1.md) · [ADR-0003](docs/adr/0003-engineering-governance.md) · [P1 governance backlog](docs/governance/p1-backlog.md) · [Governance audit](docs/governance/audit-2026-11-01.md)
 - [YAI reuse & license audit](docs/yai-reuse.md) · [API resources](docs/api-resources.md) · [Changelog](CHANGELOG.md)
 
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
+
 
 
 

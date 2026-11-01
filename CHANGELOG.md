@@ -20,6 +20,16 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ### Added
 
+- Positioning & competitor map (`docs/positioning.md`), anchor-first retrieval design (`docs/spec-anchor-retrieval.md`), and a citation-vs-freshness demo case (`docs/demo-case-citation-vs-freshness.md`).
+- `scripts/demo_citation_not_freshness.py` and `scripts/freshness_ci.py` (Freshness CI gate with configurable fail-on statuses).
+- Tests for Freshness CI status filtering.
+
+### Fixed
+
+- Version claims now compare only the newest release timestamp, so two releases published the same day no longer produce a false CONFLICTED.
+
+### Added (previous)
+
 - Reproducibility regression test: same manifest + deterministic mock agents produce the same `config_hash` and `result_hash` in CI.
 - Public-demo cost guard: global + per-IP per-minute limits and daily caps for detector/benchmark endpoints, with `429`/`Retry-After` and usage in `/api/healthz` (configurable; in-memory, resets on restart).
 
@@ -139,6 +149,7 @@ evidence core.
 [Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
 [0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+
 
 
 

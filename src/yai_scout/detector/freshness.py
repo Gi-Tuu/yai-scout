@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 
 from ..domain.models import (
@@ -102,8 +102,9 @@ def score_claim(
         known = [when for when, _ in dated if when is not None]
         if known:
             newest = max(known)
-            cutoff = newest - timedelta(days=1)
-            usable = [item for when, item in dated if when is None or when >= cutoff]
+            usable = [
+                item for when, item in dated if when is not None and when == newest
+            ]
 
     effective = [e for e in usable if e.relation in {"supports", "contradicts"}]
     supports = [e for e in effective if e.relation == "supports"]
@@ -228,6 +229,8 @@ __all__ = [
     "parse_published",
     "score_claim",
 ]
+
+
 
 
 

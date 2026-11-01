@@ -162,3 +162,32 @@ def test_overall_score_ignores_nulls():
     fresh = score([evidence("supports", 1, tier=1)], c)
     unknown = score([], c)
     assert overall_score([fresh, unknown]) == fresh.score
+
+def test_version_claim_uses_only_newest_release_timestamp():
+    c = claim(
+        "YAI Agent Core 当前版本是 0.24.0",
+        ClaimType.VERSION,
+        TemporalSensitivity.SENSITIVE,
+        180,
+        ["0.24.0"],
+    )
+    newest = EvidenceRef(
+        url="https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.24.0",
+        domain="github.com",
+        published_at="2026-10-27T08:11:51Z",
+        tier=2,
+        relation="supports",
+    )
+    older = EvidenceRef(
+        url="https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.23.0",
+        domain="github.com",
+        published_at="2026-10-27T04:30:43Z",
+        tier=2,
+        relation="contradicts",
+    )
+    verdict = score_claim(
+        c,
+        [newest, older],
+        as_of=datetime(2026, 10, 28, tzinfo=UTC),
+    )
+    assert verdict.status is FreshnessStatus.FRESH
