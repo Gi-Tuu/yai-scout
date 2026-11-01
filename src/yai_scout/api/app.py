@@ -33,6 +33,7 @@ from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
 from ..retrieval.tavily import TavilyClient
 from ..sources.seed import seed_snapshots
 from ..store import Store
+from .limits import UsageLimiter
 
 
 class CreateResearchRequest(BaseModel):
@@ -108,6 +109,28 @@ def create_app(
     runner = BenchmarkRunner(
         store, adapters, detector, cfg=cfg, agent_specs=agent_specs
     )
+    limiter = UsageLimiter(
+        per_minute=cfg.rate_limit_per_minute,
+        daily={
+            "detector": cfg.daily_detector_limit,
+            "benchmark": cfg.daily_benchmark_limit,
+        },
+    )
+
+    def guard_cost(request: Request, bucket: str) -> None:
+        if not cfg.demo_limits_enabled:
+            return
+        client = UsageLimiter.client_key(
+            dict(request.headers), request.client.host if request.client else "unknown"
+        )
+        allowed, retry = limiter.check(bucket, client)
+        if not allowed:
+            raise HTTPException(
+                status_code=429,
+                detail=f"rate limit exceeded for {bucket}; retry in {retry}s",
+                headers={"Retry-After": str(retry)},
+            )
+
     benchmark_enabled = cfg.scout_mode in {"all", "benchmark"}
     freshness_enabled = cfg.scout_mode in {"all", "freshness"}
 
@@ -141,6 +164,7 @@ def create_app(
             "mode": cfg.scout_mode,
             "snapshots": len(store.list_snapshots(limit=1000)),
             "build": os.environ.get("RENDER_GIT_COMMIT", "dev")[:12],
+            "limits": limiter.usage(),
             "tavily": {"mode": tavily.mode, "authenticated": tavily.authenticated},
             "llm": {"available": llm.available, "model": cfg.llm_model},
         }
@@ -233,7 +257,8 @@ def create_app(
     # ------------------------------------------------------------------ detector
     @app.post("/api/detector")
     @app.post("/freshness/verify")
-    async def detect(payload: DetectRequest) -> dict[str, Any]:
+    async def detect(payload: DetectRequest, request: Request) -> dict[str, Any]:
+        guard_cost(request, "detector")
         effective_as_of = payload.as_of or cfg.default_as_of
         if payload.mode == "replay":
             replay = StaleAnswerDetector(
@@ -355,7 +380,10 @@ def create_app(
 
     @app.post("/api/benchmark/run", status_code=202)
     @app.post("/benchmark/runs", status_code=202)
-    async def benchmark_run(payload: BenchmarkRequest) -> dict[str, Any]:
+    async def benchmark_run(
+        payload: BenchmarkRequest, request: Request
+    ) -> dict[str, Any]:
+        guard_cost(request, "benchmark")
         try:
             session = runner.start(payload.agent_ids, payload.task_ids)
         except ValueError as exc:
@@ -461,6 +489,8 @@ def create_app(
 
 
 app = create_app()
+
+
 
 
 

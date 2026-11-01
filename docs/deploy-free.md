@@ -81,7 +81,7 @@
 
 ## 4. Key 与成本安全
 
-- 免费 Tavily 1,000 credits/月、DeepSeek 按量；公开 Demo 可能被滥用。
+- 免费 Tavily 1,000 credits/月、DeepSeek 按量；公开 Demo 可能被滥用。\n- 代码内置基础成本保护（`rate_limit_per_minute`、`daily_detector_limit`、`daily_benchmark_limit`，默认 4/min、60/天、20/天；超限返回 429）。计数在进程内，重启清零；可在 Render 环境变量覆盖。
 - 建议：
   1. 用单独的低额度 key（不要用主 key）；
   2. 设置预算上限（代码里已有 `MAX_TAVILY_CREDITS` 等环境变量，可在平台 Secrets 里覆盖）；
@@ -96,3 +96,4 @@
 - [ ] `/freshness` 能检测 1 段答案并出证据
 - [ ] 预热一次（避免冷启动）
 - [ ] 备用录屏已下载到本地
+
