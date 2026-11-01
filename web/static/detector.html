@@ -37,6 +37,7 @@
   .badge.uncertain{color:var(--warn);border-color:#78350f}.badge.unverifiable{color:var(--muted)}
   .ev{font-size:12px;margin-top:6px;padding-left:10px;border-left:2px solid var(--line)}
   .ev .rel{font-family:var(--mono);font-size:10px;margin-right:6px}
+  .sugg{font-size:12px;color:var(--warn);border-left:2px solid #78350f;padding-left:8px;margin-top:6px}
   .muted{color:var(--muted)} .hidden{display:none}
 </style>
 </head>
@@ -130,6 +131,7 @@ function render(report) {
       <div class="text">${esc(c.text)}</div>
       <div class="meta">${(c.numbers || []).join(" · ") || "无数字"} ${c.signals.length ? "· " + c.signals.join(",") : ""}</div>
       <div class="muted" style="font-size:12px;margin-top:4px">${esc(v.rationale)}</div>
+      ${v.suggestion ? `<div class="sugg">建议：${esc(v.suggestion)}</div>` : ""}
       ${ev}
     </div>`;
   }).join("");
