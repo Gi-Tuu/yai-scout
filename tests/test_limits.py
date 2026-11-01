@@ -50,6 +50,25 @@ def test_per_ip_per_minute_limit():
         assert int(blocked.headers["Retry-After"]) >= 1
 
 
+def test_global_per_minute_limit_across_ips():
+    app = _app(rate_limit_per_minute=1, daily_detector_limit=10)
+    with TestClient(app) as client:
+        assert (
+            client.post(
+                "/api/detector",
+                json={"answer": "The price is 10 dollars today.", "max_claims": 1},
+                headers={"X-Forwarded-For": "203.0.113.10"},
+            ).status_code
+            == 200
+        )
+        blocked = client.post(
+            "/api/detector",
+            json={"answer": "The price is 10 dollars today.", "max_claims": 1},
+            headers={"X-Forwarded-For": "203.0.113.11"},
+        )
+        assert blocked.status_code == 429
+
+
 def test_daily_limit_blocks_even_with_new_ip():
     app = _app(rate_limit_per_minute=100, daily_detector_limit=1)
     with TestClient(app) as client:

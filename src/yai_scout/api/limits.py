@@ -24,6 +24,7 @@ class UsageLimiter:
         self.per_minute = max(1, per_minute)
         self.daily = {bucket: max(1, daily.get(bucket, 1)) for bucket in BUCKETS}
         self._events: dict[tuple[str, str], deque[float]] = {}
+        self._global_events: deque[float] = deque()
         self._day = datetime.now(UTC).date().isoformat()
         self._daily_used: dict[str, int] = {bucket: 0 for bucket in BUCKETS}
         self._lock = Lock()
@@ -34,6 +35,7 @@ class UsageLimiter:
             self._day = today
             self._daily_used = {bucket: 0 for bucket in BUCKETS}
             self._events.clear()
+            self._global_events.clear()
 
     def check(self, bucket: str, client: str) -> tuple[bool, int]:
         """返回 (allowed, retry_after_seconds)。允许时同时记账。"""
@@ -49,15 +51,21 @@ class UsageLimiter:
                 )
                 retry = int((midnight - datetime.now(UTC)).total_seconds())
                 return False, max(1, retry)
+            cutoff = now - 60.0
+            while self._global_events and self._global_events[0] <= cutoff:
+                self._global_events.popleft()
+            if len(self._global_events) >= self.per_minute:
+                retry = int(self._global_events[0] + 60.0 - now) + 1
+                return False, max(1, retry)
             key = (bucket, client)
             events = self._events.setdefault(key, deque())
-            cutoff = now - 60.0
             while events and events[0] <= cutoff:
                 events.popleft()
             if len(events) >= self.per_minute:
                 retry = int(events[0] + 60.0 - now) + 1
                 return False, max(1, retry)
             events.append(now)
+            self._global_events.append(now)
             self._daily_used[bucket] += 1
         return True, 0
 
@@ -80,3 +88,4 @@ class UsageLimiter:
             if first:
                 return first
         return fallback or "unknown"
+
