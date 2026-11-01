@@ -169,7 +169,16 @@ Review：
 5. 通过后只对 R4 高置信候选开启自动更新；
 6. 保留 rollback 与审计。
 
-## 12. 明确不做
+## 12. v0 评估结果（2026-11-01）
+
+- 规则实现：`src/yai_scout/detector/accuracy_gate.py`；
+- 评估脚本：`scripts/eval_accuracy_gate.py`；
+- 30 条标注：**agreement 1.000**，auto_update precision 1.000（8/8）；
+- 决策分布：auto 8 / review 12 / reject 5 / no_change 5。
+
+**必须诚实说明**：这 30 条标签是按同一套规则设计的，1.000 只证明“实现与设计一致”，不代表泛化。下一步需要 60 条独立标注（不由规则作者编写）+ 对抗样本，才可谈真实 precision。
+
+## 13. 明确不做
 
 - 不用 LLM 单独决定“新值正确”；
 - 不把 freshness score 当 accuracy；
@@ -177,3 +186,4 @@ Review：
 - 不允许单源自动更新；
 - 不允许同一来源镜像凑数；
 - 不在无标注集的情况下开启自动更新。
+

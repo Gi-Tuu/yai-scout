@@ -82,7 +82,13 @@
 
 **False update rate 优先于覆盖率**：宁可送审，不可错写。
 
-## 9. 数据集约定
+## 9. v0 结果与局限
+
+- 30 条 v0 标签上 gate agreement = 1.000；
+- 标签由规则同一作者设计，存在**过拟合**，不能当作泛化证据；
+- 扩到 60 条时必须由第二人独立标注/裁决，并加入 adversarial cases（镜像、歧义、旧证据、冲突）。
+
+## 10. 数据集约定
 
 - 文件：`benchmarks/accuracy_gate/labeled_cases.json`
 - `synthetic_metadata: true`：事实来自公开资料，来源元数据为合成；
@@ -96,3 +102,4 @@
 - 不用未核验的“行业常识”补标签；
 - 不为了让 Gate 好看而修改标签；
 - 不把 accuracy 标签用于 freshness 分数。
+
