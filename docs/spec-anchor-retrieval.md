@@ -117,14 +117,16 @@ Anchor:
 6. **多 anchor 选择**：按 `source_tier` → `published_at` → `last_verified_at` 确定性排序，取前 2 条；
 7. **读时 TTL**：STABLE 365d / SLOW 90d / SENSITIVE 7d / VOLATILE 1d；到期标记 `needs_revalidation`，不做后台 scheduler；
 8. **可选 live 抓取**：`ANCHOR_LIVE_FETCH=1` 时启用，但必须配置 `ANCHOR_ALLOWLIST`（精确 host）、仅 HTTPS、禁 redirect、公网 IP 检查、无 cookie/auth、大小/超时限制；默认关闭；
-9. 测试：anchor 存储、replay 证据、content hash、TTL、排序、allowlist/private-IP 拒绝、live happy path（MockTransport）。
+9. **DNS rebinding 缓解**：解析后固定单个公网 IP，连接该 IP，用原 host 做 `Host` + TLS `sni_hostname`，不再二次解析；仍然不是形式化证明；
+10. **TTL 复验 CLI + admin endpoint**：`scripts/revalidate_anchors.py` 调 `POST /admin/anchors/revalidate`（Bearer token），由外部 cron/GitHub Actions 触发；只记录 observation，不自动覆盖 anchor；
+11. **多 anchor 冲突 UI**：Inspector 中并列展示 anchor 证据（URL、tier、时间、hash changed），不做自动裁决；
+12. 测试：anchor 存储、replay 证据、content hash、TTL、排序、allowlist/private-IP 拒绝、live happy path、revalidation、admin auth、conflict evidence 字段。
 
 **未实现（下一阶段）**：
 
 - accuracy gate 与自动记忆更新（需要独立 ground truth/多源校验）；
-- 后台 TTL 复验调度（当前是读时判断）；
-- DNS rebinding 的完整防护（allowlist + 公网检查是缓解，不是证明）；
-- 多 anchor 的冲突合并 UI。
+- 后台常驻 scheduler（设计上改为外部 cron，避免 Render 休眠/多实例重复）；
+- 多 anchor 的自动冲突合并（只做并列展示，不裁决）。
 
 ## 7. 验收（未来）
 
@@ -144,4 +146,5 @@ Anchor:
 | SSRF | 公开 API 不抓取任意 anchor URL；MVP replay-only |
 | 记忆污染 | append-only + candidate + gate；不静默覆盖 |
 | 成本/延迟 | TTL 按 sensitivity；缓存 snapshot |
+
 

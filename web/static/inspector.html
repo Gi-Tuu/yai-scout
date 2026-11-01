@@ -33,6 +33,7 @@
   .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
   .k{font-family:var(--mono);font-size:10px;color:var(--muted)}
   .sugg{color:var(--warn);border-left:2px solid #78350f;padding-left:8px;margin-top:8px;font-size:12px}
+  .anchor-box{border:1px dashed #78350f;background:#1c1208;border-radius:8px;padding:8px;margin-top:8px;font-size:12px}
   .toolbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
   button{background:var(--accent);color:#1b1206;border:0;border-radius:7px;padding:6px 11px;font-weight:600;cursor:pointer;font-size:12px}
   button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:400}
@@ -112,6 +113,17 @@ function render() {
   }).map((c) => {
     const v = verdicts[c.id] || {};
     const b = v.breakdown || {};
+    const anchorEvidence = (v.evidence || []).filter((e) => e.anchor_id);
+    const anchorBlock = anchorEvidence.length ? `<div class="anchor-box">
+      <div class="k">ANCHOR EVIDENCE · 并列展示，不自动裁决</div>
+      ${anchorEvidence.map((e) => `<div class="ev">
+        <div><span class="rel">${esc(e.relation)}</span><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title || e.url)}</a>
+          <span class="badge">${esc(e.anchor_id)}</span>
+          ${e.content_changed ? `<span class="badge stale">content changed</span>` : ""}</div>
+        <div class="muted">T${e.tier} · 发布 ${esc(e.published_at || "unknown")} · anchor hash ${e.content_changed ? "changed" : "matched"}</div>
+        <div>${esc((e.snippet || "").slice(0, 180))}</div>
+      </div>`).join("")}
+    </div>` : "";
     const evidence = (v.evidence || []).map((e) => `<div class="ev">
       <div><span class="rel">${esc(e.relation)}</span><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title || e.url)}</a></div>
       <div class="muted">${esc(e.domain)} · 发布 ${esc(e.published_at || "unknown")} · T${e.tier} · conf ${e.relation_confidence ?? "-"}</div>
@@ -133,6 +145,7 @@ function render() {
         <div><div class="k">coverage</div><div class="mono">${b.coverage}</div><div class="bar"><i style="width:${Math.round((b.coverage || 0) * 100)}%"></i></div></div>
       </div>` : ""}
       ${v.suggestion ? `<div class="sugg">建议：${esc(v.suggestion)}</div>` : ""}
+      ${anchorBlock}
       ${evidence || '<div class="muted" style="margin-top:6px">无证据（INSUFFICIENT）</div>'}
     </div>`;
   }).join("");
@@ -162,3 +175,4 @@ init();
 </script>
 </body>
 </html>
+

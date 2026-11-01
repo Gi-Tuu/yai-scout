@@ -25,9 +25,17 @@ from ..benchmark.scoring import leaderboard as build_leaderboard
 from ..benchmark.scoring import pareto_frontier
 from ..config import ROOT, Settings, get_settings
 from ..detector.compare import claim_key, compare_reports
+from ..detector.revalidate import revalidate_due
 from ..detector.service import StaleAnswerDetector
 from ..detector.snapshot_search import SnapshotSearcher
-from ..domain.models import AgentSpec, Anchor, ResearchTask, RunEvent, TaskStatus
+from ..domain.models import (
+    AgentSpec,
+    Anchor,
+    ResearchTask,
+    RunEvent,
+    TaskStatus,
+    TemporalSensitivity,
+)
 from ..llm import LLMClient
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
 from ..retrieval.tavily import TavilyClient
@@ -57,6 +65,11 @@ class AnchorCreate(BaseModel):
     content_hash: str = ""
     source_tier: int = Field(default=3, ge=1, le=4)
     published_at: str | None = None
+    temporal_sensitivity: TemporalSensitivity | None = None
+
+
+class RevalidateRequest(BaseModel):
+    limit: int = Field(default=50, ge=1, le=500)
 
 
 class BenchmarkRequest(BaseModel):
@@ -406,6 +419,36 @@ def create_app(
         store.save_anchor(anchor)
         return anchor.model_dump(mode="json")
 
+    @app.post("/admin/anchors/revalidate")
+    async def admin_revalidate(
+        request: Request, payload: RevalidateRequest | None = None
+    ) -> dict[str, Any]:
+        if not cfg.admin_token:
+            raise HTTPException(status_code=404, detail="admin endpoint disabled")
+        if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
+            raise HTTPException(status_code=401, detail="unauthorized")
+        fetcher = None
+        if cfg.anchor_live_fetch:
+            allowlist = {
+                item.strip().lower()
+                for item in cfg.anchor_allowlist.split(",")
+                if item.strip()
+            }
+
+            async def _live(anchor: Anchor, target: str) -> Any:
+                return await live_anchor_result(anchor, allowlist)
+
+            fetcher = _live
+        observations = await revalidate_due(
+            store, fetcher=fetcher, limit=payload.limit if payload else 50
+        )
+        return {
+            "checked": len(observations),
+            "changed": sum(1 for item in observations if item.status == "changed"),
+            "unreachable": sum(1 for item in observations if item.status == "unreachable"),
+            "observations": [item.model_dump(mode="json") for item in observations],
+        }
+
     @app.get("/freshness/anchors")
     async def list_anchors(claim_key: str | None = None) -> dict[str, Any]:
         anchors = store.list_anchors(claim_key=claim_key)
@@ -559,6 +602,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 

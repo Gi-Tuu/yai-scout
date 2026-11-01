@@ -142,6 +142,8 @@ class EvidenceRef(BaseModel):
     relation_reason: str = ""
     relation_confidence: float = 0.5
     snapshot_id: str | None = None
+    anchor_id: str | None = None
+    content_changed: bool = False
 
 
 class Claim(BaseModel):
@@ -169,8 +171,19 @@ class Anchor(BaseModel):
     updated_at: str | None = None
     last_verified_at: str = Field(default_factory=utcnow_iso)
     valid_from: str | None = None
+    temporal_sensitivity: TemporalSensitivity | None = None
     supersedes: str | None = None
     status: Literal["active", "superseded", "unreachable"] = "active"
+
+
+class AnchorObservation(BaseModel):
+    id: str
+    anchor_id: str
+    status: Literal["verified", "changed", "unreachable"]
+    content_changed: bool = False
+    observed_hash: str = ""
+    observed_at: str = Field(default_factory=utcnow_iso)
+    note: str = ""
 
 
 class FreshnessVerdict(BaseModel):
@@ -342,6 +355,9 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
+
+
 
 
 

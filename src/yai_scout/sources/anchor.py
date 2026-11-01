@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import socket
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -40,17 +41,18 @@ def host_allowed(url: str, allowlist: set[str]) -> bool:
     return parts.scheme == "https" and (parts.hostname or "").lower() in allowlist
 
 
-def _public_host(host: str) -> bool:
+def _resolve_public_ip(host: str) -> str | None:
     try:
         infos = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
     except OSError:
-        return False
+        return None
+    public: list[str] = []
     for info in infos:
-        address = info[4][0]
+        address = str(info[4][0])
         try:
             ip = ipaddress.ip_address(address)
         except ValueError:
-            return False
+            return None
         if (
             ip.is_private
             or ip.is_loopback
@@ -59,8 +61,9 @@ def _public_host(host: str) -> bool:
             or ip.is_multicast
             or ip.is_unspecified
         ):
-            return False
-    return bool(infos)
+            return None
+        public.append(address)
+    return public[0] if public else None
 
 
 async def replay_anchor_result(
@@ -99,14 +102,11 @@ async def live_anchor_result(
     allowlist: set[str],
     *,
     client: httpx.AsyncClient | None = None,
-    resolver: object | None = None,
+    resolver: Callable[[str], str | None] | None = None,
 ) -> SearchResult | None:
     if not host_allowed(anchor.url, allowlist):
         return None
     host = (urlsplit(anchor.url).hostname or "").lower()
-    resolve = resolver or _public_host
-    if not resolve(host):  # type: ignore[operator]
-        return None
     owns_client = client is None
     client = client or httpx.AsyncClient(
         timeout=LIVE_TIMEOUT_S,
@@ -114,7 +114,25 @@ async def live_anchor_result(
         headers={"User-Agent": "yai-scout-anchor/1.0"},
     )
     try:
-        response = await client.get(anchor.url)
+        if client is not None and not owns_client:
+            # Injected client (tests): normal URL, no pinning.
+            response = await client.get(anchor.url)
+        else:
+            ip = (resolver or _resolve_public_ip)(host)
+            if not ip:
+                return None
+            parsed = urlsplit(anchor.url)
+            ip_host = f"[{ip}]" if ":" in ip else ip
+            pinned_url = f"https://{ip_host}{parsed.path or '/'}"
+            if parsed.query:
+                pinned_url += f"?{parsed.query}"
+            request = client.build_request(
+                "GET",
+                pinned_url,
+                headers={"Host": host},
+                extensions={"sni_hostname": host},
+            )
+            response = await client.send(request)
         if response.status_code != 200:
             return None
         content_type = response.headers.get("content-type", "")
@@ -137,3 +155,5 @@ async def live_anchor_result(
     finally:
         if owns_client:
             await client.aclose()
+
+

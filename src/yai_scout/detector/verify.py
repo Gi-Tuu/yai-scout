@@ -152,9 +152,27 @@ class ClaimVerifier:
                 continue
             seen_urls.add(item.url)
             unique_results.append(item)
-        evidence = [
-            self._to_evidence(claim, item) for item in unique_results[: self.max_results]
-        ]
+        anchor_meta = {
+            anchor.id: (anchor, result)
+            for anchor, result in zip(anchors or [], anchor_results, strict=False)
+        }
+        anchor_by_url = {result.url: anchor for anchor, result in anchor_meta.values()}
+        evidence = []
+        for item in unique_results[: self.max_results]:
+            ev = self._to_evidence(claim, item)
+            matched_anchor = anchor_by_url.get(item.url)
+            if matched_anchor is not None:
+                ev = ev.model_copy(
+                    update={
+                        "anchor_id": matched_anchor.id,
+                        "content_changed": bool(
+                            matched_anchor.content_hash
+                            and item.content_hash
+                            and matched_anchor.content_hash != item.content_hash
+                        ),
+                    }
+                )
+            evidence.append(ev)
         llm_cost = 0.0
         llm_reason = ""
         if self._should_use_llm(claim, evidence):
@@ -256,6 +274,8 @@ class ClaimVerifier:
             if result_numbers and shares_unit:
                 return "contradicts"
         return "mentions"
+
+
 
 
 

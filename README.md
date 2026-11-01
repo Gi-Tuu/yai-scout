@@ -84,7 +84,7 @@ flowchart LR
 | Evidence inspector | claim → sources → timestamps → relation → score breakdown → suggestion |
 | Temporal replay | **real**: GitHub Releases official history; example: YAI version `0.25.0` is **STALE at 2026-10-28** and **FRESH at 2026-11-01** |
 | Deployment | `Dockerfile` + two-container compose, `SCOUT_MODE` isolation verified |
-| Cost guard | per-IP per-minute + global daily limits on detector/benchmark endpoints (429 + Retry-After) |\n| Quality gates | 112 tests on Python 3.11 and 3.12, ruff, mypy strict; CI matrix runs lint + types + tests + Docker build |
+| Cost guard | per-IP per-minute + global daily limits on detector/benchmark endpoints (429 + Retry-After) |\n| Quality gates | 115 tests on Python 3.11 and 3.12, ruff, mypy strict; CI matrix runs lint + types + tests + Docker build |
 
 ## Honest limits
 
@@ -125,6 +125,7 @@ docs/              charters, specs, evaluation, demo script
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
+
 
 
 

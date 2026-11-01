@@ -26,9 +26,8 @@ async def test_live_fetch_rejected_without_allowlist():
 
 
 async def test_live_fetch_blocks_private_ip(monkeypatch):
-    monkeypatch.setattr("yai_scout.sources.anchor._public_host", lambda host: False)
     result = await live_anchor_result(
-        _anchor(), {"docs.example.com"}, resolver=lambda host: False
+        _anchor(), {"docs.example.com"}, resolver=lambda host: None
     )
     assert result is None
 
@@ -46,9 +45,10 @@ async def test_live_fetch_happy_path_with_mock_transport():
         _anchor(),
         {"docs.example.com"},
         client=client,
-        resolver=lambda host: True,
+        resolver=lambda host: "93.184.216.34",
     )
     await client.aclose()
     assert result is not None
     assert "1,000 credits" in result.content
     assert result.content_hash
+

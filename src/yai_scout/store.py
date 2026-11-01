@@ -14,6 +14,7 @@ from typing import Any
 
 from .domain.models import (
     Anchor,
+    AnchorObservation,
     BenchSession,
     CostEntry,
     DetectorReport,
@@ -115,6 +116,15 @@ CREATE TABLE IF NOT EXISTS anchor (
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_anchor_claim ON anchor(claim_key);
+CREATE TABLE IF NOT EXISTS anchor_observation (
+    id TEXT PRIMARY KEY,
+    anchor_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    content_changed INTEGER NOT NULL DEFAULT 0,
+    observed_hash TEXT NOT NULL DEFAULT '',
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS snapshot (
     id TEXT PRIMARY KEY,
     url TEXT NOT NULL,
@@ -562,6 +572,39 @@ class Store:
             ).fetchone()
         return Anchor.model_validate_json(row["payload_json"]) if row else None
 
+    def save_anchor_observation(self, observation: AnchorObservation) -> AnchorObservation:
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO anchor_observation
+                   (id, anchor_id, status, content_changed, observed_hash, payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    observation.id,
+                    observation.anchor_id,
+                    observation.status,
+                    int(observation.content_changed),
+                    observation.observed_hash,
+                    observation.model_dump_json(),
+                    observation.observed_at,
+                ),
+            )
+            self._conn.commit()
+        return observation
+
+    def list_anchor_observations(
+        self, anchor_id: str | None = None, limit: int = 100
+    ) -> list[AnchorObservation]:
+        query = "SELECT payload_json FROM anchor_observation"
+        vals: list[Any] = []
+        if anchor_id is not None:
+            query += " WHERE anchor_id = ?"
+            vals.append(anchor_id)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        vals.append(limit)
+        with self._lock:
+            rows = self._conn.execute(query, vals).fetchall()
+        return [AnchorObservation.model_validate_json(row["payload_json"]) for row in rows]
+
     # ------------------------------------------------------------------ snapshots
     def save_snapshot(self, snapshot: EvidenceSnapshot) -> EvidenceSnapshot:
         with self._lock:
@@ -678,6 +721,9 @@ def _parse_detector_report(payload: str) -> DetectorReport:
         if status in {"uncertain", "unverifiable"}:
             verdict["status"] = "insufficient"
     return DetectorReport.model_validate(data)
+
+
+
 
 
 
