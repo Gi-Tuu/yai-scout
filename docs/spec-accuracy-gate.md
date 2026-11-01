@@ -171,7 +171,7 @@ Review：
 5. `AUTO_UPDATE` 开关（`ACCURACY_AUTO_UPDATE`，默认 false）；
 6. 自动更新仅对 R4 且开关开启生效；否则停留 pending；
 7. 写回：新 Anchor + `supersedes` + 旧 Anchor `superseded`；无独立 memory 表，Anchor 即当前持久记忆；
-8. **真实 revalidation → discovery → candidate 串联**：`revalidate_due` 对 content hash 变化的 anchor 提取 value hint，并通过 Tavily discovery 额外检索 2–3 个来源；多个 observation 一起进 Gate（单源 → review；多源独立一致 → auto 候选）；`AUTO_UPDATE` 默认关闭。
+8. **真实 revalidation → discovery → candidate 串联**：`revalidate_due` 对 content hash 变化的 anchor 按 claim 类型模板提取 value hint，并通过 Tavily discovery 额外检索 2–3 个来源；多个 observation 一起进 Gate（单源 → review；多源独立一致 → auto 候选）；`AUTO_UPDATE` 默认关闭。\n9. **value hint 模板**：价格/credits、版本、许可证、端口、日期、数值各自解析；多个不同值视为歧义返回空，不猜。\n10. **discovery 缓存/预算**：查询结果 TTL 缓存（`ANCHOR_DISCOVERY_TTL_SECONDS`，默认 3600），每日调用预算（`ANCHOR_DISCOVERY_DAILY_BUDGET`，默认 50）；预算耗尽返回空结果，不阻塞 revalidation；`/api/healthz` 暴露 usage。
 
 9. **Rollback 管理**：`POST /admin/anchors/{id}/rollback` + `/admin` 管理页（token 存 sessionStorage；列表、approve/reject/rollback）；
 10. **Admin UI**：`/admin`（anchor 列表、candidate 列表、rollback 按钮）。
@@ -200,6 +200,7 @@ Review：
 - 不允许单源自动更新；
 - 不允许同一来源镜像凑数；
 - 不在无标注集的情况下开启自动更新。
+
 
 
 

@@ -26,6 +26,7 @@ from ..benchmark.scoring import pareto_frontier
 from ..config import ROOT, Settings, get_settings
 from ..detector.accuracy_gate import GateObservation, evaluate_gate
 from ..detector.compare import claim_key, compare_reports
+from ..detector.discovery import CachedDiscovery
 from ..detector.revalidate import revalidate_due
 from ..detector.service import StaleAnswerDetector
 from ..detector.snapshot_search import SnapshotSearcher
@@ -150,6 +151,11 @@ def create_app(
     runner = BenchmarkRunner(
         store, adapters, detector, cfg=cfg, agent_specs=agent_specs
     )
+    discovery = CachedDiscovery(
+        tavily,
+        ttl_seconds=cfg.anchor_discovery_ttl_seconds,
+        daily_budget=cfg.anchor_discovery_daily_budget,
+    )
     limiter = UsageLimiter(
         per_minute=cfg.rate_limit_per_minute,
         daily={
@@ -204,6 +210,7 @@ def create_app(
             "version": cfg.app_version,
             "mode": cfg.scout_mode,
             "snapshots": len(store.list_snapshots(limit=1000)),
+            "discovery": discovery.usage(),
             "build": os.environ.get("RENDER_GIT_COMMIT", "dev")[:12],
             "limits": limiter.usage(),
             "tavily": {"mode": tavily.mode, "authenticated": tavily.authenticated},
@@ -843,6 +850,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 

@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     accuracy_auto_update: bool = False
     anchor_live_fetch: bool = False
     anchor_allowlist: str = ""
+    anchor_discovery_ttl_seconds: int = 3600
+    anchor_discovery_daily_budget: int = 50
 
     # --- 公开 Demo 成本保护（单进程内存计数，重启清零）---
     demo_limits_enabled: bool = True
@@ -68,6 +70,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """返回配置（测试可替换）。"""
     return Settings()
+
 
 
 

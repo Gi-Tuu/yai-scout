@@ -10,36 +10,95 @@ from ..store import Store
 from .accuracy_gate import GateDecision, GateObservation, evaluate_gate
 
 VERSION_RE = re.compile(r"v?(\d+(?:\.\d+){1,3}(?:[-+][A-Za-z0-9.]+)?)", re.I)
-CREDIT_RE = re.compile(r"([\d][\d,]*(?:\.\d+)?)\s*credits?", re.I)
-LICENSE_RE = re.compile(r"\b(apache(?:[ -]?2(?:\.0)?)?|mit|agpl(?:[ -]?3(?:\.0)?)?)\b", re.I)
+LICENSE_RE = re.compile(
+    r"\b(apache(?:[ -]?2(?:\.0)?)?|mit|agpl(?:[ -]?3(?:\.0)?)?|gpl(?:[ -]?3(?:\.0)?)?)\b",
+    re.I,
+)
+PRICE_SYMBOL_RE = re.compile(r"([$€£¥])\s?(\d[\d,]*(?:\.\d+)?)")
+PRICE_UNIT_RE = re.compile(
+    r"(\d[\d,]*(?:\.\d+)?)\s*(credits?|usd|eur|cny|美元|积分)", re.I
+)
+PORT_RE = re.compile(r"(?:port|端口)[^\d]{0,12}(\d{2,5})", re.I)
+DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}|\d{4}\s*年")
 
 
-def extract_value_hint(text: str, old_value: str) -> str:
-    """Heuristic value extraction for revalidation; ambiguous results go to review."""
+def _claim_kind(claim_text: str, old_value: str) -> str:
+    lower = claim_text.lower()
+    if PORT_RE.search(claim_text):
+        return "port"
+    if "许可证" in claim_text or "license" in lower:
+        return "license"
+    old_is_version = bool(
+        re.fullmatch(r"v\d+(?:\.\d+){1,3}", old_value.strip(), re.I)
+        or re.fullmatch(r"\d+(?:\.\d+){2,}", old_value.strip())
+    )
+    if old_is_version or "版本" in claim_text or "version" in lower:
+        return "version"
+    if any(
+        token in lower
+        for token in (
+            "credits",
+            "credit",
+            "价格",
+            "费用",
+            "定价",
+            "pricing",
+            "price",
+            "$",
+            "€",
+            "£",
+            "¥",
+            "usd",
+        )
+    ):
+        return "pricing"
+    if "年" in claim_text or "date" in lower or "发布" in claim_text:
+        return "date"
+    return "numeric"
+
+
+def _unique(values: list[str]) -> list[str]:
+    seen: list[str] = []
+    for value in values:
+        if value not in seen:
+            seen.append(value)
+    return seen
+
+
+def extract_value_hint(text: str, old_value: str, claim_text: str = "") -> str:
+    """Typed value extraction; ambiguous results return "" and go to review."""
     if not text:
         return ""
-    if "license" in text.lower() or "许可证" in text:
-        match = LICENSE_RE.search(text)
-        if match:
-            return match.group(1)
-    old_is_version = bool(re.fullmatch(r"v?\d+(?:\.\d+){1,3}", old_value.strip(), re.I))
-    if old_is_version:
-        versions = VERSION_RE.findall(text)
-        if versions:
+    kind = _claim_kind(claim_text, old_value)
 
-            def version_key(item: str) -> list[int]:
-                return [int(part) for part in re.findall(r"\d+", item)]
+    if kind == "port":
+        ports = _unique(PORT_RE.findall(text))
+        return ports[0] if len(ports) == 1 else ""
+    if kind == "license":
+        licenses = _unique([item.group(1) for item in LICENSE_RE.finditer(text)])
+        return licenses[0] if len(licenses) == 1 else ""
+    if kind == "version":
+        versions = _unique(VERSION_RE.findall(text))
+        if not versions:
+            return ""
 
-            return "v" + str(max(versions, key=version_key))
-    credit = CREDIT_RE.search(text)
-    if credit:
-        return str(credit.group(1))
-    numbers = [str(item) for item in re.findall(r"\d[\d,]*(?:\.\d+)?", text)]
+        def version_key(item: str) -> list[int]:
+            return [int(part) for part in re.findall(r"\d+", item)]
+
+        return "v" + str(max(versions, key=version_key))
+    if kind == "pricing":
+        values = [f"{symbol}{number}" for symbol, number in PRICE_SYMBOL_RE.findall(text)]
+        values += [number for number, _unit in PRICE_UNIT_RE.findall(text)]
+        unique = _unique(values)
+        return unique[0] if len(unique) == 1 else ""
+    if kind == "date":
+        dates = _unique(DATE_RE.findall(text))
+        return dates[0] if len(dates) == 1 else ""
+
+    numbers = _unique([str(item) for item in re.findall(r"\d[\d,]*(?:\.\d+)?", text)])
     old_digits = set(re.findall(r"\d[\d,\.]*", old_value))
-    for number in numbers:
-        if number not in old_digits:
-            return number
-    return ""
+    candidates = [number for number in numbers if number not in old_digits]
+    return candidates[0] if len(candidates) == 1 else ""
 
 
 def _best_observation(observations: list[GateObservation]) -> GateObservation | None:
@@ -153,6 +212,7 @@ def apply_candidate(
     )
     store.update_anchor_candidate(updated)
     return updated
+
 
 
 

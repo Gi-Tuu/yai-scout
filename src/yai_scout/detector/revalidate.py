@@ -71,7 +71,7 @@ async def revalidate_anchor(
             url=anchor.url,
             source_tier=anchor.source_tier,
             independent_group=anchor.url,
-            value=extract_value_hint(content, anchor.last_value),
+            value=extract_value_hint(content, anchor.last_value, anchor.claim_text),
             published_at=str(getattr(result, "published_date", "") or "") or None,
         )
     store.save_anchor_observation(observation)
@@ -116,7 +116,7 @@ async def revalidate_due(
             for result in results:
                 if result.url in seen:
                     continue
-                value = extract_value_hint(result.content, anchor.last_value)
+                value = extract_value_hint(result.content, anchor.last_value, anchor.claim_text)
                 if not value:
                     continue
                 seen.add(result.url)
@@ -139,6 +139,7 @@ async def revalidate_due(
             store, anchor, candidates, auto_update=auto_update
         )
     return observations
+
 
 
 
