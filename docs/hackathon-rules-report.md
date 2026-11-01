@@ -4,18 +4,20 @@
 > 方法：官方平台 API 原始 JSON（已存档）+ 官方赛事页 + 官方公告 + 合作方官方文档；LinkedIn/Instagram 因地区/登录限制未能直读，相关处标注来源等级。
 > 约定：**[官方原文]** = 官方页面/API/公告逐字；**[官方图片]** = 官方赛题图（由核查员读取，未能直读原图）；**[推断]** = 我们的判断；**[待确认]** = 官方无明文。
 
+> **2026-11-01 11:30 更新（重要）**：主办方已回复 **"All yes."**——确认同一参赛者/团队可同时参加两轨、可提交两个独立项目、一个整合项目也可同时接受两轨评审。**双赛道资格不再是待确认项**（记录见 `research/organizer-reply.md`）。当前唯一未定的是**平台提交机制**（单次提交里如何放两个作品 / 是否允许两次提交），见 §G 追问邮件。项目决策已改为"双作品 + 共享底座"（ADR-0002）。
+
 ---
 
 ## 0. 结论摘要（先看这 8 条）
 
 1. **赛事仍在报名与提交期**：官方平台显示 `is_registration_open=true`，提交窗口 **2026-11-01 00:00 IST → 11-15 23:59 IST**（北京 11/1 02:30 → **11/16 02:29**），评审 **11/29 19:00–23:59 IST**（北京 21:30 → 次日 02:29）。共 1,407 人报名。**[官方 API]**
 2. **6 道题已正式发布**（10/31 17:13Z 公告）：Bifrost 4 题 + Tavily 2 题；你提供的 6 条标题与官方逐字一致。**[官方公告 + 官方图片]**
-3. **双赛道规则存在官方口径冲突**：平台公告写 "Every team must select one problem statement from **each track**. You can either build two separate projects or combine both challenges into one integrated solution."；而 Rules §8 写 "Each team may submit **only one final project**"，官方赛题图又被读出 "Pick 1 from either track, or combine one from each"。→ **必须向主办方确认**（见 §G 邮件）。
-4. **安全策略不依赖冲突结论**：无论"必须两轨"还是"可选一轨"、无论"一项目还是两项目"，**做一个同时覆盖 Bifrost-02 + Tavily-01 的整合项目、放进一个仓库、一次提交**都能同时满足两种口径——这是本报告的默认方案。
+3. **双赛道资格已确认**：主办方 2026-11-01 邮件回复 "All yes."——可同时参加两轨；可提交两个独立项目；整合项目也可同时受两轨评审。**[主办方邮件]** 平台公告 "one problem statement from each track" 与赛题图 "Pick 1 from either track" 的措辞差异**不再影响资格**（两种形态都允许）。
+4. **参赛策略已更新**：采用 **双作品、共享技术底座、独立交付**（Bifrost-02 + Tavily-01），不再做"整合项目"（ADR-0002）。唯一待确认的是**平台提交机制**：单次提交里如何放两个作品，或是否允许两次提交。
 5. **奖金口径必须修正**：Tavily 的 $30K/$20K/$10K 是 **credits（以美元计价）**，不是现金；Bifrost 只有 **$1,000 现金**（$500/$300/$200）+ 直通面试。平台奖项页仍写 "Tavily $65 credits ×100"，**已过期**，不要引用。**[官方公告 + 官方图片]**
-6. **提交机制**：平台只有一个提交表单，必填 **GitHub 链接**，选填 Demo 视频与 PPT；`allow_multiple_submissions=false`；同时 Rule 8 写 "Each team may submit only one final project"。→ 两个独立项目怎么交，**待确认**。**[官方 API]**
+6. **提交机制（平台现状）**：只有一个提交表单，必填 **GitHub 链接**，选填 Demo 视频与 PPT；`allow_multiple_submissions=false`；没有 Track 选择字段。→ 双作品怎么交，**待主办方回复**（§G）；默认按"一个仓库 + 两个独立入口 + 一份提交"执行。
 7. **每人/每队必须先在平台上建队**（哪怕是单人）：官方 10/20 公告原文 "Even if you're participating solo, you still need to create a team to be eligible"。**[官方公告]**
-8. **最优选题**：**Bifrost-02（Agent Benchmarking Platform）+ Tavily-01（Stale-answer Detector）做成一个整合项目** —— "Freshness-aware Research Benchmark"。理由与替代方案见 §D。
+8. **最终选题**：**Project A = Bifrost-02（Agent Benchmarking Platform）**，**Project B = Tavily-01（Stale-answer Detector）**，共享 YAI Scout Core，各自独立交付。
 9. **日期还有一个官方口径差**：HackCulture/Luma（Tavily 联合主办）写 **11/1–11/15**；Tavily 社区页把同一链接标成 **"Nov 1–22"**。→ 按 **11/15** 执行（更早、更安全），并在邮件里顺带确认。
 
 ---
@@ -41,8 +43,8 @@
 
 | # | 冲突点 | 来源 A | 来源 B | 影响 | 本报告采纳 |
 |---|---|---|---|---|---|
-| C1 | 双赛道是否必选 | 平台公告（10/31）：**每轨各选一题** | 官方赛题图：**Pick 1 from either track** | 决定要不要做两题 | 按"两轨都做"执行（对两种口径都安全） |
-| C2 | 能否交两个项目 | 平台公告：**可 build two separate projects** | Rules §8：**only one final project**；平台 `allow_multiple_submissions=false` | 决定提交形态 | 一个整合项目 + 一个仓库 + 一次提交 |
+| C1 | 双赛道是否必选 | 平台公告（10/31）：**每轨各选一题** | 官方赛题图：**Pick 1 from either track** | 决定要不要做两题 | **已由主办方邮件解决**：两种形态都允许；采用双作品 |
+| C2 | 能否交两个项目 | 平台公告：**可 build two separate projects** | Rules §8：**only one final project**；平台 `allow_multiple_submissions=false` | 决定提交形态 | **资格已确认**（All yes）；**平台提交方式待确认** → 默认一仓库两入口 |
 | C3 | 奖金总额 | 公告：Bifrost $1,000 现金 + Tavily $60,000 credits（top 3）+ $8,000 参与者 credits | 平台奖项页：$1,000 现金 + Tavily $65 credits ×100 + Omnidimension $50 ×100；总奖池 $11.5K | 材料引用风险 | 以公告 + 官方图片为准，平台旧数据不引用 |
 | C4 | 截止日期 | HackCulture / Luma：**11/15** | Tavily 社区页：**11/22** | 倒排计划 | 按 **11/15** 执行（更早、更安全） |
 
@@ -60,28 +62,29 @@
 **官方赛题图（核查员读取，未能直读原图）**：
 > "Pick 1 from either track, or combine one from each" / "Bifrost statements get priority"
 
-→ **这两句在"是否可以只做一个赛道"上不一致**：公告说每轨各选一题（=两轨都要），图说可从任一轨选一题。本报告按"**两轨都做**"给默认方案（对两种口径都安全），并把此冲突列为必须发邮件确认的第一问。
+→ **这两句在"是否可以只做一个赛道"上不一致**：公告说每轨各选一题（=两轨都要），图说可从任一轨选一题。**主办方 2026-11-01 邮件回复 "All yes."，确认两种形态都允许**（双作品 / 整合项目），因此该措辞冲突不再影响参赛资格；本报告改为按"双作品"执行（ADR-0002）。
 
 ### B.1 五问结论表
 
 | 参赛形式 | 是否允许 | 官方证据 | 置信度 |
 |---|---|---|---|
-| 一人同时参加两个赛道 | **允许（且公告要求每轨各选一题）** | 平台公告 "one problem statement from each track"；个人可参赛（Eligibility） | 高（但受 B.0 冲突影响） |
-| 同一队伍同时参加两个赛道 | **允许** | 同上；团队 1–4 人 | 高 |
-| 同一队伍提交两个独立项目 | **存在官方冲突**：公告允许，Rules §8 禁止 | 公告 "build two separate projects" **vs** Rules §8 "only one final project" + 平台单次提交 | 低（需书面确认） |
-| 一个项目同时参加两个赛道 | **允许** | 公告 "combine both challenges into one integrated solution" | 高 |
-| 分别获得两个赛道的奖项 | **官方尚未确认** | 公告暗示整合方案可同时满足两轨，但无"可同时获奖"明文；无禁止条款 | 低 |
+| 一人同时参加两个赛道 | **允许（已确认）** | 主办方邮件 "All yes."（2026-11-01）；平台公告 "each track" | **高（已确认）** |
+| 同一队伍同时参加两个赛道 | **允许（已确认）** | 同上；团队 1–4 人 | **高（已确认）** |
+| 同一队伍提交两个独立项目 | **允许（已确认）** | 主办方邮件 "All yes."；平台公告 "build two separate projects" | **高（资格已确认；提交方式待确认）** |
+| 一个项目同时参加两个赛道 | **允许（已确认）** | 主办方邮件 "All yes."；公告 "combine both challenges into one integrated solution" | **高（已确认）** |
+| 分别获得两个赛道的奖项 | **资格未禁止；双奖细节未明说** | 主办方确认"整合项目可同时受两轨评审"；未明确"双奖"规则 | 中 |
 | 一人/一队最多提交几个 | **平台仅允许 1 次提交**（`allow_multiple_submissions=false`）；Rule 8 写 1 个最终项目 | API phase 配置 + Rule 8 | 高 |
 | 是否必须先选 Track | 提交表单**没有** Track 字段（只有 GitHub / Demo / PPT） | API `submission_questions` | 高 |
 | 截止前能否改赛道 | 官方尚未确认（提交通常可覆盖？平台未给说明） | — | 待确认 |
 | 两赛道是否分别创建 Submission | 平台只支持 1 次提交 → 推测**不会**分别创建；需确认 | API | 中 |
 | 同一项目重复投两个赛道 | 与"整合项目"是同一件事；官方允许整合方案 | 公告 | 高 |
 
-### B.2 冲突的合理解读（我们的判断，非官方）
+### B.2 当前解释（官方资格已确认，平台机制待确认）
 
-- "两个独立项目"和"一队一次提交 / Rule 8"**存在文本冲突**：公告（10/31，更新）明确允许两项目，Rules §8（更早的通用模板）说只允许一个最终项目，平台又只给一次提交。最可能的情况是**主办方希望一个提交里覆盖两题**（整合或同仓库双项目），但**不能替主办方裁决**，必须书面确认。
-- "每轨各选一题"与"可选一轨"的矛盾，最可能源于**公告是最终口径、赛题图是发布文案**；同样需要书面确认。
-- **默认执行方案**：一个整合项目 + 一个仓库 + 一份提交，同时明确映射两轨评分点（见 §D/F）。若主办方回复"只能选一轨"，则把整合项目主投 Tavily-01，Bifrost-02 作为支撑模块在 README 中说明（不单独领 Bifrost 奖）；若回复"必须两个项目"，则同仓库拆 `apps/benchmark` 与 `apps/detector` 两个入口，仍一次提交。
+- **资格层面**：主办方邮件已明确"双作品"与"整合项目"都允许 → 我们选择**双作品 + 共享底座**（ADR-0002）。
+- **平台层面**：HackCulture 仍是单次提交（`allow_multiple_submissions=false`）、一个必填 GitHub 链接、无 Track 字段。因此"双作品"很可能要以**一个仓库 + 两个独立入口 + 一份提交**呈现；是否允许两次提交、是否会分别进入两轨评审队列，需主办方确认（§G）。
+- **不做外推**：不认为"双作品 + 额外整合作品 = 3 个提交"被允许；只做两种形态中的一种。
+- **默认执行**：一个仓库（`apps/benchmark` 与 `apps/freshness` 两个入口，各自 README/Demo/验收），一次提交；提交说明中明确"Project A → Bifrost-02 / Project B → Tavily-01"。
 
 ### B.3 提交表单实际字段（官方 API 原文）
 
@@ -236,34 +239,36 @@ P2：第三个适配器；Bifrost 网关（缓存关闭）；导出 PDF；历史
 
 ---
 
-## G. 必须向主办方确认的问题（可直接发邮件）
+## G. 仍需向主办方确认的问题（资格已确认，只剩平台机制）
+
+**第一封邮件已获回复 "All yes."**（双赛道资格）。以下是**第二封追问邮件**，只问平台提交机制与 credits 细节：
 
 **收件人**：team@geekroom.co.in
-**Subject**：Clarification on Multi-Track Participation, Submission Format and Credits – Geek Room Global AI Hackathon
+**Subject**：Follow-up: Submission Format for Two Projects and Credits Details – Geek Room Global AI Hackathon
 
 ```
 Hi Geek Room team,
 
-I have registered for the Global AI Hackathon as an individual participant (team of 1) and am planning my build around Bifrost-02 + Tavily-01.
+Thank you for confirming that we can participate in both tracks and submit two separate projects.
 
-I would like to confirm a few points before finalizing the architecture:
+To make sure we submit correctly, could you clarify:
 
-1. Track selection: the HackCulture announcement says "Every team must select one problem statement from each track", while the problem-statement graphic says "Pick 1 from either track, or combine one from each". Which is authoritative — must we submit one problem from each track, or may we choose only one track?
+1. The HackCulture submission form has one required GitHub link and only one submission. For two separate projects, should we put both in one repository (with two entry points and two README files), or will two submissions be enabled?
 
-2. Submission format: the submission form has a single required GitHub link and only one submission is allowed. How should we submit "two separate projects"? Should both projects live in one repository (with one submission), or are two submissions permitted?
+2. If both projects are in one submission, should the form/README explicitly state "Project A → Bifrost-02, Project B → Tavily-01"? Is there a track selection field, or is the track inferred from the problem statement?
 
-3. If we build one integrated solution covering both tracks, will it be evaluated by both track judges and be eligible for prizes in both tracks?
+3. Will the two projects be evaluated by the corresponding track judges separately and be eligible for both tracks' prizes?
 
-4. Credits: are the Tavily prizes ($30,000 / $20,000 / $10,000) in USD-denominated credits, per team or per member? What is the expiry/validity period, and how are they claimed? How is the $8,000 participant credit pool distributed?
+4. Can the submission be updated before 15 Nov 23:59 IST?
 
-5. Bifrost: is the $1,000 cash prize split as $500 / $300 / $200, and does the interview opportunity apply to all members of winning teams?
+5. Credits: are the Tavily prizes ($30,000 / $20,000 / $10,000) in USD-denominated credits, per team or per member? What is the validity period, and how are they claimed? How is the $8,000 participant credit pool distributed?
 
-6. Is there a per-team submission limit, and can the submission be updated before the 15 Nov deadline?
+6. Bifrost: is the $1,000 cash prize split as $500 / $300 / $200, and does the interview opportunity apply to all team members?
 
 Thank you!
 ```
 
-> 若 24 小时内没有回复：在官方 WhatsApp 群（`https://chat.whatsapp.com/GkRxNNSAhBP0y89HG8SGpa`）与 Discord 同步问一遍，并**默认按"两轨整合项目 + 单仓库单提交"执行**（对两种口径都安全）。
+> 若 24 小时内没有回复：在官方 WhatsApp 群（`https://chat.whatsapp.com/GkRxNNSAhBP0y89HG8SGpa`）与 Discord 同步问一遍；**默认按"一个仓库 + 两个独立入口 + 一次提交"执行**，并在提交说明中写清两轨映射。
 
 ---
 
@@ -287,7 +292,7 @@ Thank you!
 - **LinkedIn 帖子未能直读**（地区限制 451）；**Discord 公告需登录**（API 401），未读取；**X 不可达**。因此"官方赛题图"的具体措辞来自核查员读取，未能逐字比对原图；题目标题的逐字比对已由另一路核查完成（6/6 一致）。
 - HackCulture Themes 区与 Prizes 区**未同步**（Themes 仍 REVEALING SOON，theme API 返回 `[]`；Prizes 仍为 $65×100 的旧配置），与 10/31 公告冲突；本报告以公告 + API 配置为准。
 - **Tavily 社区页把同一赛事标成 Nov 1–22**，与 HackCulture/Luma 的 11/15 冲突；按 11/15 执行。
-- 官方未公布：双赛道评分 rubric、评委名单、提交是否可修改、两轨是否分别评奖、credits 领取与有效期、面试具体形式、"两个独立项目"在单次提交里的具体形态。
+- 官方未公布：双赛道评分 rubric、评委名单、双作品在单次提交中的呈现方式、两轨是否分别评奖、credits 领取与有效期、面试具体形式。**双赛道资格已由主办方邮件确认**；平台提交机制仍待回复。
 - 结论中所有 **[推断]** 已显式标注；未标注者均来自上表一级/二级来源。
 
 ---

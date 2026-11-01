@@ -14,7 +14,16 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 | [research/yai-interface-audit.md](research/yai-interface-audit.md) | YAI Agent Core v0.25.0 可复用接口审计、已知坑与依赖方式 |
 | [docs/tavily-setup.md](docs/tavily-setup.md) | Tavily 接入决策：Windows 下走 REST API（不装 CLI/全局 Skills）、key 存放与验证 |
 | [docs/hackathon-rules-report.md](docs/hackathon-rules-report.md) | **赛事调查全文**：赛题、双赛道规则（含 4 处官方口径冲突）、奖金修正、选题与开发建议 |
-| [docs/adr/0001-track-selection.md](docs/adr/0001-track-selection.md) | 选题决策：Bifrost-02 + Tavily-01 整合方案（待主办方确认） |
+| [research/organizer-reply.md](research/organizer-reply.md) | 主办方 "All yes." 确认记录（双赛道/双作品/整合均可） |
+| [docs/adr/0001-track-selection.md](docs/adr/0001-track-selection.md) | ~~整合方案~~（已被 ADR-0002 取代） |
+| [docs/adr/0002-dual-project-strategy.md](docs/adr/0002-dual-project-strategy.md) | **决策**：双赛道、双独立作品、共享技术底座 |
+| [docs/charter-benchmark.md](docs/charter-benchmark.md) | Project A 立项：Benchmark（Bifrost-02） |
+| [docs/charter-freshness.md](docs/charter-freshness.md) | Project B 立项：Freshness（Tavily-01） |
+| [docs/architecture-shared.md](docs/architecture-shared.md) | 共享底座架构、契约、数据模型、数据流、部署 |
+| [docs/yai-reuse.md](docs/yai-reuse.md) | YAI 复用清单与许可证核对（MIT，非 AGPL） |
+| [docs/api-resources.md](docs/api-resources.md) | Tavily / Bifrost / 模型 API 额度与成本评估 |
+| [docs/dual-project-plan.md](docs/dual-project-plan.md) | MVP 验收、14 天排期、风险、提交材料矩阵 |
+| [docs/benchmark.md](docs/benchmark.md) | 已实现 Benchmark/Detector 的说明（demo v0） |
 | [research/problem-statements/hackculture-event.json](research/problem-statements/hackculture-event.json) | 官方平台事件原始 JSON（时间线/提交字段/公告/奖项）存档 |
 | [scripts/tavily_smoke.py](scripts/tavily_smoke.py) | Tavily 冒烟测试（只打印标题/URL/credits，不打印 key） |
 
@@ -58,10 +67,10 @@ copy .env.example .env          # 填 TAVILY_API_KEY（不填则走 keyless 模�
 
 ## 下一步
 
-1. **发确认邮件**（[报告 §G](docs/hackathon-rules-report.md)）：双赛道是否必选、两个项目怎么交、整合项目能否双轨获奖、credits 归属/有效期。等回复期间按 [ADR-0001](docs/adr/0001-track-selection.md) 推进。
-2. **建队 + 加群**：单人参赛也必须在 HackCulture 建队；官方 10/26 起把公告迁到 WhatsApp 群（`https://chat.whatsapp.com/GkRxNNSAhBP0y89HG8SGpa`），务必加入；Discord 仍是强制项。
-3. **配 Tavily key**：写入 `.env` 的 `TAVILY_API_KEY`（当前 keyless，有限速）。
-4. **按报告 §F 开发**：P0 = Stale-answer Detector（claim 抽取 + Tavily 核验 + Freshness Score）与 Benchmark Runner + 2 个 Adapter + 榜单；11/12 功能冻结。
+1. **按 [ADR-0002](docs/adr/0002-dual-project-strategy.md) 执行**：Project A = Benchmark（`/benchmark`），Project B = Freshness（`/freshness`），共享 `scout_core`。
+2. **等两个 key/答复**：DeepSeek key（当前缺失）；主办方对"双作品如何提交"的回复（默认一仓库两入口 + 合并视频）。
+3. **11/02 冻结共享契约**（见 [共享架构](docs/architecture-shared.md)），之后并行开发两个 app。
+4. **11/12 功能冻结**；11/15 12:00 前提交（详见 [双项目计划](docs/dual-project-plan.md)）。
 
 ## 合规边界（本项目已遵守）
 

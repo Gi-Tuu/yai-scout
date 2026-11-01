@@ -1,9 +1,9 @@
 # ADR-0001：双赛道选题 —— Bifrost-02 + Tavily-01（整合方案）
 
-- 状态：**Proposed**（等待主办方书面确认双赛道/提交形态）
+- 状态：**Superseded by ADR-0002**（主办方 2026-11-01 回复 "All yes."，改为双作品方案）
 - 日期：2026-11-01
 - 决策人：YAI Scout 项目组
-- 相关：`docs/hackathon-rules-report.md`（调查全文与证据）
+- 相关：`docs/hackathon-rules-report.md`（调查全文与证据）、`docs/adr/0002-dual-project-strategy.md`
 
 ## 背景
 

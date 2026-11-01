@@ -1,5 +1,9 @@
 # YAI Scout — Project Charter
 
+> **注意（2026-11-01 更新）**：本文件是早期"整合项目"方案的总纲，仍保留作背景资料。
+> 现行决策已改为 **双作品 + 共享底座**，见 `docs/adr/0002-dual-project-strategy.md`、
+> `docs/charter-benchmark.md`、`docs/charter-freshness.md`、`docs/architecture-shared.md`。
+
 > **Evidence First, Answers Second.**
 > 版本 v0.1（预研版） · 编制日期 2026-10-31 · 状态：待确认 · 编制人：YAI Scout 项目组（个人参赛）
 
