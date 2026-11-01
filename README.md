@@ -40,9 +40,9 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 已实现（P0，2026-11-01）：
 - **两个独立入口**：`/benchmark`（B2）、`/freshness`（T1），统一 landing 在 `/`；旧入口 `/bench`、`/detector` 保留别名；`SCOUT_MODE=benchmark|freshness` 可单开。
 - **Freshness（T1）**：LLM claim 抽取 + 规则兜底、时间敏感性四档分类、Tavily 实时核验、关系（supports/contradicts/mentions）、状态机（FRESH/STALE/CONFLICTED/INSUFFICIENT/UNKNOWN）、可空分数 + breakdown + confidence、修正建议。
-- **Benchmark（B2）**：12 题四类数据集（stable / time_sensitive / changed / conflicting）、`scout-adapter/1.0` HTTP 协议（`/manifest` + `/run`）、外部示例 Agent、Runner、多维排行榜（准确率/Freshness/Stale/证据质量/Claim 覆盖/成本/时延）、`config_hash` 可复现。
+- **Benchmark（B2）**：**24 题四类数据集（21 公开 + 3 隐藏）**、`scout-adapter/1.0` HTTP 协议（`/manifest` + `/run`）、外部示例 Agent、Runner、多维排行榜（准确率/Freshness/Stale/证据质量/Claim 覆盖/成本/时延）+ **Pareto frontier**、`config_hash` 可复现。
 - Tavily REST（key 模式）+ DeepSeek LLM（`deepseek-v4.1-flash-1017`），无 key 时自动降级。
-- **59 个测试 + ruff + mypy(strict) 全绿**。
+- **61 个测试 + ruff + mypy(strict) 全绿**；Freshness 规则层 20/20 标注一致（见 [freshness-eval](docs/freshness-eval.md)）。
 
 页面：`/benchmark` 榜单 · `/freshness` 检测器 · `/research` 旧研究控制台。
 未实现（P1）：Evidence Inspector、Pareto 可视化、24 题、Wayback 历史快照与漂移对比、更多 Adapter。详见 [differentiation-spec.md](docs/differentiation-spec.md)。
@@ -81,5 +81,6 @@ copy .env.example .env          # 填 TAVILY_API_KEY（不填则走 keyless 模�
 - 未创建任何收费资源；
 - 未修改 YAI 主仓库（只读审计；该仓库原有未提交改动与本项目无关）；
 - 未进行任何远程提交或报名操作（需本人确认）。
+
 
 

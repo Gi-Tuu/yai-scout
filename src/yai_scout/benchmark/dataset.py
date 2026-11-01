@@ -26,6 +26,9 @@ def load_dataset(path: Path | None = None) -> tuple[str, list[BenchmarkTask]]:
     return version, tasks
 
 
-def load_tasks(path: Path | None = None) -> list[BenchmarkTask]:
+def load_tasks(path: Path | None = None, *, include_hidden: bool = False) -> list[BenchmarkTask]:
     _, tasks = load_dataset(path)
-    return tasks
+    if include_hidden:
+        return tasks
+    return [task for task in tasks if not task.hidden]
+

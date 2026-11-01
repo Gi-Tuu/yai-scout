@@ -1,9 +1,15 @@
 import asyncio
 
 from yai_scout.benchmark.adapters import LLMAgentAdapter, MockAdapter
-from yai_scout.benchmark.dataset import load_tasks
+from yai_scout.benchmark.dataset import load_dataset, load_tasks
 from yai_scout.benchmark.runner import BenchmarkRunner
-from yai_scout.benchmark.scoring import composite_score, leaderboard, match_gold, numeric_accuracy
+from yai_scout.benchmark.scoring import (
+    composite_score,
+    leaderboard,
+    match_gold,
+    numeric_accuracy,
+    pareto_frontier,
+)
 from yai_scout.domain.models import BenchSession, TaskResult
 from yai_scout.llm import LLMResult
 from yai_scout.retrieval.tavily import SearchResult
@@ -73,6 +79,47 @@ async def test_llm_agent_adapter_returns_answer_and_citations():
     assert answer.citations == ["https://docs.tavily.com/documentation/api-credits"]
     assert answer.tokens == 330
     assert answer.cost_usd > 0
+
+
+def test_dataset_has_24_tasks_and_hidden_split():
+    version, tasks = load_dataset()
+    assert version.startswith("freshness-bench/")
+    assert len(tasks) == 24
+    assert sum(1 for task in tasks if task.hidden) == 3
+    assert len(load_tasks()) == 21
+
+
+def test_pareto_frontier_marks_dominated_agents():
+    # 直接构造 leaderboard 输入所需的字段
+    results = [
+        TaskResult(
+            task_id="t1",
+            agent_id="good",
+            answer={"text": "x"},  # type: ignore[arg-type]
+            numeric_accuracy=1.0,
+            freshness_score=90,
+            score=0.9,
+        ),
+        TaskResult(
+            task_id="t1",
+            agent_id="cheap",
+            answer={"text": "x"},  # type: ignore[arg-type]
+            numeric_accuracy=0.8,
+            freshness_score=80,
+            score=0.8,
+        ),
+        TaskResult(
+            task_id="t1",
+            agent_id="weak",
+            answer={"text": "x"},  # type: ignore[arg-type]
+            numeric_accuracy=0.4,
+            freshness_score=40,
+            score=0.4,
+        ),
+    ]
+    frontier = pareto_frontier(results)
+    assert "weak" not in frontier["frontier"]
+    assert "good" in frontier["frontier"]
 
 
 async def test_runner_completes_with_mock_adapters():

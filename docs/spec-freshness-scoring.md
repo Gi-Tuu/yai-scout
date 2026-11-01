@@ -80,12 +80,12 @@ recency = 1                                     if STABLE
 authority = max(w_tier(e)) over E_eff           （无证据 → 0）
 coverage = 1 if 至少一条 E_eff 且 effective_date 可判定 else 0
 
-score = round(100 * (0.5*relation_norm + 0.3*recency + 0.2*authority), 0)  if coverage
+score = round(100 * (0.6*relation_norm + 0.1*recency + 0.3*authority), 0)  if coverage
       = null                                                              otherwise
 ```
 
 - `score_breakdown` 必须返回 `relation_norm / recency / authority / coverage` 四项及每条证据的贡献。
-- 权重（0.5/0.3/0.2）是**初始 rubric**，用 60 条人工标注做网格搜索校准（目标：与人工排序 Spearman ≥0.7，MAE ≤12），权重版本化 `freshness_weights_version`。
+- 权重已从 rubric-v1（0.5/0.3/0.2）校准为 **rubric-v2（0.6/0.1/0.3）**：20 条标注上 MAE 13.41 → 12.06，状态判定 20/20（见 `docs/freshness-eval.md`）；扩到 60 条人工打分后重跑。
 
 ## 6. Confidence（0–1）
 
@@ -131,3 +131,4 @@ confidence = 0.4*authority + 0.3*evidence_count_factor + 0.3*agreement
 - 报告必须展示：类别与窗口、target_time、每条证据的时间/档位/关系、决策表命中行、分数 breakdown、权重版本。
 - 相同输入 + 相同证据 + 相同 policy → 相同输出（确定性；LLM 只做分类/关系，不允许它改分）。
 - 数据集/权重/policy 版本变化时，报告记录版本号。
+

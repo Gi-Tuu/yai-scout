@@ -80,7 +80,8 @@ class BenchmarkRunner:
             ]
         dataset_version, all_task_list = load_dataset()
         all_tasks = {task.id: task for task in all_task_list}
-        chosen_tasks = task_ids or list(all_tasks)
+        public_tasks = [task.id for task in all_task_list if not task.hidden]
+        chosen_tasks = task_ids or public_tasks
         missing = [task_id for task_id in chosen_tasks if task_id not in all_tasks]
         if missing:
             raise ValueError(f"unknown task ids: {missing}")
@@ -218,6 +219,7 @@ class BenchmarkRunner:
             job.cancel()
         if jobs:
             await asyncio.gather(*jobs, return_exceptions=True)
+
 
 
 

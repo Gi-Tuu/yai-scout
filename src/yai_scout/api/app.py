@@ -19,6 +19,7 @@ from ..benchmark.dataset import load_dataset
 from ..benchmark.registry import DEFAULT_AGENT_SPECS, build_adapters
 from ..benchmark.runner import BenchmarkRunner
 from ..benchmark.scoring import leaderboard as build_leaderboard
+from ..benchmark.scoring import pareto_frontier
 from ..config import Settings, get_settings
 from ..detector.service import StaleAnswerDetector
 from ..domain.models import ResearchTask, RunEvent, TaskStatus
@@ -229,11 +230,13 @@ def create_app(
     # ------------------------------------------------------------------ benchmark
     @app.get("/api/benchmark/tasks")
     @app.get("/benchmark/tasks")
-    async def benchmark_tasks() -> dict[str, Any]:
+    async def benchmark_tasks(include_hidden: bool = False) -> dict[str, Any]:
         version, tasks = load_dataset()
+        visible = tasks if include_hidden else [task for task in tasks if not task.hidden]
         return {
             "dataset_version": version,
-            "tasks": [task.model_dump(mode="json") for task in tasks],
+            "tasks": [task.model_dump(mode="json") for task in visible],
+            "hidden_count": sum(1 for task in tasks if task.hidden),
         }
 
     @app.get("/api/benchmark/agents")
@@ -272,6 +275,7 @@ def create_app(
             "session": session.model_dump(mode="json"),
             "results": [result.model_dump(mode="json") for result in results],
             "leaderboard": build_leaderboard(results),
+            "pareto": pareto_frontier(results),
         }
 
     @app.get("/api/benchmark/leaderboard")
@@ -285,6 +289,7 @@ def create_app(
             "session_id": session_id,
             "status": session.status,
             "leaderboard": build_leaderboard(results),
+            "pareto": pareto_frontier(results),
         }
 
     # ------------------------------------------------------------------ pages
@@ -328,4 +333,6 @@ def create_app(
 
 
 app = create_app()
+
+
 

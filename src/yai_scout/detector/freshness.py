@@ -19,7 +19,8 @@ from ..domain.models import (
 )
 from .temporal import DEFAULT_WINDOWS, POLICY_VERSION
 
-WEIGHTS_VERSION = "rubric-v1"
+WEIGHTS_VERSION = "rubric-v2-calibrated"
+DEFAULT_WEIGHTS = {"relation": 0.6, "recency": 0.1, "authority": 0.3}
 TIER_WEIGHTS = {1: 1.0, 2: 0.8, 3: 0.5, 4: 0.25}
 RECENT_DAYS = 120
 YEAR_DAYS = 365
@@ -72,6 +73,7 @@ def score_claim(
     *,
     as_of: datetime | None = None,
     allow_future: bool = True,
+    weights: dict[str, float] | None = None,
 ) -> FreshnessVerdict:
     """按决策表给出状态 + 可空分数 + 拆解。"""
     fallback = as_of or datetime.now(UTC)
@@ -134,7 +136,15 @@ def score_claim(
     coverage = 1.0 if effective else 0.0
     score: int | None = None
     if coverage:
-        score = round(100 * (0.5 * relation_norm + 0.3 * recency + 0.2 * authority))
+        w = weights or DEFAULT_WEIGHTS
+        score = round(
+            100
+            * (
+                w["relation"] * relation_norm
+                + w["recency"] * recency
+                + w["authority"] * authority
+            )
+        )
         if status is FreshnessStatus.STALE:
             score = min(score, 50)
         elif status is FreshnessStatus.CONFLICTED:
@@ -206,3 +216,5 @@ __all__ = [
     "parse_published",
     "score_claim",
 ]
+
+

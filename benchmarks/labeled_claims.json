@@ -1,0 +1,26 @@
+{
+  "version": "labeled-claims/0.1",
+  "description": "20 条人工标注 claim：用于评估关系/状态判定与分数校准（不参与产品运行）。",
+  "claims": [
+    {"id": "L01", "text": "Tavily 免费计划每月提供 500 credits。", "type": "pricing", "sensitivity": "sensitive", "evidence": [{"relation": "contradicts", "tier": 1, "days_ago": 3}], "expected": "stale"},
+    {"id": "L02", "text": "Tavily 免费计划每月提供 1,000 credits。", "type": "pricing", "sensitivity": "sensitive", "evidence": [{"relation": "supports", "tier": 1, "days_ago": 3}], "expected": "fresh"},
+    {"id": "L03", "text": "Tavily 免费计划每月提供 1,000 credits。", "type": "pricing", "sensitivity": "sensitive", "evidence": [{"relation": "supports", "tier": 4, "days_ago": 2}], "expected": "insufficient"},
+    {"id": "L04", "text": "Tavily 免费计划每月提供 1,000 credits。", "type": "pricing", "sensitivity": "sensitive", "evidence": [{"relation": "mentions", "tier": 1, "days_ago": 2}], "expected": "insufficient"},
+    {"id": "L05", "text": "Tavily 免费计划每月提供 1,000 credits。", "type": "pricing", "sensitivity": "sensitive", "evidence": [], "expected": "insufficient"},
+    {"id": "L06", "text": "Python 3.12 于 2023 年发布。", "type": "date", "sensitivity": "stable", "evidence": [{"relation": "supports", "tier": 1, "days_ago": 900}], "expected": "fresh"},
+    {"id": "L07", "text": "Python 3.12 于 2023 年发布。", "type": "date", "sensitivity": "stable", "evidence": [], "expected": "insufficient"},
+    {"id": "L08", "text": "1 英里等于 1.60934 公里。", "type": "statistic", "sensitivity": "stable", "evidence": [{"relation": "supports", "tier": 2, "days_ago": 2000}], "expected": "fresh"},
+    {"id": "L09", "text": "YAI Agent Core 当前版本是 0.24.0。", "type": "version", "sensitivity": "sensitive", "evidence": [{"relation": "contradicts", "tier": 1, "days_ago": 2}], "expected": "stale"},
+    {"id": "L10", "text": "YAI Agent Core 当前版本是 0.25.0。", "type": "version", "sensitivity": "sensitive", "evidence": [{"relation": "supports", "tier": 1, "days_ago": 1}], "expected": "fresh"},
+    {"id": "L11", "text": "Bifrost 使用 Apache-2.0 许可证。", "type": "law", "sensitivity": "slow", "evidence": [{"relation": "supports", "tier": 1, "days_ago": 5}], "expected": "fresh"},
+    {"id": "L12", "text": "Bifrost 使用 AGPL-3.0 许可证。", "type": "law", "sensitivity": "slow", "evidence": [{"relation": "contradicts", "tier": 1, "days_ago": 5}], "expected": "stale"},
+    {"id": "L13", "text": "Bifrost 使用 AGPL-3.0 许可证。", "type": "law", "sensitivity": "slow", "evidence": [{"relation": "supports", "tier": 4, "days_ago": 2}], "expected": "insufficient"},
+    {"id": "L14", "text": "Tavily advanced search 每次消耗 2 credits。", "type": "pricing", "sensitivity": "sensitive", "evidence": [{"relation": "supports", "tier": 1, "days_ago": 3}, {"relation": "contradicts", "tier": 1, "days_ago": 3}], "expected": "conflicted"},
+    {"id": "L15", "text": "Tavily advanced search 每次消耗 1 credit。", "type": "pricing", "sensitivity": "sensitive", "evidence": [{"relation": "contradicts", "tier": 1, "days_ago": 10}], "expected": "stale"},
+    {"id": "L16", "text": "Tavily 免费计划每月提供 500 credits。", "type": "pricing", "sensitivity": "sensitive", "evidence": [{"relation": "supports", "tier": 3, "days_ago": 400}], "expected": "stale"},
+    {"id": "L17", "text": "某公司 CEO 是张三。", "type": "leadership", "sensitivity": "slow", "evidence": [{"relation": "supports", "tier": 1, "days_ago": 10}], "expected": "fresh"},
+    {"id": "L18", "text": "某公司 CEO 是张三。", "type": "leadership", "sensitivity": "slow", "evidence": [{"relation": "contradicts", "tier": 1, "days_ago": 10}], "expected": "stale"},
+    {"id": "L19", "text": "HTTP 404 表示 Not Found。", "type": "other", "sensitivity": "stable", "evidence": [{"relation": "supports", "tier": 2, "days_ago": 1000}], "expected": "fresh"},
+    {"id": "L20", "text": "Tavily 学生计划每月提供 4,000 credits。", "type": "pricing", "sensitivity": "sensitive", "evidence": [{"relation": "supports", "tier": 1, "days_ago": 1}], "expected": "fresh"}
+  ]
+}

@@ -226,6 +226,7 @@ class BenchmarkTask(BaseModel):
     reference_evidence: list[str] = Field(default_factory=list)
     gold_values: list[str] = Field(default_factory=list)
     gold_sources: list[str] = Field(default_factory=list)
+    hidden: bool = False
     notes: str = ""
 
 

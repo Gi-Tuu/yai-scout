@@ -165,6 +165,51 @@ def weighted_view(
     return round(score, 4)
 
 
+def pareto_frontier(results: list[TaskResult]) -> dict[str, object]:
+    """非支配集：最大化 accuracy/freshness，最小化 cost/latency/stale。"""
+    rows = leaderboard(results)
+    points: list[dict[str, float | str | bool]] = []
+    for row in rows:
+        points.append(
+            {
+                "agent_id": str(row["agent_id"]),
+                "accuracy": float(row["numeric_accuracy"] or 0.0),
+                "freshness": float(row["freshness_score"] or 0.0) / 100.0,
+                "cost": float(row["avg_cost_usd"] or 0.0),
+                "latency": float(row["avg_latency_s"] or 0.0),
+                "stale": float(row["stale_rate"] or 0.0),
+            }
+        )
+
+    def dominates(a: dict[str, float | str | bool], b: dict[str, float | str | bool]) -> bool:
+        better_or_equal = (
+            float(a["accuracy"]) >= float(b["accuracy"])
+            and float(a["freshness"]) >= float(b["freshness"])
+            and float(a["cost"]) <= float(b["cost"])
+            and float(a["latency"]) <= float(b["latency"])
+            and float(a["stale"]) <= float(b["stale"])
+        )
+        strictly_better = (
+            float(a["accuracy"]) > float(b["accuracy"])
+            or float(a["freshness"]) > float(b["freshness"])
+            or float(a["cost"]) < float(b["cost"])
+            or float(a["latency"]) < float(b["latency"])
+            or float(a["stale"]) < float(b["stale"])
+        )
+        return better_or_equal and strictly_better
+
+    for point in points:
+        point["pareto"] = not any(
+            dominates(other, point) for other in points if other is not point
+        )
+    frontier = [p["agent_id"] for p in points if p["pareto"]]
+    return {
+        "objectives": ["accuracy↑", "freshness↑", "cost↓", "latency↓", "stale↓"],
+        "points": points,
+        "frontier": frontier,
+    }
+
+
 def leaderboard(results: list[TaskResult]) -> list[dict[str, float | str | None]]:
     """按 agent 聚合：多维指标（不隐藏单一总分）。"""
     grouped: dict[str, list[TaskResult]] = {}

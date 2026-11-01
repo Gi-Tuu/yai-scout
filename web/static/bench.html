@@ -113,18 +113,19 @@ async function poll() {
   const data = await res.json();
   const session = data.session || {};
   $("status").textContent = `${session.status} · ${data.results.length}/${(session.agent_ids || []).length * (session.task_ids || []).length} 结果`;
-  renderBoard(data.leaderboard || []);
+  renderBoard(data.leaderboard || [], data.pareto || null);
   renderDetail(data.results || []);
   if (session.status !== "running") { clearInterval(state.timer); $("run").disabled = false; }
 }
 
-function renderBoard(rows) {
+function renderBoard(rows, pareto) {
   if (!rows.length) { $("board").innerHTML = ""; return; }
+  const frontier = new Set((pareto && pareto.frontier) || []);
   $("board").innerHTML =
     `<tr><th>#</th><th>Agent</th><th>加权视图</th><th>准确率</th><th>Freshness</th><th>Stale率</th><th>证据质量</th><th>Claim覆盖</th><th>成本</th><th>时延</th></tr>` +
     rows.map((r, i) => `<tr>
       <td class="num">${i + 1}</td>
-      <td>${esc(r.agent_id)}</td>
+      <td>${esc(r.agent_id)} ${frontier.has(r.agent_id) ? `<span title="Pareto frontier">★</span>` : ""}</td>
       <td><div class="row"><span class="num">${r.score}</span><span class="bar" style="width:120px"><i style="width:${Math.round(r.score * 100)}%"></i></span></div></td>
       <td class="num">${r.numeric_accuracy}</td>
       <td class="num">${r.freshness_score ?? "-"}</td>
@@ -139,7 +140,7 @@ function renderDetail(results) {
   results.forEach((r) => { (byTask[r.task_id] ||= []).push(r); });
   $("detail").innerHTML = Object.entries(byTask).map(([taskId, items]) => {
     const rows = items.map((r) => `<tr>
-      <td>${esc(r.agent_id)}</td>
+      <td>${esc(r.agent_id)} ${frontier.has(r.agent_id) ? `<span title="Pareto frontier">★</span>` : ""}</td>
       <td class="num">${r.numeric_accuracy}</td>
       <td class="num">${r.score}</td>
       <td class="num">${r.freshness_score ?? "-"}</td>
@@ -153,4 +154,5 @@ function renderDetail(results) {
 </script>
 </body>
 </html>
+
 
