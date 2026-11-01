@@ -118,9 +118,10 @@ docs/              charters, specs, evaluation, demo script
 - [Differentiation spec](docs/differentiation-spec.md) · [Freshness scoring spec](docs/spec-freshness-scoring.md)
 - [Adapter & dataset spec](docs/spec-benchmark-adapter.md) · [Temporal replay spec](docs/spec-temporal-replay.md)
 - [Evaluation](docs/freshness-eval.md) · [Demo script](docs/demo-script.md) · [Hackathon rules report](docs/hackathon-rules-report.md)
-- [YAI reuse & license audit](docs/yai-reuse.md) · [API resources](docs/api-resources.md)
+- [YAI reuse & license audit](docs/yai-reuse.md) · [API resources](docs/api-resources.md) · [Changelog](CHANGELOG.md)
 
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
+
 
