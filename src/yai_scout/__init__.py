@@ -1,3 +1,4 @@
 """YAI Scout —— evidence-first, auditable research agent."""
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
+

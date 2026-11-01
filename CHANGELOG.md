@@ -14,7 +14,26 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - Real web-archive snapshots (Wayback or manual HTML) for pricing/leaderboard facts.
 - API rate limiting and cost protection for the public demo (P1 R1/R3).
 - More agent adapters (framework wrappers) and larger benchmark dataset.
-- Final submission package: two project READMEs, slides, demo video.
+- Final submission package: one primary README, slides, demo video; independent second labeler for accuracy.
+
+## [0.3.0] - 2026-11-02
+
+### Changed
+
+- Repositioned to **one primary submission**: Tavily Track Problem 05 (Stale-answer detector). The benchmark is now supporting evaluation evidence, not a second submission.
+- `docs/track-tavily.md` is the primary submission brief; `docs/track-bifrost.md` explicitly does not claim Bifrost Track Problem 02.
+- README rewritten around one product + both required technologies.
+
+### Added
+
+- **Bifrost AI Gateway integration**: `BIFROST_BASE_URL` / `BIFROST_API_KEY` / `BIFROST_MODEL`; all LLM requests route through Bifrost when configured; healthz reports `gateway`.
+- Local Bifrost verification: real `/freshness/verify` routed through Bifrost, `POST /v1/chat/completions` 200, documented in `docs/bifrost-verification.md`; `scripts/verify_bifrost.py`.
+- Editable 12-slide submission deck (`deliverables/YAI_Scout_Submission.pptx`) + builder.
+- Submission checklist mapping official requirements (`docs/submission.md`).
+
+### Fixed
+
+- No-auth local Bifrost failed with `Illegal header value b''`; `Authorization` is now omitted when no key is set.
 
 ## [0.2.1-hackathon] - 2026-11-01
 
@@ -23,7 +42,9 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - Accuracy gate design (`docs/spec-accuracy-gate.md`), labeling protocol (`docs/accuracy-labeling-protocol.md`), and 30 labeled gate cases (`benchmarks/accuracy_gate/labeled_cases.json`, synthetic source metadata) covering auto_update/review/reject/no_change.
 - Deterministic accuracy gate evaluator (`accuracy_gate.py`) + `scripts/eval_accuracy_gate.py`; v0 reports 30/30 agreement on rule-consistent labels (overfit caveat documented).
 - Accuracy labels expanded to 60; gate agreement 1.000 on rule-consistent labels (independent human labels still pending).
-- First human labeling result (labeler 001) and caveat: 60/60 matches hidden key, so it is rule-following not independent ground truth (`docs/accuracy-eval.md`).\n- Blind labeling kit: 60-case worksheet, hidden key, `/label` UI, and `eval_accuracy_gate.py --labels` for independent human labels/false-update rate.\n- Typed value-hint templates (price/credits, version, license, port, date, numeric) with ambiguity rejection.
+- First human labeling result (labeler 001) and caveat: 60/60 matches hidden key, so it is rule-following not independent ground truth (`docs/accuracy-eval.md`).
+- Blind labeling kit: 60-case worksheet, hidden key, `/label` UI, and `eval_accuracy_gate.py --labels` for independent human labels/false-update rate.
+- Typed value-hint templates (price/credits, version, license, port, date, numeric) with ambiguity rejection.
 - Cached/budgeted Tavily discovery (`ANCHOR_DISCOVERY_TTL_SECONDS`, `ANCHOR_DISCOVERY_DAILY_BUDGET`); healthz exposes usage.
 - Multi-source discovery for changed anchors: revalidation now enriches observations via Tavily (2–3 sources) before gate evaluation.
 - Rollback API + `/admin` UI: token-gated anchor/candidate tables, approve/reject and rollback.
@@ -165,6 +186,7 @@ evidence core.
 [Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
 [0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
 [0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+
 
 
 
