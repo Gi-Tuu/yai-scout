@@ -1,7 +1,7 @@
 # YAI Scout
 
 > Evidence First, Answers Second.
-> 状态：**G0 骨架已跑通** · 2026-11-01
+> 状态：**G0 骨架已跑通 / 赛题已发布 / 选题待官方确认** · 2026-11-01
 
 YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，线上，个人可参赛）的作品：一个可审计、证据优先的研究 Agent。本仓库同时保存预研材料与实现代码。
 
@@ -13,6 +13,9 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 | [research/competition-facts.md](research/competition-facts.md) | 赛事事实核查底稿 + Tavily/合作方/模型 API 额度与价格 + 北京时间换算 |
 | [research/yai-interface-audit.md](research/yai-interface-audit.md) | YAI Agent Core v0.25.0 可复用接口审计、已知坑与依赖方式 |
 | [docs/tavily-setup.md](docs/tavily-setup.md) | Tavily 接入决策：Windows 下走 REST API（不装 CLI/全局 Skills）、key 存放与验证 |
+| [docs/hackathon-rules-report.md](docs/hackathon-rules-report.md) | **赛事调查全文**：赛题、双赛道规则（含 4 处官方口径冲突）、奖金修正、选题与开发建议 |
+| [docs/adr/0001-track-selection.md](docs/adr/0001-track-selection.md) | 选题决策：Bifrost-02 + Tavily-01 整合方案（待主办方确认） |
+| [research/problem-statements/hackculture-event.json](research/problem-statements/hackculture-event.json) | 官方平台事件原始 JSON（时间线/提交字段/公告/奖项）存档 |
 | [scripts/tavily_smoke.py](scripts/tavily_smoke.py) | Tavily 冒烟测试（只打印标题/URL/credits，不打印 key） |
 
 ## 现在能跑什么（G0 骨架）
