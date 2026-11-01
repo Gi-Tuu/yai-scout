@@ -14,7 +14,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 
-from ..domain.models import Claim, EvidenceRef, FreshnessStatus, FreshnessVerdict
+from ..domain.models import Claim, ClaimType, EvidenceRef, FreshnessStatus, FreshnessVerdict
 
 RECENT_DAYS = 120
 YEAR_DAYS = 365
@@ -55,6 +55,7 @@ def score_claim(
     contradicts_any = False
     contradicts_recent = False
     best_tier = 4
+    support_tiers: list[int] = []
 
     for item in evidence:
         published = parse_published(item.published_at)
@@ -65,6 +66,7 @@ def score_claim(
             best_tier = min(best_tier, item.tier)
         if item.relation == "supports":
             supports_any = True
+            support_tiers.append(item.tier)
             if is_recent:
                 supports_recent = True
         if item.relation == "contradicts":
@@ -103,6 +105,17 @@ def score_claim(
     else:
         status = FreshnessStatus.UNCERTAIN
         rationale = "证据不足或时效性无法确认，建议人工复核"
+
+    # 价格/版本/法规类 claim：只有非权威来源支持时，不能判 fresh（防止"博客说新就是新"）。
+    strict_types = {ClaimType.PRICING, ClaimType.VERSION, ClaimType.LAW}
+    if (
+        status is FreshnessStatus.FRESH
+        and claim.type in strict_types
+        and not any(tier <= 2 for tier in support_tiers)
+    ):
+        status = FreshnessStatus.UNCERTAIN
+        score = min(score, 60)
+        rationale = "仅非权威来源支持，时效性存疑"
 
     return FreshnessVerdict(
         claim_id=claim.id,

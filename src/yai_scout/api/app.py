@@ -21,6 +21,7 @@ from ..benchmark.scoring import leaderboard as build_leaderboard
 from ..config import Settings, get_settings
 from ..detector.service import StaleAnswerDetector
 from ..domain.models import ResearchTask, RunEvent, TaskStatus
+from ..llm import LLMClient
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
 from ..retrieval.tavily import TavilyClient
 from ..store import Store
@@ -66,8 +67,15 @@ def create_app(
         max_results=cfg.max_results_per_query,
     )
     director = ResearchDirector(store, tavily, cfg)
-    detector = StaleAnswerDetector(tavily, as_of=cfg.default_as_of, max_claims=6, concurrency=3)
-    runner = BenchmarkRunner(store, build_adapters(tavily), detector)
+    llm = LLMClient(
+        cfg.openai_api_key,
+        base_url=cfg.openai_base_url,
+        model=cfg.llm_model,
+    )
+    detector = StaleAnswerDetector(
+        tavily, as_of=cfg.default_as_of, max_claims=6, concurrency=3, llm=llm
+    )
+    runner = BenchmarkRunner(store, build_adapters(tavily, llm), detector)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
@@ -75,6 +83,7 @@ def create_app(
         await director.shutdown()
         await runner.shutdown()
         await tavily.aclose()
+        await llm.aclose()
         store.close()
 
     app = FastAPI(title=cfg.app_name, version=cfg.app_version, lifespan=lifespan)
@@ -87,6 +96,7 @@ def create_app(
             "app": cfg.app_name,
             "version": cfg.app_version,
             "tavily": {"mode": tavily.mode, "authenticated": tavily.authenticated},
+            "llm": {"available": llm.available, "model": cfg.llm_model},
         }
 
     # ------------------------------------------------------------------ research

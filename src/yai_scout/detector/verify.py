@@ -7,6 +7,7 @@ import re
 from typing import Literal, Protocol
 
 from ..domain.models import Claim, ClaimType, EvidenceRef, FreshnessStatus, FreshnessVerdict
+from ..llm import LLMClient
 from ..retrieval.quality import classify_source
 from ..retrieval.tavily import SearchResult, TavilyError
 from .claims import extract_numbers
@@ -36,6 +37,20 @@ class Searcher(Protocol):
     ) -> tuple[list[SearchResult], float]: ...
 
 
+RELATION_SYSTEM = (
+    "You are a fact-checking judge. Given one claim and up to three web sources, decide whether "
+    "the sources support the claim, contradict it, or merely mention it. Return ONLY JSON: "
+    '{"relation":"supports|contradicts|mentions","reason":"<short>"}. '
+    "If the values/dates/roles differ, use contradicts. "
+    "If the sources do not address it, use mentions."
+)
+RELATION_USER = """Claim: {claim}
+
+Sources:
+{sources}
+"""
+
+
 class ClaimVerifier:
     def __init__(
         self,
@@ -44,13 +59,17 @@ class ClaimVerifier:
         as_of: str = "2026-11-01",
         max_results: int = 4,
         timeout_s: float = VERIFY_TIMEOUT_S,
+        llm: LLMClient | None = None,
+        use_llm_relations: bool = True,
     ) -> None:
         self.searcher = searcher
         self.as_of = as_of_datetime(as_of)
         self.max_results = max_results
         self.timeout_s = timeout_s
+        self.llm = llm
+        self.use_llm_relations = use_llm_relations
 
-    async def verify(self, claim: Claim) -> tuple[FreshnessVerdict, float]:
+    async def verify(self, claim: Claim) -> tuple[FreshnessVerdict, float, float]:
         query = build_query(claim)
         try:
             results, credits = await asyncio.wait_for(
@@ -64,11 +83,50 @@ class ClaimVerifier:
                 score=0,
                 rationale=f"检索失败：{type(exc).__name__}",
             )
-            return verdict, 0.0
+            return verdict, 0.0, 0.0
 
         evidence = [self._to_evidence(claim, item) for item in results[: self.max_results]]
+        llm_cost = 0.0
+        llm_reason = ""
+        if self._should_use_llm(claim, evidence):
+            relation, reason, llm_cost = await self._llm_relation(claim, evidence)
+            if relation is not None:
+                evidence[0].relation = relation
+                llm_reason = reason
         verdict = score_claim(claim, evidence, as_of=self.as_of)
-        return verdict, credits
+        if llm_reason:
+            verdict.rationale = f"{verdict.rationale}（LLM 判定：{llm_reason}）"
+        return verdict, credits, llm_cost
+
+    def _should_use_llm(self, claim: Claim, evidence: list[EvidenceRef]) -> bool:
+        if self.llm is None or not self.llm.available or not self.use_llm_relations:
+            return False
+        if not evidence:
+            return False
+        special = {ClaimType.LAW, ClaimType.LEADERSHIP, ClaimType.DATE}
+        return claim.type in special or not claim.numbers
+
+    async def _llm_relation(
+        self, claim: Claim, evidence: list[EvidenceRef]
+    ) -> tuple[Literal["supports", "contradicts", "mentions"] | None, str, float]:
+        sources = "\n".join(
+            f"- [{i + 1}] {item.title or item.url} ({item.published_at or 'date unknown'}): "
+            f"{item.snippet[:280]}"
+            for i, item in enumerate(evidence[:3])
+        )
+        payload = await self.llm.chat_json(  # type: ignore[union-attr]
+            RELATION_SYSTEM,
+            RELATION_USER.format(claim=claim.text, sources=sources),
+            max_tokens=200,
+        )
+        if payload is None:
+            return None, "", 0.0
+        data, result = payload
+        relation = str(data.get("relation") or "").lower()
+        if relation not in {"supports", "contradicts", "mentions"}:
+            return None, "", result.cost_usd
+        valid: Literal["supports", "contradicts", "mentions"] = relation  # type: ignore[assignment]
+        return valid, str(data.get("reason") or "")[:160], result.cost_usd
 
     def _to_evidence(self, claim: Claim, result: SearchResult) -> EvidenceRef:
         tier, _ = classify_source(result.url)

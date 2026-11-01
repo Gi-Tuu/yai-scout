@@ -1,9 +1,12 @@
 import asyncio
 
-from yai_scout.benchmark.adapters import MockAdapter
+from yai_scout.benchmark.adapters import LLMAgentAdapter, MockAdapter
+from yai_scout.benchmark.dataset import load_tasks
 from yai_scout.benchmark.runner import BenchmarkRunner
 from yai_scout.benchmark.scoring import composite_score, leaderboard, match_gold, numeric_accuracy
 from yai_scout.domain.models import BenchSession, TaskResult
+from yai_scout.llm import LLMResult
+from yai_scout.retrieval.tavily import SearchResult
 from yai_scout.store import Store
 
 
@@ -38,6 +41,38 @@ def test_leaderboard_orders_by_score():
     )
     assert rows[0]["agent_id"] == "a"
     assert rows[0]["runs"] == 2
+
+
+async def test_llm_agent_adapter_returns_answer_and_citations():
+    class FakeTavily:
+        async def search(self, query: str, **kwargs):  # type: ignore[no-untyped-def]
+            return [
+                SearchResult(
+                    title="Tavily pricing",
+                    url="https://docs.tavily.com/documentation/api-credits",
+                    content="1,000 free credits per month.",
+                    published_date="Tue, 28 Oct 2026 00:00:00 GMT",
+                )
+            ], 1.0
+
+    class FakeLLM:
+        available = True
+
+        async def chat_text(self, system: str, user: str, **kwargs):  # type: ignore[no-untyped-def]
+            return LLMResult(
+                text="Tavily gives 1,000 free credits per month [1].",
+                prompt_tokens=300,
+                completion_tokens=30,
+                cost_usd=0.0002,
+            )
+
+    adapter = LLMAgentAdapter(FakeTavily(), FakeLLM())  # type: ignore[arg-type]
+    task = load_tasks()[0]
+    answer = await adapter.answer(task)
+    assert answer.text.startswith("Tavily gives")
+    assert answer.citations == ["https://docs.tavily.com/documentation/api-credits"]
+    assert answer.tokens == 330
+    assert answer.cost_usd > 0
 
 
 async def test_runner_completes_with_mock_adapters():

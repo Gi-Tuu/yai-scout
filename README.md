@@ -36,9 +36,10 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 - SQLite 持久化（任务/计划/来源/事件/成本），来源按 canonical URL 去重；
 - Tavily REST 适配器：有 key 走 Bearer，无 key 自动 keyless（有限速）；
 - credits 记账、单 run 预算（默认 32 credits）与墙钟降级；
-- **Stale-answer Detector**（Tavily-01）：claim 抽取 → Tavily 实时核验 → Freshness Score + 证据；
-- **Benchmark**（Bifrost-02）：13 题数据集 + Agent Adapter 协议 + Runner + 排行榜（合成/检索基线）；
-- 39 个测试 + ruff + mypy(strict) 全绿。
+- **Stale-answer Detector**（Tavily-01）：LLM claim 抽取（规则兜底）→ Tavily 实时核验 → Freshness Score + 逐条证据 + 修正建议；
+- **Benchmark**（Bifrost-02）：13 题数据集 + Agent Adapter 协议 + Runner + 排行榜（合成/检索基线/LLM 单轮 RAG）；
+- LLM 已接入：`deepseek/deepseek-v4.1-flash-1017`（OpenAI 兼容端点），无 key 时自动降级规则版；
+- 46 个测试 + ruff + mypy(strict) 全绿。
 
 页面：`/` 研究控制台 · `/detector` 时效检测器 · `/bench` 排行榜。
 未实现（下一轮）：LLM 版 claim 抽取与关系判定、HTTP 外部 Agent 接入、更多题目与去污染。详见 [docs/benchmark.md](docs/benchmark.md)。

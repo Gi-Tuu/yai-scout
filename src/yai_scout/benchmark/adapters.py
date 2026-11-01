@@ -8,6 +8,7 @@ from typing import Any, Protocol
 import httpx
 
 from ..domain.models import AgentAnswer, BenchmarkTask
+from ..llm import LLMClient
 from ..pipeline.planning import build_plan
 from ..retrieval.tavily import SearchResult, TavilyClient
 
@@ -124,6 +125,61 @@ class ScoutAdapter:
                 seen.add(item.url)
                 merged.append(item)
         return _compose(task, merged, started, credits)
+
+
+LLM_SYSTEM = (
+    "You are a careful research assistant. Answer the question using ONLY the provided sources. "
+    "Cite sources with [n]. Keep the answer short and factual. "
+    "If the sources do not contain the answer, say you cannot verify it."
+)
+LLM_USER = """Question: {question}
+As of: {as_of}
+
+Sources:
+{sources}
+
+Answer:"""
+
+
+class LLMAgentAdapter:
+    """单轮 RAG + LLM 回答：Tavily 检索 → 拼接来源 → DeepSeek 生成答案。"""
+
+    def __init__(self, tavily: TavilyClient, llm: LLMClient, *, max_results: int = 4) -> None:
+        self.tavily = tavily
+        self.llm = llm
+        self.max_results = max_results
+        self.id = "llm_agent"
+        self.name = "LLM Single-shot (RAG)"
+        self.description = "Tavily retrieval + DeepSeek answer with citations"
+
+    async def answer(self, task: BenchmarkTask) -> AgentAnswer:
+        started = time.monotonic()
+        results, credits = await self.tavily.search(task.question, max_results=self.max_results)
+        sources = "\n".join(
+            f"[{i + 1}] {item.title} ({item.published_date or 'date unknown'}): "
+            f"{item.content[:300]}"
+            for i, item in enumerate(results[: self.max_results])
+        )
+        result = await self.llm.chat_text(
+            LLM_SYSTEM,
+            LLM_USER.format(question=task.question, as_of=task.as_of, sources=sources),
+            max_tokens=350,
+        )
+        if result is None:
+            return AgentAnswer(
+                text="",
+                citations=[item.url for item in results],
+                latency_s=round(time.monotonic() - started, 2),
+                cost_usd=round(credits * 0.008, 4),
+                error="LLM unavailable",
+            )
+        return AgentAnswer(
+            text=result.text,
+            citations=[item.url for item in results],
+            tokens=result.prompt_tokens + result.completion_tokens,
+            latency_s=round(time.monotonic() - started, 2),
+            cost_usd=round(result.cost_usd + credits * 0.008, 6),
+        )
 
 
 class HttpAdapter:

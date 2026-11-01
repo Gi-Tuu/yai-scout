@@ -54,12 +54,15 @@
 
 ## 5. Stale-answer Detector（Tavily-01）
 
-链路：`答案 → 句子切分 → 规则 claim 抽取 → 逐条 Tavily 检索 → 关系判定（supports/contradicts/mentions）→ Freshness Score + 判定`。
+链路：`答案 → 句子切分 → claim 抽取（LLM 主 + 规则兜底）→ 逐条 Tavily 检索 → 关系判定（规则 + LLM 复核）→ Freshness Score + 判定 → 修正建议`。
 
-- 抽取：只保留含价格/版本/法规/人事/日期/统计信号的句子；不切开 `0.25.0` 这类版本号。
+- 抽取：LLM 走 JSON 模式，**claim 必须是原文子串**（防编造）；LLM 失败/不可用时用规则版（价格/版本/法规/人事/日期/统计信号）。
 - 核验：每条 claim 一次 search（默认 4 条结果），查询会去掉"旧资料显示"前缀与答案值，只留主题词。
+- 关系：数字型 claim 先做值比较；法规/人事/日期等非数字 claim 由 LLM 复核（返回 supports/contradicts/mentions + 理由）。
 - 打分：基础 50；支持 +30（近期）/ +15（历史）；矛盾 −40（近期）/ −25（历史）；一手 +10、权威二手 +5；无一年内证据 −20；clamp 0–100。
+- 权威性门槛：价格/版本/法规类 claim 若只有 T3/T4 来源支持，最多判 `uncertain`（分数 ≤60），不判 fresh。
 - 判定：`stale`（有矛盾且 <55）/ `fresh`（有支持且 ≥65）/ `unverifiable`（无来源）/ `uncertain`（其余）。
+- 修正建议：对 stale/uncertain 且已有证据的 claim，LLM 生成一句"当前值/建议表述"（最多 3 条）。
 
 ## 6. 接口
 

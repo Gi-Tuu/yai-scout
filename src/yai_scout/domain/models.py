@@ -144,6 +144,7 @@ class FreshnessVerdict(BaseModel):
     status: FreshnessStatus
     score: int = Field(ge=0, le=100)
     rationale: str = ""
+    suggestion: str = ""
     evidence: list[EvidenceRef] = Field(default_factory=list)
     checked_at: str = Field(default_factory=utcnow_iso)
 
@@ -157,6 +158,7 @@ class DetectorReport(BaseModel):
     overall_score: int = Field(default=0, ge=0, le=100)
     stale_claims: int = 0
     credits: float = 0.0
+    llm_cost_usd: float = 0.0
     created_at: str = Field(default_factory=utcnow_iso)
 
 
@@ -174,7 +176,7 @@ class BenchmarkTask(BaseModel):
 class AgentSpec(BaseModel):
     id: str
     name: str
-    kind: Literal["mock", "retrieval_baseline", "scout", "http"] = "mock"
+    kind: Literal["mock", "retrieval_baseline", "scout", "http", "llm"] = "mock"
     description: str = ""
     config: dict[str, Any] = Field(default_factory=dict)
 

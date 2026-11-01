@@ -56,6 +56,14 @@ def test_fresh_when_recent_support():
     assert verdict.score >= 65
 
 
+def test_pricing_claim_with_only_weak_sources_is_uncertain():
+    verdict = score_claim(
+        claim(), [evidence("supports", 2, tier=4)], as_of=datetime.now(UTC)
+    )
+    assert verdict.status is FreshnessStatus.UNCERTAIN
+    assert verdict.score <= 60
+
+
 def test_stale_when_old_but_authoritative_contradiction():
     verdict = score_claim(
         claim(), [evidence("contradicts", 400, tier=1)], as_of=datetime.now(UTC)

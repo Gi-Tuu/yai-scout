@@ -33,6 +33,12 @@ DEFAULT_AGENT_SPECS: list[AgentSpec] = [
         kind="retrieval_baseline",
         description="single search + snippet stitching",
     ),
+    AgentSpec(
+        id="llm_agent",
+        name="LLM Single-shot (RAG)",
+        kind="llm",
+        description="Tavily retrieval + DeepSeek answer with citations",
+    ),
 ]
 
 

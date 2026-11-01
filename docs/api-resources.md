@@ -39,12 +39,12 @@
 | 项目 | 事实 | 来源 |
 |---|---|---|
 | 已给 base_url | `https://api.suanli.cn/v1`（OpenAI 兼容） | 用户提供 |
-| DeepSeek key | **缺失**：用户提供的第二串与 Tavily key 相同，`/v1/models` 返回 401 | 本地验证 |
+| DeepSeek key / 模型 | **已配置并验证**：`deepseek/deepseek-v4.1-flash-1017`；`/v1/models` 200，chat JSON 模式可用 | 本地验证 2026-11-01 |
 | 价格量级 | DeepSeek V4.1-Flash 高峰 $0.30 输入 / $1.20 输出（每百万 token）；Claude Haiku 5.5 $0.10/$0.50 | 官方定价页（2026-10-31 核对） |
 
-**成本估算**：
-- Freshness 报告：claim 抽取 3K in / 0.8K out；关系判定 2K in / 0.3K out × 6 条 ≈ 15K in / 3K out ≈ **$0.009/份**（Flash 高峰）。
-- Benchmark：每题答案生成 2K/0.5K × 15 题 × 3 Agent ≈ 90K in / 22K out ≈ **$0.053/次**。
+**成本估算**（实测）：
+- Freshness 报告（4 条 claim + 建议）：LLM ≈ **$0.00086** + Tavily 4 credits。
+- Benchmark 单题单 Agent（LLM RAG）：≈640 tokens、~2.9s、≈$0.0003 + 1 credit。
 - 14 天开发 + 评测 ≈ **$3–8**。
 
 ## 4. 现金预算（双项目，14 天）
