@@ -10,6 +10,8 @@ Two independent hackathon projects sharing one evidence core.
 
 > *We benchmark not just whether agents are right, but whether their evidence is still current.*
 
+**Live demo:** <https://yai-scout.onrender.com> — free tier sleeps after ~15 min idle; first request can take 30–90s.
+
 ---
 
 ## The two projects

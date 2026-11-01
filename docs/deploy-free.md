@@ -3,6 +3,10 @@
 > 目标：**$0** 拿到一个评委可访问的 URL，不绑卡、不买域名。
 > 结论先说：**主用 Render 免费 Web Service；备用 Hugging Face Docker Space；临时演示用 Cloudflare Tunnel。**
 
+> **已部署（2026-11-01）**：<https://yai-scout.onrender.com>
+> healthz `mode=all`、tavily=key、llm=available；`smoke_online.py` 全部通过。
+> 注意：免费层 15 分钟无请求会休眠，首次访问 30–90s；磁盘临时，重启后快照/SQLite 清空（live 模式不受影响）。
+
 ## 0. 三种免费路径对比
 
 | 方案 | 费用 | 需要信用卡 | 冷启动 | 公网访问 | 适合 |

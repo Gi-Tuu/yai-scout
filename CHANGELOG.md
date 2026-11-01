@@ -8,11 +8,15 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ## [Unreleased]
 
+### Added
+
+- Public demo deployment: <https://yai-scout.onrender.com> (Render free tier, `SCOUT_MODE=all`); online smoke checks pass for health, all pages and dataset, plus live freshness and benchmark runs.
+- `scripts/smoke_online.py` for post-deploy verification.
+
 ### Planned
 
 - 60 human-scored claims for freshness calibration (current: 20 rule-labelled).
 - Real web-archive snapshots (Wayback or manual HTML) for pricing/leaderboard facts.
-- Public demo deployment URL in README and release notes.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Final submission package: two project READMEs, slides, demo video.
 
