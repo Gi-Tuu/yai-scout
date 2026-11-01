@@ -1,0 +1,47 @@
+{
+  "version": "demo-cases/0.1",
+  "cases": [
+    {
+      "id": "stable_python_2023",
+      "group": "freshness",
+      "title": "稳定事实：Python 3.12 发布于 2023",
+      "answer": "Python 3.12 于 2023 年发布。",
+      "as_of": "2026-11-01",
+      "mode": "live",
+      "expected_status": "fresh",
+      "purpose": "展示：来源旧不等于过期，稳定事实不误伤"
+    },
+    {
+      "id": "yai_v024_1028",
+      "group": "replay",
+      "title": "真实回放：2026-10-28 的 0.24.0",
+      "answer": "YAI Agent Core 当前版本是 0.24.0。来源：https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.24.0",
+      "as_of": "2026-10-28",
+      "mode": "replay",
+      "expected_status": "fresh",
+      "purpose": "展示：引用真实且当时正确"
+    },
+    {
+      "id": "yai_v024_1101",
+      "group": "replay",
+      "title": "同一答案：2026-11-01 已过期",
+      "answer": "YAI Agent Core 当前版本是 0.24.0。来源：https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.24.0",
+      "as_of": "2026-11-01",
+      "mode": "replay",
+      "expected_status": "stale",
+      "purpose": "展示：citation ≠ freshness，引用真实也会过期"
+    },
+    {
+      "id": "yai_v025_1101",
+      "group": "replay",
+      "title": "当前值：2026-11-01 的 0.25.0",
+      "answer": "YAI Agent Core 当前版本是 0.25.0。来源：https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+      "as_of": "2026-11-01",
+      "mode": "replay",
+      "expected_status": "fresh",
+      "purpose": "展示：当前值给出 FRESH 与修正"
+    }
+  ]
+}
+
+

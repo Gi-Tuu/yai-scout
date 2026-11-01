@@ -1,0 +1,343 @@
+{
+  "tavily_500_stale": {
+    "id": "det_dbcc120d7210",
+    "answer": "Tavily 免费计划每月提供 500 credits。",
+    "as_of": "2026-11-01",
+    "claims": [
+      {
+        "id": "cl_3adad148",
+        "text": "Tavily 免费计划每月提供 500 credits",
+        "type": "pricing",
+        "numbers": [
+          "500"
+        ],
+        "signals": [
+          "llm"
+        ],
+        "target_time": "2026-11-01",
+        "temporal_sensitivity": "sensitive",
+        "validity_window_days": 180
+      }
+    ],
+    "verdicts": [
+      {
+        "claim_id": "cl_3adad148",
+        "status": "insufficient",
+        "score": null,
+        "confidence": 0.3,
+        "rationale": "没有足够证据（仅提及或检索为空），不能判断是否过时",
+        "suggestion": "Tavily's free plan provides 1,000 credits per month, according to Tavily's official API Credits & Pricing documentation.",
+        "breakdown": {
+          "relation": 0.5,
+          "recency": 0.0,
+          "authority": 0.0,
+          "coverage": 0.0
+        },
+        "evidence": [
+          {
+            "url": "https://docs.tavily.com/documentation/api-credits",
+            "title": "https://docs.tavily.com/documentation/api-credits",
+            "domain": "docs.tavily.com",
+            "published_at": "2026-11-01T00:00:00Z",
+            "updated_at": null,
+            "retrieved_at": "2026-11-01T00:00:00Z",
+            "tier": 1,
+            "snippet": "Credits & Pricing - Tavily Docs\nDocumentation Index\nFetch the complete documentation index at:\n/llms.txt\nUse this file to discover all available pages before ex Credits & Pricing - Tavily Docs",
+            "relation": "mentions",
+            "relation_reason": "规则：仅提及",
+            "relation_confidence": 0.4,
+            "snapshot_id": null,
+            "anchor_id": null,
+            "content_changed": false
+          }
+        ],
+        "anchor_id": null,
+        "anchor_status": null,
+        "checked_at": "2026-11-01T17:32:57+00:00"
+      }
+    ],
+    "overall_score": null,
+    "stale_claims": 0,
+    "conflicted_claims": 0,
+    "insufficient_claims": 1,
+    "credits": 0.0,
+    "llm_cost_usd": 0.000223,
+    "mode": "replay",
+    "policy_version": "2026-11-01",
+    "weights_version": "rubric-v2-calibrated",
+    "created_at": "2026-11-01T17:32:57+00:00"
+  },
+  "stable_python_2023": {
+    "id": "det_652b8ffbc70e",
+    "answer": "Python 3.12 于 2023 年发布。",
+    "as_of": "2026-11-01",
+    "claims": [
+      {
+        "id": "cl_33f589b8",
+        "text": "Python 3.12 于 2023 年发布。",
+        "type": "version",
+        "numbers": [
+          "3.12",
+          "2023"
+        ],
+        "signals": [
+          "llm"
+        ],
+        "target_time": "2026-11-01",
+        "temporal_sensitivity": "stable",
+        "validity_window_days": 3650
+      }
+    ],
+    "verdicts": [
+      {
+        "claim_id": "cl_33f589b8",
+        "status": "fresh",
+        "score": 70,
+        "confidence": 0.65,
+        "rationale": "稳定事实，一般来源支持即可（不因来源旧扣分）",
+        "suggestion": "",
+        "breakdown": {
+          "relation": 0.75,
+          "recency": 1.0,
+          "authority": 0.5,
+          "coverage": 1.0
+        },
+        "evidence": [
+          {
+            "url": "https://endoflife.date/python",
+            "title": "Python | endoflife.date",
+            "domain": "endoflife.date",
+            "published_at": "Thu, 22 Oct 2026 04:00:00 GMT",
+            "updated_at": null,
+            "retrieved_at": "Thu, 22 Oct 2026 04:00:00 GMT",
+            "tier": 3,
+            "snippet": "| 3.12 | 3 years ago (02 Oct 2023) | Ended 1 year and 6 months ago (02 Apr 2025) | Ends in 2 years (31 Oct 2028) | 3.12.16 (25 Oct 2026) |\n| 3.11 | 4 years ago (24 Oct 2022) | Ended 2 years and 7 months ago (01 Apr 2024) | Ends in 1 year (31 Oct 2027) | 3.11.17 (01 Oct 2026) |\n| 3.10 | 5 years ago (04 Oct 2021) | Ended 3 years and 6 months ago (05 Apr 2023) | Ended 3 weeks and 4 days ago (01 Oct 2",
+            "relation": "supports",
+            "relation_reason": "规则：值匹配",
+            "relation_confidence": 0.7,
+            "snapshot_id": null,
+            "anchor_id": null,
+            "content_changed": false
+          }
+        ],
+        "anchor_id": null,
+        "anchor_status": null,
+        "checked_at": "2026-11-01T17:33:18+00:00"
+      }
+    ],
+    "overall_score": 70.0,
+    "stale_claims": 0,
+    "conflicted_claims": 0,
+    "insufficient_claims": 0,
+    "credits": 1.0,
+    "llm_cost_usd": 0.000111,
+    "mode": "live",
+    "policy_version": "2026-11-01",
+    "weights_version": "rubric-v2-calibrated",
+    "created_at": "2026-11-01T17:33:18+00:00"
+  },
+  "yai_v024_1028": {
+    "id": "det_9b0e81c39767",
+    "answer": "YAI Agent Core 当前版本是 0.24.0。来源：https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.24.0",
+    "as_of": "2026-10-28",
+    "claims": [
+      {
+        "id": "cl_3403df83",
+        "text": "YAI Agent Core 当前版本是 0.24.0",
+        "type": "version",
+        "numbers": [
+          "0.24.0"
+        ],
+        "signals": [
+          "llm"
+        ],
+        "target_time": "2026-10-28",
+        "temporal_sensitivity": "sensitive",
+        "validity_window_days": 180
+      }
+    ],
+    "verdicts": [
+      {
+        "claim_id": "cl_3403df83",
+        "status": "fresh",
+        "score": 88,
+        "confidence": 0.77,
+        "rationale": "权威来源支持该说法",
+        "suggestion": "",
+        "breakdown": {
+          "relation": 0.9,
+          "recency": 1.0,
+          "authority": 0.8,
+          "coverage": 1.0
+        },
+        "evidence": [
+          {
+            "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.24.0",
+            "title": "anchor snapshot snap_5eb41f9be062",
+            "domain": "github.com",
+            "published_at": "2026-10-27T08:11:51Z",
+            "updated_at": null,
+            "retrieved_at": "2026-10-27T08:11:51Z",
+            "tier": 2,
+            "snippet": "release version v0.24.0\nname v0.24.0\npublished_at 2026-10-27T08:11:51Z\nurl https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.24.0\nnotes # v0.24.0 · 把\"可信\"做进三个层面：成本、注入、审计 > 发布正文源稿。GitHub Release 会带 cosign 签名资产、SHA256SUMS 与 > `provenance/*.intoto.jsonl` attestation。 ## 这一版是什么 八项新增，**零新增运行时依赖**（`dependencies = []` 不变），全部离线可验。 没有破坏性改动；唯一需要知道的是事件类型从 20 类变成 21 类。 ## 三条主线 1. **成本：提示缓存**（`AnthropicP",
+            "relation": "supports",
+            "relation_reason": "规则：值匹配",
+            "relation_confidence": 0.7,
+            "snapshot_id": null,
+            "anchor_id": "anc_663c5c388006",
+            "content_changed": false
+          }
+        ],
+        "anchor_id": "anc_39767eda8e78",
+        "anchor_status": "used",
+        "checked_at": "2026-11-01T17:33:18+00:00"
+      }
+    ],
+    "overall_score": 88.0,
+    "stale_claims": 0,
+    "conflicted_claims": 0,
+    "insufficient_claims": 0,
+    "credits": 0.0,
+    "llm_cost_usd": 0.000118,
+    "mode": "replay",
+    "policy_version": "2026-11-01",
+    "weights_version": "rubric-v2-calibrated",
+    "created_at": "2026-11-01T17:33:18+00:00"
+  },
+  "yai_v024_1101": {
+    "id": "det_9fdd2595c089",
+    "answer": "YAI Agent Core 当前版本是 0.24.0。来源：https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.24.0",
+    "as_of": "2026-11-01",
+    "claims": [
+      {
+        "id": "cl_fcd12faf",
+        "text": "YAI Agent Core 当前版本是 0.24.0",
+        "type": "version",
+        "numbers": [
+          "0.24.0"
+        ],
+        "signals": [
+          "llm"
+        ],
+        "target_time": "2026-11-01",
+        "temporal_sensitivity": "sensitive",
+        "validity_window_days": 180
+      }
+    ],
+    "verdicts": [
+      {
+        "claim_id": "cl_fcd12faf",
+        "status": "stale",
+        "score": 30,
+        "confidence": 0.47,
+        "rationale": "权威来源给出了不同的值/事实，判定可能过时",
+        "suggestion": "YAI Agent Core 当前版本是 0.25.0（来源：GitHub release v0.25.0，发布于 2026-10-31）。",
+        "breakdown": {
+          "relation": 0.1,
+          "recency": 0.0,
+          "authority": 0.8,
+          "coverage": 1.0
+        },
+        "evidence": [
+          {
+            "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+            "title": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+            "domain": "github.com",
+            "published_at": "2026-10-31T04:09:06Z",
+            "updated_at": null,
+            "retrieved_at": "2026-10-31T04:09:06Z",
+            "tier": 2,
+            "snippet": "release version v0.25.0\nname v0.25.0\npublished_at 2026-10-31T04:09:06Z\nurl https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0\nnotes # v0.25.0 · Produ com/Gi-Tuu/yai-agent-core/releases/tag/v0.",
+            "relation": "contradicts",
+            "relation_reason": "规则：值不一致",
+            "relation_confidence": 0.7,
+            "snapshot_id": null,
+            "anchor_id": null,
+            "content_changed": false
+          }
+        ],
+        "anchor_id": "anc_39767eda8e78",
+        "anchor_status": "used",
+        "checked_at": "2026-11-01T17:33:19+00:00"
+      }
+    ],
+    "overall_score": 30.0,
+    "stale_claims": 1,
+    "conflicted_claims": 0,
+    "insufficient_claims": 0,
+    "credits": 0.0,
+    "llm_cost_usd": 0.000268,
+    "mode": "replay",
+    "policy_version": "2026-11-01",
+    "weights_version": "rubric-v2-calibrated",
+    "created_at": "2026-11-01T17:33:19+00:00"
+  },
+  "yai_v025_1101": {
+    "id": "det_c4c75c87f382",
+    "answer": "YAI Agent Core 当前版本是 0.25.0。来源：https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+    "as_of": "2026-11-01",
+    "claims": [
+      {
+        "id": "cl_2c123e76",
+        "text": "YAI Agent Core 当前版本是 0.25.0",
+        "type": "version",
+        "numbers": [
+          "0.25.0"
+        ],
+        "signals": [
+          "llm"
+        ],
+        "target_time": "2026-11-01",
+        "temporal_sensitivity": "sensitive",
+        "validity_window_days": 180
+      }
+    ],
+    "verdicts": [
+      {
+        "claim_id": "cl_2c123e76",
+        "status": "fresh",
+        "score": 88,
+        "confidence": 0.77,
+        "rationale": "权威来源支持该说法",
+        "suggestion": "",
+        "breakdown": {
+          "relation": 0.9,
+          "recency": 1.0,
+          "authority": 0.8,
+          "coverage": 1.0
+        },
+        "evidence": [
+          {
+            "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+            "title": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+            "domain": "github.com",
+            "published_at": "2026-10-31T04:09:06Z",
+            "updated_at": null,
+            "retrieved_at": "2026-10-31T04:09:06Z",
+            "tier": 2,
+            "snippet": "release version v0.25.0\nname v0.25.0\npublished_at 2026-10-31T04:09:06Z\nurl https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0\nnotes # v0.25.0 · Produ com/Gi-Tuu/yai-agent-core/releases/tag/v0.",
+            "relation": "supports",
+            "relation_reason": "规则：值匹配",
+            "relation_confidence": 0.7,
+            "snapshot_id": null,
+            "anchor_id": null,
+            "content_changed": false
+          }
+        ],
+        "anchor_id": "anc_39767eda8e78",
+        "anchor_status": "used",
+        "checked_at": "2026-11-01T17:33:20+00:00"
+      }
+    ],
+    "overall_score": 88.0,
+    "stale_claims": 0,
+    "conflicted_claims": 0,
+    "insufficient_claims": 0,
+    "credits": 0.0,
+    "llm_cost_usd": 0.000118,
+    "mode": "replay",
+    "policy_version": "2026-11-01",
+    "weights_version": "rubric-v2-calibrated",
+    "created_at": "2026-11-01T17:33:20+00:00"
+  }
+}
