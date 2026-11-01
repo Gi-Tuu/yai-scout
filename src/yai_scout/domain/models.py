@@ -101,3 +101,111 @@ class CostEntry(BaseModel):
     credits: float = 0.0
     usd_estimate: float = 0.0
     ts: str = Field(default_factory=utcnow_iso)
+
+
+# --------------------------------------------------------------------------- detector
+class ClaimType(StrEnum):
+    PRICING = "pricing"
+    VERSION = "version"
+    LAW = "law"
+    LEADERSHIP = "leadership"
+    STATISTIC = "statistic"
+    DATE = "date"
+    OTHER = "other"
+
+
+class FreshnessStatus(StrEnum):
+    FRESH = "fresh"
+    STALE = "stale"
+    UNCERTAIN = "uncertain"
+    UNVERIFIABLE = "unverifiable"
+
+
+class EvidenceRef(BaseModel):
+    url: str
+    title: str = ""
+    domain: str = ""
+    published_at: str | None = None
+    tier: int = 3
+    snippet: str = ""
+    relation: Literal["supports", "contradicts", "mentions"] = "mentions"
+
+
+class Claim(BaseModel):
+    id: str
+    text: str
+    type: ClaimType = ClaimType.OTHER
+    numbers: list[str] = Field(default_factory=list)
+    signals: list[str] = Field(default_factory=list)
+
+
+class FreshnessVerdict(BaseModel):
+    claim_id: str
+    status: FreshnessStatus
+    score: int = Field(ge=0, le=100)
+    rationale: str = ""
+    evidence: list[EvidenceRef] = Field(default_factory=list)
+    checked_at: str = Field(default_factory=utcnow_iso)
+
+
+class DetectorReport(BaseModel):
+    id: str
+    answer: str
+    as_of: str
+    claims: list[Claim] = Field(default_factory=list)
+    verdicts: list[FreshnessVerdict] = Field(default_factory=list)
+    overall_score: int = Field(default=0, ge=0, le=100)
+    stale_claims: int = 0
+    credits: float = 0.0
+    created_at: str = Field(default_factory=utcnow_iso)
+
+
+# --------------------------------------------------------------------------- benchmark
+class BenchmarkTask(BaseModel):
+    id: str
+    question: str
+    as_of: str
+    category: ClaimType = ClaimType.OTHER
+    gold_values: list[str] = Field(default_factory=list)
+    gold_sources: list[str] = Field(default_factory=list)
+    notes: str = ""
+
+
+class AgentSpec(BaseModel):
+    id: str
+    name: str
+    kind: Literal["mock", "retrieval_baseline", "scout", "http"] = "mock"
+    description: str = ""
+    config: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgentAnswer(BaseModel):
+    text: str
+    citations: list[str] = Field(default_factory=list)
+    tokens: int = 0
+    latency_s: float = 0.0
+    cost_usd: float = 0.0
+    error: str | None = None
+
+
+class TaskResult(BaseModel):
+    task_id: str
+    agent_id: str
+    answer: AgentAnswer
+    numeric_accuracy: float = 0.0
+    has_citations: bool = False
+    citation_count: int = 0
+    freshness_score: int | None = None
+    stale_claim_rate: float | None = None
+    score: float = 0.0
+    error: str | None = None
+
+
+class BenchSession(BaseModel):
+    id: str
+    status: Literal["running", "done", "failed"] = "running"
+    agent_ids: list[str] = Field(default_factory=list)
+    task_ids: list[str] = Field(default_factory=list)
+    created_at: str = Field(default_factory=utcnow_iso)
+    finished_at: str | None = None
+    error: str | None = None

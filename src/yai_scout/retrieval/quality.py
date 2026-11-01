@@ -26,6 +26,15 @@ T1_DOMAINS = {
     "nejm.org",
     "ieee.org",
     "acm.org",
+    # 官方文档/定价页（对本项目的 claim 核验来说属于一手）
+    "tavily.com",
+    "docs.tavily.com",
+    "help.tavily.com",
+    "api-docs.deepseek.com",
+    "platform.claude.com",
+    "docs.anthropic.com",
+    "docs.getbifrost.ai",
+    "openai.com",
 }
 T2_DOMAINS = {
     "reuters.com",

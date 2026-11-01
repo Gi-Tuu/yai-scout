@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>YAI Scout — Stale-answer Detector</title>
+<style>
+  :root { --bg:#0b0f14; --panel:#121821; --panel2:#0f141c; --line:#1f2a37; --text:#e6e9ef;
+          --muted:#8b98a9; --accent:#f5a524; --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+          --mono:ui-monospace,"Cascadia Code",Consolas,monospace; }
+  *{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#16202c 0%,var(--bg) 55%);
+    color:var(--text);font:14px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+  header{display:flex;align-items:baseline;gap:14px;padding:20px 28px;border-bottom:1px solid var(--line)}
+  h1{font-size:18px;margin:0} h1 span{color:var(--accent)} .tag{color:var(--muted);font-size:12px}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  main{max-width:1080px;margin:0 auto;padding:20px 28px 60px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 10px}
+  textarea{width:100%;min-height:110px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    color:var(--text);padding:10px 12px;font:inherit;outline:none;resize:vertical}
+  textarea:focus{border-color:#7a5314}
+  button{background:var(--accent);color:#1b1206;border:0;border-radius:8px;padding:9px 14px;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:400}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+  .samples{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .samples button{text-align:left;font-size:12px;font-weight:400;padding:6px 8px}
+  .score{display:flex;align-items:center;gap:16px}
+  .big{font-family:var(--mono);font-size:42px;font-weight:600}
+  .bar{height:8px;background:#1b2430;border-radius:999px;overflow:hidden;flex:1}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#f87171,#fbbf24,#34d399)}
+  .claim{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;background:var(--panel2)}
+  .claim .text{font-size:13px}
+  .meta{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .badge{font-family:var(--mono);font-size:11px;padding:1px 8px;border-radius:999px;border:1px solid var(--line)}
+  .badge.fresh{color:var(--ok);border-color:#14532d}.badge.stale{color:var(--bad);border-color:#7f1d1d}
+  .badge.uncertain{color:var(--warn);border-color:#78350f}.badge.unverifiable{color:var(--muted)}
+  .ev{font-size:12px;margin-top:6px;padding-left:10px;border-left:2px solid var(--line)}
+  .ev .rel{font-family:var(--mono);font-size:10px;margin-right:6px}
+  .muted{color:var(--muted)} .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>YAI <span>Scout</span> · Stale-answer Detector</h1>
+  <div class="tag">Tavily-01 · 输入任意 LLM 答案 → claim 级时效核验</div>
+  <div style="margin-left:auto"><a href="/">研究控制台</a> · <a href="/bench">Benchmark</a></div>
+</header>
+<main>
+  <div class="panel">
+    <h2>待检测的答案</h2>
+    <textarea id="answer" placeholder="粘贴一段 LLM 生成的答案（含价格/版本/日期/法规等可能过时的事实）……"></textarea>
+    <div class="row">
+      <button id="run">检测时效</button>
+      <button class="ghost" id="clear">清空</button>
+      <span class="muted" id="hint">as_of 2026-11-01 · 最多 6 条 claim</span>
+    </div>
+    <div class="samples" id="samples"></div>
+  </div>
+
+  <div class="panel hidden" id="result">
+    <h2>检测报告</h2>
+    <div class="score">
+      <div class="big" id="overall">0</div>
+      <div style="flex:1">
+        <div class="muted" id="summary"></div>
+        <div class="bar"><i id="bar" style="width:0%"></i></div>
+      </div>
+    </div>
+    <div id="claims"></div>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const SAMPLES = [
+  "Tavily 的免费计划每月提供 500 API credits，advanced search 每次消耗 1 credit。",
+  "YAI Agent Core 当前版本是 0.24.0，默认使用 Python 3.10。",
+  "Bifrost 使用 Apache-2.0 许可证，自托管默认端口是 8080。"
+];
+SAMPLES.forEach((s, i) => {
+  const b = document.createElement("button");
+  b.className = "ghost"; b.textContent = `示例 ${i + 1}：${s.slice(0, 46)}…`;
+  b.onclick = () => { $("answer").value = s; };
+  $("samples").appendChild(b);
+});
+$("clear").onclick = () => { $("answer").value = ""; $("result").classList.add("hidden"); };
+
+const STATUS_LABEL = { fresh: "fresh", stale: "stale", uncertain: "uncertain", unverifiable: "unverifiable" };
+const STATUS_CLASS = { fresh: "fresh", stale: "stale", uncertain: "uncertain", unverifiable: "unverifiable" };
+
+function esc(s) { return (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c])); }
+
+$("run").onclick = async () => {
+  const answer = $("answer").value.trim();
+  if (answer.length < 10) return;
+  $("run").disabled = true; $("hint").textContent = "检测中（每条 claim 会做一次 Tavily 检索）…";
+  try {
+    const res = await fetch("/api/detector", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ answer })
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    render(await res.json());
+  } catch (err) {
+    $("hint").textContent = "失败：" + err.message;
+  } finally {
+    $("run").disabled = false;
+  }
+};
+
+function render(report) {
+  $("result").classList.remove("hidden");
+  $("overall").textContent = report.overall_score;
+  $("bar").style.width = report.overall_score + "%";
+  $("summary").textContent =
+    `${report.claims.length} 条 claim · ${report.stale_claims} 条可能过时 · ${report.credits} credits · 报告 ${report.id}`;
+  $("hint").textContent = "as_of " + report.as_of;
+  const byId = {};
+  report.verdicts.forEach((v) => { byId[v.claim_id] = v; });
+  $("claims").innerHTML = report.claims.map((c) => {
+    const v = byId[c.id] || { status: "unverifiable", score: 0, rationale: "", evidence: [] };
+    const ev = (v.evidence || []).map((e) =>
+      `<div class="ev"><span class="rel">${e.relation}</span><a href="${e.url}" target="_blank" rel="noopener">${esc(e.title || e.url)}</a>
+       <span class="muted"> · ${e.domain} · ${e.published_at ? new Date(e.published_at).toLocaleDateString() : "时间未知"} · T${e.tier}</span>
+       <div class="muted">${esc((e.snippet || "").slice(0, 160))}</div></div>`).join("");
+    return `<div class="claim">
+      <div><span class="badge ${STATUS_CLASS[v.status]}">${STATUS_LABEL[v.status]}</span>
+        <span class="badge">${c.type}</span> <b>${v.score}/100</b></div>
+      <div class="text">${esc(c.text)}</div>
+      <div class="meta">${(c.numbers || []).join(" · ") || "无数字"} ${c.signals.length ? "· " + c.signals.join(",") : ""}</div>
+      <div class="muted" style="font-size:12px;margin-top:4px">${esc(v.rationale)}</div>
+      ${ev}
+    </div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>

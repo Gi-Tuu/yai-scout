@@ -14,7 +14,12 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from ..benchmark.dataset import load_tasks
+from ..benchmark.registry import DEFAULT_AGENT_SPECS, build_adapters
+from ..benchmark.runner import BenchmarkRunner
+from ..benchmark.scoring import leaderboard as build_leaderboard
 from ..config import Settings, get_settings
+from ..detector.service import StaleAnswerDetector
 from ..domain.models import ResearchTask, RunEvent, TaskStatus
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
 from ..retrieval.tavily import TavilyClient
@@ -24,6 +29,17 @@ from ..store import Store
 class CreateResearchRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
     as_of: str | None = None
+
+
+class DetectRequest(BaseModel):
+    answer: str = Field(min_length=10, max_length=8000)
+    as_of: str | None = None
+    max_claims: int = Field(default=6, ge=1, le=12)
+
+
+class BenchmarkRequest(BaseModel):
+    agent_ids: list[str] | None = None
+    task_ids: list[str] | None = None
 
 
 def _sse(event: RunEvent) -> str:
@@ -38,6 +54,8 @@ def create_app(
     store: Store | None = None,
 ) -> FastAPI:
     cfg = settings or get_settings()
+    static_dir = cfg.web_dir / "static"
+    index_file = static_dir / "index.html"
     store = store or Store(cfg.db_path)
     tavily = tavily or TavilyClient(
         cfg.tavily_api_key,
@@ -48,11 +66,14 @@ def create_app(
         max_results=cfg.max_results_per_query,
     )
     director = ResearchDirector(store, tavily, cfg)
+    detector = StaleAnswerDetector(tavily, as_of=cfg.default_as_of, max_claims=6, concurrency=3)
+    runner = BenchmarkRunner(store, build_adapters(tavily), detector)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         yield
         await director.shutdown()
+        await runner.shutdown()
         await tavily.aclose()
         store.close()
 
@@ -153,9 +174,82 @@ def create_app(
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    # ------------------------------------------------------------------ detector
+    @app.post("/api/detector")
+    async def detect(payload: DetectRequest) -> dict[str, Any]:
+        report = await detector.detect(
+            payload.answer,
+            as_of=payload.as_of,
+            max_claims=payload.max_claims,
+        )
+        store.save_detector_report(report)
+        return report.model_dump(mode="json")
+
+    @app.get("/api/detector/{report_id}")
+    async def get_detector_report(report_id: str) -> dict[str, Any]:
+        report = store.get_detector_report(report_id)
+        if report is None:
+            raise HTTPException(status_code=404, detail="report not found")
+        return report.model_dump(mode="json")
+
+    # ------------------------------------------------------------------ benchmark
+    @app.get("/api/benchmark/tasks")
+    async def benchmark_tasks() -> dict[str, Any]:
+        return {"tasks": [task.model_dump(mode="json") for task in load_tasks()]}
+
+    @app.get("/api/benchmark/agents")
+    async def benchmark_agents() -> dict[str, Any]:
+        return {"agents": [spec.model_dump(mode="json") for spec in DEFAULT_AGENT_SPECS]}
+
+    @app.post("/api/benchmark/run", status_code=202)
+    async def benchmark_run(payload: BenchmarkRequest) -> dict[str, Any]:
+        try:
+            session = runner.start(payload.agent_ids, payload.task_ids)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"session": session.model_dump(mode="json")}
+
+    @app.get("/api/benchmark/sessions/{session_id}")
+    async def benchmark_session(session_id: str) -> dict[str, Any]:
+        session = store.get_bench_session(session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="session not found")
+        results = store.list_bench_results(session_id)
+        return {
+            "session": session.model_dump(mode="json"),
+            "results": [result.model_dump(mode="json") for result in results],
+            "leaderboard": build_leaderboard(results),
+        }
+
+    @app.get("/api/benchmark/leaderboard")
+    async def benchmark_leaderboard(session_id: str) -> dict[str, Any]:
+        session = store.get_bench_session(session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="session not found")
+        results = store.list_bench_results(session_id)
+        return {
+            "session_id": session_id,
+            "status": session.status,
+            "leaderboard": build_leaderboard(results),
+        }
+
+    # ------------------------------------------------------------------ pages
+    detector_page = static_dir / "detector.html" if static_dir.is_dir() else None
+    bench_page = static_dir / "bench.html" if static_dir.is_dir() else None
+
+    @app.get("/detector", include_in_schema=False)
+    async def detector_page_route() -> FileResponse:
+        if detector_page is None or not detector_page.is_file():
+            raise HTTPException(status_code=404, detail="detector page not found")
+        return FileResponse(detector_page)
+
+    @app.get("/bench", include_in_schema=False)
+    async def bench_page_route() -> FileResponse:
+        if bench_page is None or not bench_page.is_file():
+            raise HTTPException(status_code=404, detail="bench page not found")
+        return FileResponse(bench_page)
+
     # ------------------------------------------------------------------ static UI
-    static_dir = cfg.web_dir / "static"
-    index_file = static_dir / "index.html"
     if static_dir.is_dir():
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 

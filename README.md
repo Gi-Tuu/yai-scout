@@ -18,7 +18,7 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 | [research/problem-statements/hackculture-event.json](research/problem-statements/hackculture-event.json) | 官方平台事件原始 JSON（时间线/提交字段/公告/奖项）存档 |
 | [scripts/tavily_smoke.py](scripts/tavily_smoke.py) | Tavily 冒烟测试（只打印标题/URL/credits，不打印 key） |
 
-## 现在能跑什么（G0 骨架）
+## 现在能跑什么
 
 **输入问题 → 规则计划 → Tavily 多查询检索 → 归一化/域名分级 → SSE 实时进度 → 来源清单 + 报告桩**
 
@@ -27,9 +27,12 @@ YAI Scout 是参加 **Geek Room Global AI Hackathon**（2026-10-09 → 11-29，�
 - SQLite 持久化（任务/计划/来源/事件/成本），来源按 canonical URL 去重；
 - Tavily REST 适配器：有 key 走 Bearer，无 key 自动 keyless（有限速）；
 - credits 记账、单 run 预算（默认 32 credits）与墙钟降级；
-- 21 个测试 + ruff + mypy(strict) 全绿。
+- **Stale-answer Detector**（Tavily-01）：claim 抽取 → Tavily 实时核验 → Freshness Score + 证据；
+- **Benchmark**（Bifrost-02）：13 题数据集 + Agent Adapter 协议 + Runner + 排行榜（合成/检索基线）；
+- 39 个测试 + ruff + mypy(strict) 全绿。
 
-未实现（G0 之后按 Charter 推进）：证据抽取与引文校验（M4）、跨来源验证（M5）、带引用报告与自审计（M7）。
+页面：`/` 研究控制台 · `/detector` 时效检测器 · `/bench` 排行榜。
+未实现（下一轮）：LLM 版 claim 抽取与关系判定、HTTP 外部 Agent 接入、更多题目与去污染。详见 [docs/benchmark.md](docs/benchmark.md)。
 
 ### 本地运行
 

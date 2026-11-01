@@ -13,11 +13,14 @@ from pathlib import Path
 from typing import Any
 
 from .domain.models import (
+    BenchSession,
     CostEntry,
+    DetectorReport,
     Plan,
     ResearchTask,
     RunEvent,
     SourceRecord,
+    TaskResult,
     TaskStatus,
     utcnow_iso,
 )
@@ -75,6 +78,30 @@ CREATE TABLE IF NOT EXISTS cost_ledger (
     usd_estimate REAL NOT NULL DEFAULT 0,
     ts TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS detector_report (
+    id TEXT PRIMARY KEY,
+    answer TEXT NOT NULL,
+    as_of TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS bench_session (
+    id TEXT PRIMARY KEY,
+    status TEXT NOT NULL,
+    config_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL,
+    finished_at TEXT,
+    error TEXT
+);
+CREATE TABLE IF NOT EXISTS bench_result (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    agent_id TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    score REAL NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_bench_result_session ON bench_result(session_id);
 """
 
 
@@ -284,6 +311,120 @@ class Store:
             ).fetchone()
         return float(row["credits"]), float(row["usd"])
 
+    # ------------------------------------------------------------------ detector
+    def save_detector_report(self, report: DetectorReport) -> DetectorReport:
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO detector_report (id, answer, as_of, payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?)
+                   ON CONFLICT(id) DO UPDATE SET
+                     answer = excluded.answer,
+                     as_of = excluded.as_of,
+                     payload_json = excluded.payload_json""",
+                (
+                    report.id,
+                    report.answer,
+                    report.as_of,
+                    report.model_dump_json(),
+                    report.created_at,
+                ),
+            )
+            self._conn.commit()
+        return report
+
+    def get_detector_report(self, report_id: str) -> DetectorReport | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT payload_json FROM detector_report WHERE id = ?", (report_id,)
+            ).fetchone()
+        return DetectorReport.model_validate_json(row["payload_json"]) if row else None
+
+    # ------------------------------------------------------------------ benchmark
+    def create_bench_session(self, session: BenchSession) -> BenchSession:
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO bench_session 
+                   (id, status, config_json, created_at, finished_at, error)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (
+                    session.id,
+                    session.status,
+                    session.model_dump_json(),
+                    session.created_at,
+                    session.finished_at,
+                    session.error,
+                ),
+            )
+            self._conn.commit()
+        return session
+
+    def update_bench_session(
+        self,
+        session_id: str,
+        *,
+        status: str | None = None,
+        finished_at: str | None = None,
+        error: str | None = None,
+    ) -> None:
+        sets: list[str] = []
+        vals: list[Any] = []
+        if status is not None:
+            sets.append("status = ?")
+            vals.append(status)
+        if finished_at is not None:
+            sets.append("finished_at = ?")
+            vals.append(finished_at)
+        if error is not None:
+            sets.append("error = ?")
+            vals.append(error)
+        if not sets:
+            return
+        vals.append(session_id)
+        with self._lock:
+            self._conn.execute(f"UPDATE bench_session SET {', '.join(sets)} WHERE id = ?", vals)
+            self._conn.commit()
+
+    def get_bench_session(self, session_id: str) -> BenchSession | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT config_json, status, finished_at, error FROM bench_session WHERE id = ?",
+                (session_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        session = BenchSession.model_validate_json(row["config_json"])
+        return session.model_copy(
+            update={
+                "status": row["status"],
+                "finished_at": row["finished_at"],
+                "error": row["error"],
+            }
+        )
+
+    def add_bench_result(self, session_id: str, result: TaskResult) -> None:
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO bench_result (session_id, task_id, agent_id, payload_json, score)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (
+                    session_id,
+                    result.task_id,
+                    result.agent_id,
+                    result.model_dump_json(),
+                    result.score,
+                ),
+            )
+            self._conn.commit()
+
+    def list_bench_results(self, session_id: str) -> list[TaskResult]:
+        with self._lock:
+            rows = self._conn.execute(
+                """SELECT payload_json FROM bench_result WHERE session_id = ?
+                   ORDER BY id ASC""",
+                (session_id,),
+            ).fetchall()
+        return [TaskResult.model_validate_json(r["payload_json"]) for r in rows]
+
 
 # ---------------------------------------------------------------------- row mappers
 def _row_to_task(row: sqlite3.Row) -> ResearchTask:
@@ -327,3 +468,4 @@ def _row_to_event(row: sqlite3.Row) -> RunEvent:
         payload=json.loads(row["payload_json"] or "{}"),
         ts=row["ts"],
     )
+

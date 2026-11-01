@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "as_of": "2026-11-01",
+  "description": "AI 开发者生态事实基准（demo v0）：13 道题，全部有官方/一手来源，适合做 freshness 敏感评测。",
+  "tasks": [
+    {
+      "id": "tavily_free_credits",
+      "question": "Tavily 免费计划每月包含多少 API credits？",
+      "category": "pricing",
+      "gold_values": ["1000", "1,000"],
+      "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
+      "notes": "官方：1,000 free API Credits every month"
+    },
+    {
+      "id": "tavily_advanced_cost",
+      "question": "Tavily advanced search 每次请求消耗多少 credits？",
+      "category": "pricing",
+      "gold_values": ["2"],
+      "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
+      "notes": "advanced search = 2 credits"
+    },
+    {
+      "id": "tavily_extract_cost",
+      "question": "Tavily basic extract 每 5 个成功 URL 消耗多少 credits？",
+      "category": "pricing",
+      "gold_values": ["1"],
+      "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
+      "notes": "basic extract = 1 credit / 5 URLs"
+    },
+    {
+      "id": "tavily_research_min",
+      "question": "Tavily Research model=mini 单次请求最少消耗多少 credits？",
+      "category": "pricing",
+      "gold_values": ["4"],
+      "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
+      "notes": "mini 最少 4 credits"
+    },
+    {
+      "id": "tavily_student_plan",
+      "question": "Tavily 学生计划每月提供多少 credits？",
+      "category": "pricing",
+      "gold_values": ["4000", "4,000"],
+      "gold_sources": ["https://help.tavily.com/articles/6606514713-student-account"],
+      "notes": "Project 档 4,000 credits/月，免费 4 个月"
+    },
+    {
+      "id": "tavily_paygo_price",
+      "question": "Tavily pay-as-you-go 每个 credit 的价格是多少美元？",
+      "category": "pricing",
+      "gold_values": ["0.008"],
+      "gold_sources": ["https://docs.tavily.com/documentation/api-credits"],
+      "notes": "$0.008 / credit"
+    },
+    {
+      "id": "deepseek_flash_input_price",
+      "question": "DeepSeek V4.1-Flash 每百万输入 token 的高峰价格是多少美元？",
+      "category": "pricing",
+      "gold_values": ["0.30"],
+      "gold_sources": ["https://api-docs.deepseek.com/quick_start/pricing"],
+      "notes": "高峰 $0.30 / 百万输入 token；低谷 $0.15"
+    },
+    {
+      "id": "claude_haiku_output_price",
+      "question": "Claude Haiku 5.5 每百万输出 token 的价格是多少美元？",
+      "category": "pricing",
+      "gold_values": ["0.50"],
+      "gold_sources": ["https://platform.claude.com/docs/en/about-claude/pricing"],
+      "notes": "$0.50 / 百万输出 token"
+    },
+    {
+      "id": "bifrost_license",
+      "question": "Bifrost 开源 AI Gateway 使用什么许可证？",
+      "category": "law",
+      "gold_values": ["Apache-2.0", "Apache 2.0"],
+      "gold_sources": ["https://github.com/maximhq/bifrost"],
+      "notes": "Apache-2.0"
+    },
+    {
+      "id": "bifrost_port",
+      "question": "Bifrost 自托管默认监听哪个端口？",
+      "category": "version",
+      "gold_values": ["8080"],
+      "gold_sources": ["https://docs.getbifrost.ai/overview"],
+      "notes": "默认 8080"
+    },
+    {
+      "id": "yai_version",
+      "question": "YAI Agent Core 当前发布版本号是多少？",
+      "category": "version",
+      "gold_values": ["0.25.0"],
+      "gold_sources": ["https://github.com/Gi-Tuu/yai-agent-core"],
+      "notes": "v0.25.0"
+    },
+    {
+      "id": "geekroom_deadline",
+      "question": "Geek Room Global AI Hackathon 的原型提交截止日期（IST）是哪一天？",
+      "category": "date",
+      "gold_values": ["2026-11-15", "11-15"],
+      "gold_sources": ["https://hackculture.io/hackathons/ai-global-hackathon"],
+      "notes": "2026-11-15 23:59 IST"
+    },
+    {
+      "id": "omnidimension_free",
+      "question": "Omnidimension 的免费额度是多少分钟？",
+      "category": "pricing",
+      "gold_values": ["20"],
+      "gold_sources": ["https://omnidim.io/pricing"],
+      "notes": "免费 20 分钟"
+    }
+  ]
+}

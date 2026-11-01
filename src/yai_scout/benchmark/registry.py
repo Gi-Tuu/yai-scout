@@ -1,0 +1,36 @@
+"""Agent 注册表：把 AgentSpec 变成可运行的适配器。"""
+
+from __future__ import annotations
+
+from ..domain.models import AgentSpec
+from ..retrieval.tavily import TavilyClient
+from .adapters import AgentAdapter, HttpAdapter, MockAdapter, RetrievalAdapter, ScoutAdapter
+from .runner import DEFAULT_AGENT_SPECS
+
+
+def build_adapters(tavily: TavilyClient) -> dict[str, AgentAdapter]:
+    adapters: dict[str, AgentAdapter] = {
+        "mock_good": MockAdapter("mock_good", "Mock (fresh)", good=True),
+        "mock_stale": MockAdapter("mock_stale", "Mock (stale)", good=False),
+        "retrieval_baseline": RetrievalAdapter(tavily),
+        "scout": ScoutAdapter(tavily),
+    }
+    return adapters
+
+
+def adapter_from_spec(spec: AgentSpec, tavily: TavilyClient) -> AgentAdapter:
+    if spec.kind == "mock":
+        return MockAdapter(spec.id, spec.name, good=bool(spec.config.get("good", True)))
+    if spec.kind == "retrieval_baseline":
+        return RetrievalAdapter(tavily)
+    if spec.kind == "scout":
+        return ScoutAdapter(tavily)
+    if spec.kind == "http":
+        endpoint = str(spec.config.get("endpoint") or "")
+        if not endpoint:
+            raise ValueError("http adapter requires config.endpoint")
+        return HttpAdapter(spec.id, spec.name, endpoint)
+    raise ValueError(f"unknown agent kind: {spec.kind}")
+
+
+__all__ = ["DEFAULT_AGENT_SPECS", "adapter_from_spec", "build_adapters"]
