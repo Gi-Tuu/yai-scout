@@ -26,9 +26,17 @@ def load_dataset(path: Path | None = None) -> tuple[str, list[BenchmarkTask]]:
     return version, tasks
 
 
-def load_tasks(path: Path | None = None, *, include_hidden: bool = False) -> list[BenchmarkTask]:
+def load_tasks(path: Path | None = None) -> list[BenchmarkTask]:
+    """公开数据集：永远不返回 hidden 题目。"""
     _, tasks = load_dataset(path)
-    if include_hidden:
-        return tasks
     return [task for task in tasks if not task.hidden]
+
+
+def load_private_dataset(path: Path) -> list[BenchmarkTask]:
+    """私有评测集：必须显式给出仓库外的路径，仅受控环境调用。"""
+    if not path.is_file():
+        raise ValueError(f"private dataset not found: {path}")
+    _, tasks = load_dataset(path)
+    return tasks
+
 

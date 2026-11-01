@@ -18,9 +18,9 @@ from ..domain.models import (
     FreshnessVerdict,
     TemporalSensitivity,
 )
-from .temporal import DEFAULT_WINDOWS, POLICY_VERSION
+from .temporal import DEFAULT_WINDOWS
+from .versions import POLICY_VERSION, WEIGHTS_VERSION
 
-WEIGHTS_VERSION = "rubric-v2-calibrated"
 DEFAULT_WEIGHTS = {"relation": 0.6, "recency": 0.1, "authority": 0.3}
 TIER_WEIGHTS = {1: 1.0, 2: 0.8, 3: 0.5, 4: 0.25}
 RECENT_DAYS = 120
@@ -228,6 +228,8 @@ __all__ = [
     "parse_published",
     "score_claim",
 ]
+
+
 
 
 

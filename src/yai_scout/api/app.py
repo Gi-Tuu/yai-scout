@@ -18,15 +18,16 @@ from pydantic import BaseModel, Field
 
 from ..benchmark.adapters import HttpAdapter
 from ..benchmark.dataset import load_dataset
-from ..benchmark.registry import DEFAULT_AGENT_SPECS, build_adapters
-from ..benchmark.runner import BenchmarkRunner
+from ..benchmark.manifest import result_hash as compute_result_hash
+from ..benchmark.registry import build_adapters
+from ..benchmark.runner import DEFAULT_AGENT_SPECS, BenchmarkRunner
 from ..benchmark.scoring import leaderboard as build_leaderboard
 from ..benchmark.scoring import pareto_frontier
 from ..config import ROOT, Settings, get_settings
 from ..detector.compare import compare_reports
 from ..detector.service import StaleAnswerDetector
 from ..detector.snapshot_search import SnapshotSearcher
-from ..domain.models import ResearchTask, RunEvent, TaskStatus
+from ..domain.models import AgentSpec, ResearchTask, RunEvent, TaskStatus
 from ..llm import LLMClient
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
 from ..retrieval.tavily import TavilyClient
@@ -92,11 +93,21 @@ def create_app(
         llm=llm,
     )
     adapters = build_adapters(tavily, llm)
+    agent_specs = {spec.id: spec for spec in DEFAULT_AGENT_SPECS}
     if cfg.http_agent_url:
         adapters["external_http"] = HttpAdapter(
             "external_http", "External HTTP Agent", cfg.http_agent_url
         )
-    runner = BenchmarkRunner(store, adapters, detector)
+        agent_specs["external_http"] = AgentSpec(
+            id="external_http",
+            name="External HTTP Agent",
+            kind="http",
+            description=f"scout-adapter/1.0 → {cfg.http_agent_url}",
+            config={"endpoint": cfg.http_agent_url},
+        )
+    runner = BenchmarkRunner(
+        store, adapters, detector, cfg=cfg, agent_specs=agent_specs
+    )
     benchmark_enabled = cfg.scout_mode in {"all", "benchmark"}
     freshness_enabled = cfg.scout_mode in {"all", "freshness"}
 
@@ -316,13 +327,14 @@ def create_app(
     # ------------------------------------------------------------------ benchmark
     @app.get("/api/benchmark/tasks")
     @app.get("/benchmark/tasks")
-    async def benchmark_tasks(include_hidden: bool = False) -> dict[str, Any]:
+    async def benchmark_tasks() -> dict[str, Any]:
         version, tasks = load_dataset()
-        visible = tasks if include_hidden else [task for task in tasks if not task.hidden]
+        public = [task for task in tasks if not task.hidden]
         return {
             "dataset_version": version,
-            "tasks": [task.model_dump(mode="json") for task in visible],
+            "tasks": [task.model_dump(mode="json") for task in public],
             "hidden_count": sum(1 for task in tasks if task.hidden),
+            "hidden_status": "compromised",
         }
 
     @app.get("/api/benchmark/agents")
@@ -362,6 +374,21 @@ def create_app(
             "results": [result.model_dump(mode="json") for result in results],
             "leaderboard": build_leaderboard(results),
             "pareto": pareto_frontier(results),
+        }
+
+    @app.get("/benchmark/runs/{session_id}/verify")
+    @app.get("/api/benchmark/runs/{session_id}/verify")
+    async def verify_benchmark_run(session_id: str) -> dict[str, Any]:
+        session = store.get_bench_session(session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="session not found")
+        results = store.list_bench_results(session_id)
+        computed = compute_result_hash(results)
+        return {
+            "session_id": session_id,
+            "stored_result_hash": session.result_hash,
+            "computed_result_hash": computed,
+            "matches": session.result_hash == computed,
         }
 
     @app.get("/api/benchmark/leaderboard")
@@ -434,6 +461,8 @@ def create_app(
 
 
 app = create_app()
+
+
 
 
 

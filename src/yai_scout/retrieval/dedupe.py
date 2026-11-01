@@ -7,7 +7,10 @@ G0 先做确定性归一化（canonical URL），近重复文本合并（SimHash
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TypeVar
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+T = TypeVar("T")
 
 TRACKING_PREFIXES = ("utm_",)
 TRACKING_KEYS = {
@@ -55,7 +58,7 @@ def canonicalize_url(url: str) -> str:
     return urlunsplit((scheme, netloc, path, query, ""))
 
 
-def dedupe_sources[T](items: list[T], *, key: Callable[[T], str]) -> list[T]:
+def dedupe_sources(items: list[T], *, key: Callable[[T], str]) -> list[T]:
     """按 key 去重，保留首次出现顺序。"""
     seen: set[str] = set()
     out: list[T] = []

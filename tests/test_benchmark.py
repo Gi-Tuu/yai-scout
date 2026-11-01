@@ -2,6 +2,7 @@ import asyncio
 
 from yai_scout.benchmark.adapters import LLMAgentAdapter, MockAdapter
 from yai_scout.benchmark.dataset import load_dataset, load_tasks
+from yai_scout.benchmark.manifest import result_hash as compute_result_hash
 from yai_scout.benchmark.runner import BenchmarkRunner
 from yai_scout.benchmark.scoring import (
     composite_score,
@@ -148,8 +149,17 @@ async def test_runner_completes_with_mock_adapters():
     assert current.status == "done"
     results = store.list_bench_results(session.id)
     assert len(results) == 4
+    assert current.manifest is not None
+    manifest = current.manifest
+    assert manifest.config_hash == session.config_hash
+    assert manifest.task_ids == ["b_tavily_free_credits", "b_bifrost_license"]
+    assert manifest.policy_version and manifest.weights_version
+    assert manifest.dependency_lock_hash
+    assert current.result_hash == compute_result_hash(results)
+    assert "api_key" not in manifest.model_dump_json().lower()
     good = [r for r in results if r.agent_id == "mock_good"]
     assert all(r.numeric_accuracy == 1.0 for r in good)
     stale = [r for r in results if r.agent_id == "mock_stale"]
     assert all(r.numeric_accuracy == 0.0 for r in stale)
     store.close()
+

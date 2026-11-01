@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import re
 
-from ..domain.models import BenchmarkTask, DetectorReport, FreshnessStatus, TaskResult
+from ..domain.models import (
+    BenchmarkTask,
+    DetectorReport,
+    FreshnessStatus,
+    TaskResult,
+    TemporalSensitivity,
+)
 
 NUMBER_TOKEN = re.compile(r"\d+(?:\.\d+)?")
 TIER_WEIGHTS = {1: 1.0, 2: 0.8, 3: 0.5, 4: 0.25}
@@ -123,16 +129,31 @@ def evidence_metrics(report: DetectorReport | None) -> dict[str, float | None]:
     coverage = len(with_evidence) / len(verdicts) if verdicts else 0.0
     supported_rate = len(supported) / len(with_evidence) if with_evidence else 0.0
     evidence_quality = coverage * (0.6 * supported_rate + 0.4 * authority)
-    stable = [
-        v
-        for v in verdicts
-        if v.status in {FreshnessStatus.FRESH, FreshnessStatus.STALE, FreshnessStatus.CONFLICTED}
+    # Stable fact integrity 只统计 temporal_sensitivity=STABLE 的 claim；
+    # 必须通过 claim_id 关联，不能把所有 FRESH/STALE/CONFLICTED 都当成稳定事实。
+    claims_by_id = {claim.id: claim for claim in report.claims}
+    stable_claim_ids = {
+        claim.id
+        for claim in report.claims
+        if claim.temporal_sensitivity is TemporalSensitivity.STABLE
+    }
+    stable_verdicts = [
+        verdict
+        for verdict in verdicts
+        if verdict.claim_id in stable_claim_ids
+        and verdict.claim_id in claims_by_id
+        and verdict.status
+        in {FreshnessStatus.FRESH, FreshnessStatus.STALE, FreshnessStatus.CONFLICTED}
     ]
-    stable_fresh = [v for v in stable if v.status is FreshnessStatus.FRESH]
+    stable_fresh = [
+        verdict for verdict in stable_verdicts if verdict.status is FreshnessStatus.FRESH
+    ]
     return {
         "evidence_quality": round(evidence_quality, 3),
         "supported_claim_rate": round(supported_rate, 3),
-        "stable_fact_integrity": round(len(stable_fresh) / len(stable), 3) if stable else None,
+        "stable_fact_integrity": (
+            round(len(stable_fresh) / len(stable_verdicts), 3) if stable_verdicts else None
+        ),
         "authority": round(authority, 3),
     }
 
