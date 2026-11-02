@@ -31,6 +31,10 @@ from .domain.models import (
 )
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS schema_version (
+    version INTEGER PRIMARY KEY,
+    applied_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS research_task (
     id TEXT PRIMARY KEY,
     question TEXT NOT NULL,
@@ -178,9 +182,24 @@ class Store:
             if self.path != ":memory:":
                 self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.executescript(SCHEMA)
-            self._ensure_bench_columns()
-            self._ensure_task_columns()
+            self._apply_migrations()
             self._conn.commit()
+
+    def _apply_migrations(self) -> None:
+        """Sequential, idempotent schema migrations with a recorded version."""
+        applied = {
+            int(row["version"])
+            for row in self._conn.execute("SELECT version FROM schema_version")
+        }
+        migrations = ((1, self._ensure_bench_columns), (2, self._ensure_task_columns))
+        for version, migrate in migrations:
+            if version in applied:
+                continue
+            migrate()
+            self._conn.execute(
+                "INSERT INTO schema_version (version, applied_at) VALUES (?, ?)",
+                (version, utcnow_iso()),
+            )
 
     def _ensure_bench_columns(self) -> None:
         """向后兼容迁移：只加列，不重建表，不删除历史数据。"""
@@ -1034,6 +1053,7 @@ def _parse_detector_report(payload: str) -> DetectorReport:
         if status in {"uncertain", "unverifiable"}:
             verdict["status"] = "insufficient"
     return DetectorReport.model_validate(data)
+
 
 
 
