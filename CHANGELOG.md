@@ -23,7 +23,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - **P0-1**: app now uses the effective Bifrost/direct `llm_connection()`; healthz reports the actual client gateway/model; manifest records effective gateway/model + redacted fingerprint.
 - **P0-2**: currency/unit/period-aware value normalization (`$` vs `€`, credits vs money, `/month` vs `/year`).
 - **P0-4**: admin revalidation passes discovery + auto-update flag; API integration test.
-- **P0-3 partial**: public-suffix grouping and active-anchor guard on approve.
+- **P0-3**: public-suffix grouping, known GitHub publisher aliases, active-anchor guard, and transactional single-winner candidate approval.
 
 ## [0.3.5] - 2026-11-02
 

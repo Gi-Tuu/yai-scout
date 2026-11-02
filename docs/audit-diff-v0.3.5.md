@@ -9,7 +9,7 @@
 |---|---|---|
 | P0-1 Bifrost wiring | **Confirmed broken**: app built `LLMClient` from `openai_*`, healthz reported Bifrost from config only | **Fixed** |
 | P0-2 currency/units | **Confirmed broken**: `$1000` and `€1000` both `amount:1000`; credits/percent collapsed | **Fixed** |
-| P0-3 independence / write safety | **Partial**: PSL bug `.co.uk` → `co.uk`; approve could target a superseded anchor | **Partially fixed** |
+| P0-3 independence / write safety | **Partial**: PSL bug `.co.uk` → `co.uk`; approve could target a superseded anchor | **Fixed for known aliases + transactions; residual unknown publishers** |
 | P0-4 revalidation wiring | **Confirmed broken**: admin API called `revalidate_due()` without `discovery`/`auto_update` | **Fixed** |
 | P1-1 research limits | Confirmed not fixed | Deferred (P1) |
 | P1-2 ownership isolation | Confirmed not fixed | Deferred (P1) |
@@ -45,19 +45,21 @@ Limitation: public Render still uses direct fallback because no public Bifrost i
 
 60 labeled gate cases still pass 60/60; new required assertions added.
 
-## P0-3 — independence / write safety (partial)
+## P0-3 — independence / write safety (fixed for known publishers)
 
 Fixed:
 
-- registrable domain now handles common multi-label public suffixes (`.co.uk`, `.com.au`, etc.) and IPs;
+- registrable domain handles common multi-label public suffixes (`.co.uk`, `.com.au`, etc.) and IPs;
+- GitHub org aliases are mapped to publisher domains for known orgs (`tavily-ai → tavily.com`, `deepseek-ai → deepseek.com`, `maximhq → getbifrost.ai`, `anthropic-ai → anthropic.com`, `openai → openai.com`); unknown GitHub orgs use `github:<org>`;
 - primary observation and discovery share `independent_group_from_url()`;
-- approving a candidate for a non-active (superseded/rolled-back) anchor returns 409.
+- approving a candidate for a non-active (superseded/rolled-back) anchor returns 409;
+- `Store.apply_candidate_transaction()` claims the candidate, inserts the replacement anchor, supersedes the old anchor and updates the candidate in one SQLite transaction;
+- concurrent approval test has a single winner.
 
-Still open:
+Residual:
 
-- `github.com/<org>/...` vs the same organization's official docs cannot be proven independent from hostname alone; a publisher registry/alias map is still needed.
-- Concurrent double-approval is not CAS-protected; two admin calls can race between read and write.
-- Candidate status update and anchor replacement are separate transactions (anchor replacement is atomic, candidate update is not).
+- unknown cross-domain publishers (e.g. PyPI vs an unknown GitHub org) still cannot be proven independent; Gate may need a future `publisher_confidence`/review rule;
+- SQLite transaction protects one process; multi-process deployments need the same DB-level transaction (SQLite WAL) or a shared store.
 
 `ACCURACY_AUTO_UPDATE` remains **false**.
 
@@ -93,7 +95,7 @@ Added API → replay observation → discovery → candidate integration test; d
 ```text
 ruff  : pass
 mypy  : pass (49 files)
-pytest: 149 passed
+pytest: 150 passed
 gate  : 60/60 rule-consistent labels, auto precision 1.000
 Bifrost app E2E: MockTransport + local real gateway
 Docker: pending CI

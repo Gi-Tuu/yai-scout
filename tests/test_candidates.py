@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+
 from fastapi.testclient import TestClient
 
 from yai_scout.api.app import create_app
 from yai_scout.config import Settings
+from yai_scout.detector.candidates import apply_candidate
 from yai_scout.domain.models import Anchor, TemporalSensitivity
 from yai_scout.retrieval.tavily import SearchResult
 from yai_scout.sources.snapshot import save_snapshot
@@ -319,4 +322,28 @@ def test_approve_refuses_candidate_for_superseded_anchor():
             headers=AUTH,
         )
         assert response.status_code == 409
+    store.close()
+
+def test_concurrent_approval_has_single_winner():
+    store = Store(":memory:")
+    anchor = _anchor(store)
+    app = _app(store)
+    with TestClient(app) as client:
+        candidate_json = client.post(
+            f"/admin/anchors/{anchor.id}/candidates",
+            json={"observations": _observations()},
+            headers=AUTH,
+        ).json()
+        candidate = store.get_anchor_candidate(candidate_json["id"])
+        assert candidate is not None
+
+        def approve(_: int):
+            return apply_candidate(
+                store, candidate, status="approved", decided_by="admin"
+            )
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(approve, range(2)))
+        assert sum(item.accuracy_status == "approved" for item in results) == 1
+        assert len(store.list_anchors()) == 1
     store.close()

@@ -16,7 +16,12 @@ from ..domain.models import (
     utcnow_iso,
 )
 from ..store import Store
-from .accuracy_gate import GateDecision, GateObservation, evaluate_gate
+from .accuracy_gate import (
+    GateDecision,
+    GateObservation,
+    evaluate_gate,
+    normalize_value,
+)
 
 VERSION_RE = re.compile(r"v?(\d+(?:\.\d+){1,3}(?:[-+][A-Za-z0-9.]+)?)", re.I)
 LICENSE_RE = re.compile(
@@ -77,9 +82,24 @@ PUBLIC_SUFFIXES = frozenset(
 )
 
 
+GITHUB_ORG_ALIASES = {
+    "tavily-ai": "tavily.com",
+    "deepseek-ai": "deepseek.com",
+    "maximhq": "getbifrost.ai",
+    "anthropic-ai": "anthropic.com",
+    "openai": "openai.com",
+}
+
+
 def independent_group_from_url(url: str) -> str:
-    """Coarse publisher grouping: registrable domain (with common public suffixes)."""
-    host = (urlsplit(url).hostname or "").lower().rstrip(".")
+    """Publisher grouping: registrable domain + GitHub org aliases.
+
+    Unknown GitHub orgs stay in their own ``github:<org>`` group; if another
+    source cannot be proven to be the same publisher, the Gate should not
+    auto-update on the pair without a known alias.
+    """
+    parts = urlsplit(url)
+    host = (parts.hostname or "").lower().rstrip(".")
     if host.startswith("www."):
         host = host[4:]
     try:
@@ -87,11 +107,15 @@ def independent_group_from_url(url: str) -> str:
         return host
     except ValueError:
         pass
-    parts = host.split(".")
-    if len(parts) >= 3 and ".".join(parts[-2:]) in PUBLIC_SUFFIXES:
-        return ".".join(parts[-3:])
-    if len(parts) >= 2:
-        return ".".join(parts[-2:])
+    if host == "github.com" or host.endswith(".github.com"):
+        segments = [item for item in parts.path.split("/") if item]
+        org = segments[0].lower() if segments else "unknown"
+        return GITHUB_ORG_ALIASES.get(org, f"github:{org}")
+    labels = host.split(".")
+    if len(labels) >= 3 and ".".join(labels[-2:]) in PUBLIC_SUFFIXES:
+        return ".".join(labels[-3:])
+    if len(labels) >= 2:
+        return ".".join(labels[-2:])
     return host
 
 
@@ -233,8 +257,16 @@ def apply_candidate(
     anchor = store.get_anchor(candidate.anchor_id)
     if anchor is None:
         return candidate
+    if not candidate.evidence:
+        return candidate
+    matching = [
+        item
+        for item in candidate.evidence
+        if normalize_value(item.value, anchor.claim_text)[0]
+        == candidate.normalized_new
+    ]
     best = max(
-        candidate.evidence,
+        matching or candidate.evidence,
         key=lambda item: (item.source_tier * -1, item.published_at or ""),
     )
     new_anchor = Anchor(
@@ -250,18 +282,14 @@ def apply_candidate(
         supersedes=anchor.id,
         temporal_sensitivity=anchor.temporal_sensitivity,
     )
-    if not store.save_anchor_replacement(anchor.id, new_anchor):
-        return candidate
-    updated = candidate.model_copy(
-        update={
-            "accuracy_status": status,
-            "decided_at": utcnow_iso(),
-            "decided_by": decided_by,
-            "applied_anchor_id": new_anchor.id,
-        }
+    updated = store.apply_candidate_transaction(
+        candidate.id,
+        new_anchor,
+        status=status,
+        decided_by=decided_by,
     )
-    store.update_anchor_candidate(updated)
-    return updated
+    return updated or candidate
+
 
 
 

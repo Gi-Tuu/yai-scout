@@ -165,9 +165,13 @@ def test_candidate_reject_status_and_dedupe(tmp_path: Path):
 
 def test_independent_group_uses_registrable_domain():
     assert independent_group_from_url("https://docs.tavily.com/x") == "tavily.com"
-    assert independent_group_from_url("https://github.com/a/b") == "github.com"
+    assert independent_group_from_url("https://github.com/a/b") == "github:a"
+    assert independent_group_from_url("https://github.com/tavily-ai/x") == "tavily.com"
+    assert independent_group_from_url("https://docs.tavily.com/x") == "tavily.com"
+    assert independent_group_from_url("https://github.com/maximhq/bifrost") == "getbifrost.ai"
     assert independent_group_from_url("https://blog.example.co.uk/x") == "example.co.uk"
     assert independent_group_from_url("https://docs.example.com.au/x") == "example.com.au"
     assert independent_group_from_url("https://8.8.8.8/x") == "8.8.8.8"
+
 
 
