@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import secrets
 import uuid
@@ -16,16 +15,12 @@ from urllib.parse import urlsplit
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from ..benchmark.adapters import HttpAdapter
-from ..benchmark.dataset import load_dataset
-from ..benchmark.manifest import result_hash as compute_result_hash
 from ..benchmark.registry import build_adapters
 from ..benchmark.runner import DEFAULT_AGENT_SPECS, BenchmarkRunner
-from ..benchmark.scoring import leaderboard as build_leaderboard
-from ..benchmark.scoring import pareto_frontier
 from ..config import ROOT, Settings, get_settings
 from ..detector.accuracy_gate import GateObservation, evaluate_gate
 from ..detector.candidates import apply_candidate, independent_group_from_url
@@ -40,25 +35,19 @@ from ..domain.models import (
     Anchor,
     AnchorCandidate,
     CandidateEvidence,
-    ResearchTask,
-    RunEvent,
-    TaskStatus,
     TemporalSensitivity,
     utcnow_iso,
 )
 from ..llm import LLMClient
-from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
+from ..pipeline.director import ResearchDirector
 from ..retrieval.tavily import TavilyClient
 from ..sources.anchor import live_anchor_result, replay_anchor_result
 from ..sources.seed import seed_snapshots
 from ..store import Store
+from .benchmark_routes import register_benchmark_routes
 from .limits import UsageLimiter
 from .pages import register_pages
-
-
-class CreateResearchRequest(BaseModel):
-    question: str = Field(min_length=3, max_length=500)
-    as_of: str | None = None
+from .research_routes import register_research_routes
 
 
 class DetectRequest(BaseModel):
@@ -95,16 +84,6 @@ class ObservationInput(BaseModel):
 
 class CandidateCreate(BaseModel):
     observations: list[ObservationInput] = Field(default_factory=list)
-
-
-class BenchmarkRequest(BaseModel):
-    agent_ids: list[str] | None = None
-    task_ids: list[str] | None = None
-
-
-def _sse(event: RunEvent) -> str:
-    data = json.dumps(event.model_dump(mode="json"), ensure_ascii=False)
-    return f"id: {event.seq}\nevent: {event.type}\ndata: {data}\n\n"
 
 
 def create_app(
@@ -287,120 +266,17 @@ def create_app(
             },
         }
 
-    # ------------------------------------------------------------------ research
-    @app.post("/api/research", status_code=202)
-    async def create_research(
-        payload: CreateResearchRequest, request: Request, response: Response
-    ) -> dict[str, Any]:
-        if not cfg.research_enabled:
-            raise HTTPException(status_code=404, detail="research disabled")
-        guard_cost(request, "research")
-        if director.active_count() >= cfg.max_active_research_tasks:
-            raise HTTPException(
-                status_code=429,
-                detail="too many active research tasks; retry later",
-                headers={"Retry-After": "30"},
-            )
-        task = ResearchTask(
-            id=f"task_{uuid.uuid4().hex[:12]}",
-            owner_id=session_id(request, response),
-            question=" ".join(payload.question.split()),
-            as_of=validated_as_of(payload.as_of),
-        )
-        await asyncio.to_thread(store.create_task, task)
-        director.start(task)
-        return {
-            "task": task.model_dump(mode="json"),
-            "events_url": f"/api/research/{task.id}/events",
-        }
-
-    @app.get("/api/research")
-    async def list_research(request: Request, limit: int = 20) -> dict[str, Any]:
-        limit = max(1, min(limit, 100))
-        if is_admin(request):
-            tasks = await asyncio.to_thread(store.list_tasks, limit=limit)
-        else:
-            tasks = await asyncio.to_thread(
-                store.list_tasks,
-                limit=limit,
-                owner_id=session_id(request),
-            )
-        return {"tasks": [task.model_dump(mode="json") for task in tasks]}
-
-    @app.get("/api/research/{task_id}")
-    async def get_research(task_id: str, request: Request) -> dict[str, Any]:
-        task = await asyncio.to_thread(store.get_task, task_id)
-        if task is None or not can_access(task.owner_id, request):
-            raise HTTPException(status_code=404, detail="task not found")
-        plan = await asyncio.to_thread(store.get_plan, task_id)
-        credits, usd = await asyncio.to_thread(store.cost_sum, task_id)
-        return {
-            "task": task.model_dump(mode="json"),
-            "plan": plan.model_dump(mode="json") if plan else None,
-            "sources": [
-                s.model_dump(mode="json")
-                for s in await asyncio.to_thread(store.list_sources, task_id)
-            ],
-            "cost": {"credits": round(credits, 3), "usd": round(usd, 4)},
-            "event_count": len(
-                await asyncio.to_thread(store.list_events, task_id, 0, 10000)
-            ),
-        }
-
-    @app.post("/api/research/{task_id}/cancel")
-    async def cancel_research(task_id: str, request: Request) -> dict[str, Any]:
-        task = await asyncio.to_thread(store.get_task, task_id)
-        if task is None or not can_access(task.owner_id, request):
-            raise HTTPException(status_code=404, detail="task not found")
-        cancelled = await director.cancel(task_id)
-        return {"cancelled": cancelled}
-
-    @app.get("/api/research/{task_id}/events")
-    async def research_events(task_id: str, request: Request) -> StreamingResponse:
-        task = store.get_task(task_id)
-        if task is None or not can_access(task.owner_id, request):
-            raise HTTPException(status_code=404, detail="task not found")
-        cursor = 0
-        header = request.headers.get("last-event-id") or request.headers.get("Last-Event-ID")
-        if header and header.isdigit():
-            cursor = int(header)
-
-        async def stream() -> AsyncIterator[str]:
-            nonlocal cursor
-            idle = 0.0
-            while True:
-                if await request.is_disconnected():
-                    return
-                events = await asyncio.to_thread(
-                    store.list_events, task_id, cursor, 200
-                )
-                for event in events:
-                    cursor = event.seq
-                    yield _sse(event)
-                    if event.type in TERMINAL_EVENTS:
-                        return
-                await asyncio.sleep(0.25)
-                idle += 0.25
-                if idle >= 15:
-                    idle = 0.0
-                    yield ": ping\n\n"
-                    task = await asyncio.to_thread(store.get_task, task_id)
-                    if task is not None and task.status in {
-                        TaskStatus.DELIVERED,
-                        TaskStatus.FAILED,
-                        TaskStatus.CANCELLED,
-                    }:
-                        yield (
-                            "event: stream_closed\n"
-                            f"data: {json.dumps({'status': task.status.value})}\n\n"
-                        )
-                        return
-
-        return StreamingResponse(
-            stream(),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-        )
+    register_research_routes(
+        app,
+        cfg=cfg,
+        store=store,
+        director=director,
+        guard_cost=guard_cost,
+        session_id=session_id,
+        can_access=can_access,
+        validated_as_of=validated_as_of,
+        is_admin=is_admin,
+    )
 
     # ------------------------------------------------------------------ detector
     @app.post("/api/detector")
@@ -859,95 +735,15 @@ def create_app(
             raise HTTPException(status_code=404, detail="report not found")
         return compare_reports(left, right).model_dump(mode="json")
 
-    # ------------------------------------------------------------------ benchmark
-    @app.get("/api/benchmark/tasks")
-    @app.get("/benchmark/tasks")
-    async def benchmark_tasks() -> dict[str, Any]:
-        version, tasks = load_dataset()
-        public = [task for task in tasks if not task.hidden]
-        return {
-            "dataset_version": version,
-            "tasks": [task.model_dump(mode="json") for task in public],
-            "hidden_count": sum(1 for task in tasks if task.hidden),
-            "hidden_status": "compromised",
-        }
-
-    @app.get("/api/benchmark/agents")
-    @app.get("/benchmark/agents")
-    async def benchmark_agents() -> dict[str, Any]:
-        specs = [spec.model_dump(mode="json") for spec in DEFAULT_AGENT_SPECS]
-        if cfg.http_agent_url:
-            specs.append(
-                {
-                    "id": "external_http",
-                    "name": "External HTTP Agent",
-                    "kind": "http",
-                    "description": f"scout-adapter/1.0 → {cfg.http_agent_url}",
-                    "config": {"endpoint": cfg.http_agent_url},
-                }
-            )
-        return {"agents": specs}
-
-    @app.post("/api/benchmark/run", status_code=202)
-    @app.post("/benchmark/runs", status_code=202)
-    async def benchmark_run(
-        payload: BenchmarkRequest, request: Request, response: Response
-    ) -> dict[str, Any]:
-        guard_cost(request, "benchmark")
-        try:
-            session = runner.start(
-                payload.agent_ids,
-                payload.task_ids,
-                owner_id=session_id(request, response),
-            )
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return {"session": session.model_dump(mode="json")}
-
-    @app.get("/api/benchmark/sessions/{session_id}")
-    @app.get("/benchmark/runs/{session_id}")
-    async def benchmark_session(session_id: str, request: Request) -> dict[str, Any]:
-        session = await asyncio.to_thread(store.get_bench_session, session_id)
-        if session is None or not can_access(session.owner_id, request):
-            raise HTTPException(status_code=404, detail="session not found")
-        results = await asyncio.to_thread(store.list_bench_results, session_id)
-        return {
-            "session": session.model_dump(mode="json"),
-            "results": [result.model_dump(mode="json") for result in results],
-            "leaderboard": build_leaderboard(results),
-            "pareto": pareto_frontier(results),
-        }
-
-    @app.get("/benchmark/runs/{session_id}/verify")
-    @app.get("/api/benchmark/runs/{session_id}/verify")
-    async def verify_benchmark_run(session_id: str, request: Request) -> dict[str, Any]:
-        session = await asyncio.to_thread(store.get_bench_session, session_id)
-        if session is None or not can_access(session.owner_id, request):
-            raise HTTPException(status_code=404, detail="session not found")
-        results = await asyncio.to_thread(store.list_bench_results, session_id)
-        computed = compute_result_hash(results)
-        return {
-            "session_id": session_id,
-            "stored_result_hash": session.result_hash,
-            "computed_result_hash": computed,
-            "matches": session.result_hash == computed,
-        }
-
-    @app.get("/api/benchmark/leaderboard")
-    @app.get("/benchmark/leaderboard")
-    async def benchmark_leaderboard(
-        session_id: str, request: Request
-    ) -> dict[str, Any]:
-        session = await asyncio.to_thread(store.get_bench_session, session_id)
-        if session is None or not can_access(session.owner_id, request):
-            raise HTTPException(status_code=404, detail="session not found")
-        results = await asyncio.to_thread(store.list_bench_results, session_id)
-        return {
-            "session_id": session_id,
-            "status": session.status,
-            "leaderboard": build_leaderboard(results),
-            "pareto": pareto_frontier(results),
-        }
+    register_benchmark_routes(
+        app,
+        cfg=cfg,
+        store=store,
+        runner=runner,
+        guard_cost=guard_cost,
+        can_access=can_access,
+        session_id=session_id,
+    )
 
     register_pages(app, static_dir)
 

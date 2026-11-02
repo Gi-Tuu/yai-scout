@@ -30,7 +30,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   pytest-cov added; claim_key collision behavior documented in tests;
   benchmark sessions are owner-scoped (migration 5); admin candidate and
   benchmark read paths offloaded to worker threads; static page routes extracted
-  to `api/pages.py`.
+  to `api/pages.py`; benchmark/research routes moved to separate modules.
 
 ### Fixed
 

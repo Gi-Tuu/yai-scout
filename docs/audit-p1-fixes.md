@@ -79,7 +79,9 @@ Docker      : built
 ## Still open (P2)
 
 - no FK constraints / duplicated JSON columns;
-- Static page routes were extracted to `api/pages.py`; the JSON API module is still large, and the revalidation pipeline still uses sync SQLite internally;
+- Page, benchmark and research routes are now in `api/pages.py`,
+  `api/benchmark_routes.py`, and `api/research_routes.py`; detector/admin routes
+  still share `api/app.py`, and the revalidation pipeline still uses sync SQLite internally;
 - `claim_key` numeric normalization can merge distinct facts;
 - no line-coverage tool installed;
 - benchmark endpoints are session-scoped but still have no separate api-key auth.
