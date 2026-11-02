@@ -64,3 +64,14 @@ python scripts/eval_accuracy_gate.py `
   --worksheet benchmarks/accuracy_gate/private_worksheet.json `
   --labels accuracy_labels_private_<name>.json
 ```
+
+
+## Evaluator bug (2026-11-02)
+
+The independent-label evaluator was comparing Gate vs the hidden key, ignoring
+the human label. It now compares Gate vs the human decision; regression test
+`tests/test_eval_metrics.py`. The old 60/60 from labeler 001 is invalid.
+
+Labeler 336 (public BL set, compromised key): agreement 0.267, auto precision
+0.222, false-update rate 0.778. This is a disagreement to adjudicate, not a
+Gate verdict; see `docs/eval-336.md`.

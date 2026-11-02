@@ -18,6 +18,11 @@ Fixes confirmed against the GPT audit, without adopting the stale parts of that 
 
 P0-3 residual unknown cross-domain publishers, P1 research budget/ownership, P1 private labels, P2 architecture/DB/CI. See `docs/audit-diff-v0.3.5.md`.
 
+## Fixed after label data arrived
+
+- Evaluator compared Gate to the hidden key instead of the human labels; fixed + regression test.
+- Labeler 336 public-set result recorded in `docs/eval-336.md`; not treated as ground truth.
+
 ## Verification
 
 ```text

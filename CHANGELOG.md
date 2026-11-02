@@ -29,6 +29,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - **P1-3**: explicit live-fetch timeout and adversarial SSRF/DNS/redirect/content-type/size tests.
 - **P1-4 tooling**: private 30-case worksheet (no answers in repo), `/label?worksheet=private`, worksheet evaluator, adjudication script; human labels pending.
 - **P2 partial**: schema_version migrations, architecture import CI, pinned actions, Dependabot, CodeQL, offline backup/restore/integrity scripts.
+- Fixed independent-label evaluator to compare human labels, not key; labeler 336 report in `docs/eval-336.md`.
 
 ## [0.3.5] - 2026-11-02
 

@@ -75,17 +75,16 @@ def evaluate_independent(labels_path: Path, key_path: Path) -> int:
         source_id = meta["source_id"]
         case = cases[source_id]
         prediction = evaluate_label_case(case).decision.value
-        expected_human = meta["expected_decision"]
         total += 1
-        correct += int(prediction == expected_human)
-        confusion[(expected_human, prediction)] += 1
+        correct += int(prediction == human)
+        confusion[(human, prediction)] += 1
         if prediction == "auto_update":
             gate_auto += 1
-            if expected_human == "auto_update":
+            if human == "auto_update":
                 auto_correct += 1
             else:
                 false_update += 1
-        if expected_human == "auto_update":
+        if human == "auto_update":
             human_auto += 1
             if prediction == "review":
                 review_coverage += 1
