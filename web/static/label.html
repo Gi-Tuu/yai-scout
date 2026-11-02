@@ -27,7 +27,7 @@
 <body>
 <header>
   <h1>YAI <span>Scout</span> · Accuracy Labeling</h1>
-  <div class="tag">blind worksheet · 60 cases · auto_update / review / reject / no_change</div>
+  <div class="tag">blind worksheet · auto_update / review / reject / no_change</div>
   <div style="margin-left:auto"><a href="/" style="color:var(--accent)">首页</a></div>
 </header>
 <main>
@@ -35,6 +35,19 @@
     <h2>Labeler</h2>
     <input id="labeler" placeholder="你的名字/编号（用于独立性记录）" style="width:320px" />
     <span class="progress" id="progress"></span>
+  </div>
+  <div class="panel">
+    <h2>先读一遍：怎么判断</h2>
+    <div style="font-size:13px;line-height:1.8">
+      看“当前 Anchor 的 value”和下面所有来源的 value、tier、group：
+      <ol style="margin:8px 0 0 18px;padding:0">
+        <li><b>no_change</b>：新值和旧值其实一样（忽略逗号/货币符号/版本 v 前缀）</li>
+        <li><b>reject</b>：来源不可靠（T3/T4）、打不开，或比旧值还旧</li>
+        <li><b>review</b>：只有 1 个权威来源、来源冲突、单位/周期说不清，或你拿不准</li>
+        <li><b>auto_update</b>：至少 2 个互相独立的 T1/T2 来源给出相同新值</li>
+      </ol>
+      <div class="muted" style="margin-top:6px">同一个 group 不算两个来源；拿不准就选 review，不要猜。</div>
+    </div>
   </div>
   <div class="panel" id="casePanel">
     <div class="muted">加载中…</div>
@@ -115,4 +128,5 @@ init();
 </script>
 </body>
 </html>
+
 

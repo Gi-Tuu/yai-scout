@@ -18,6 +18,10 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ## [0.3.6] - 2026-11-02
 
+### Added
+
+- Private label quality checker (`scripts/check_label_quality.py`) and plain-language `/label` instructions; first private label batch reviewed and rejected as incomplete/inconsistent (`docs/eval-private-2026-11-02.md`).
+
 ### Fixed
 
 - **P0-1**: app now uses the effective Bifrost/direct `llm_connection()`; healthz reports the actual client gateway/model; manifest records effective gateway/model + redacted fingerprint.

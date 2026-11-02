@@ -47,3 +47,13 @@ python scripts/adjudicate_labels.py `
 
 Only adjudicated labels should be used as ground truth. Keep both raw label
 files, but do not commit them.
+
+## Quality gate
+
+```powershell
+python scripts/check_label_quality.py `
+  --worksheet benchmarks/accuracy_gate/private_worksheet.json `
+  --labels accuracy_labels_private_<name>.json
+```
+
+Incomplete files or impossible `no_change` answers are rejected before evaluation.
