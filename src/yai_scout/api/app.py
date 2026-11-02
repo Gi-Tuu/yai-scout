@@ -516,6 +516,11 @@ def create_app(
             observations=observations,
             claim_text=anchor.claim_text,
         )
+        existing = store.find_anchor_candidate(
+            anchor.id, gate.normalized_new, gate.decision.value
+        )
+        if existing is not None:
+            return existing.model_dump(mode="json")
         reachable = [item for item in observations if item.reachable and item.value]
         best = max(reachable, key=lambda item: item.published_at or "") if reachable else None
         candidate = AnchorCandidate(
@@ -627,6 +632,14 @@ def create_app(
         store.update_anchor_candidate(updated)
         return updated.model_dump(mode="json")
 
+    @app.get("/admin/anchors/audit")
+    async def admin_anchor_audit(request: Request, limit: int = 100) -> dict[str, Any]:
+        if not cfg.admin_token:
+            raise HTTPException(status_code=404, detail="admin endpoint disabled")
+        if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
+            raise HTTPException(status_code=401, detail="unauthorized")
+        return {"audit": store.list_anchor_audit(limit=max(1, min(limit, 500)))}
+
     @app.get("/admin/anchors")
     async def admin_list_anchors(request: Request) -> dict[str, Any]:
         if not cfg.admin_token:
@@ -655,9 +668,18 @@ def create_app(
         if result is None:
             raise HTTPException(status_code=409, detail="rollback failed")
         restored, rolled_back = result
+        rolled_candidates = store.mark_candidates_rolled_back(rolled_back.id)
+        audit_id = store.save_anchor_audit(
+            "rollback",
+            rolled_back.id,
+            related_id=restored.id,
+            details={"rolled_back_candidates": rolled_candidates},
+        )
         return {
             "restored": restored.model_dump(mode="json"),
             "rolled_back": rolled_back.model_dump(mode="json"),
+            "rolled_back_candidates": rolled_candidates,
+            "audit_id": audit_id,
         }
 
     @app.get("/freshness/compare")

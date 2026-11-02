@@ -136,6 +136,15 @@ CREATE TABLE IF NOT EXISTS anchor_observation (
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_anchor_observation_anchor ON anchor_observation(anchor_id);
+CREATE TABLE IF NOT EXISTS anchor_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action TEXT NOT NULL,
+    anchor_id TEXT NOT NULL,
+    related_id TEXT NOT NULL DEFAULT '',
+    details_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_anchor_audit_anchor ON anchor_audit(anchor_id, id);
 CREATE TABLE IF NOT EXISTS snapshot (
     id TEXT PRIMARY KEY,
     url TEXT NOT NULL,
@@ -661,6 +670,96 @@ class Store:
         with self._lock:
             rows = self._conn.execute(query, vals).fetchall()
         return [AnchorCandidate.model_validate_json(row["payload_json"]) for row in rows]
+
+    def find_anchor_candidate(
+        self,
+        anchor_id: str,
+        normalized_new: str,
+        gate_decision: str,
+        *,
+        statuses: tuple[str, ...] = ("pending", "rejected"),
+    ) -> AnchorCandidate | None:
+        placeholders = ",".join("?" for _ in statuses)
+        query = (
+            "SELECT payload_json FROM anchor_candidate "
+            f"WHERE anchor_id = ? AND status IN ({placeholders}) "
+            "ORDER BY created_at DESC"
+        )
+        with self._lock:
+            rows = self._conn.execute(
+                query, (anchor_id, *statuses)
+            ).fetchall()
+        for row in rows:
+            candidate = AnchorCandidate.model_validate_json(row["payload_json"])
+            if (
+                candidate.normalized_new == normalized_new
+                and candidate.gate_decision == gate_decision
+            ):
+                return candidate
+        return None
+
+    def mark_candidates_rolled_back(self, applied_anchor_id: str) -> int:
+        count = 0
+        for candidate in self.list_anchor_candidates(limit=1000):
+            if (
+                candidate.applied_anchor_id == applied_anchor_id
+                and candidate.accuracy_status in {"approved", "auto_applied"}
+            ):
+                updated = candidate.model_copy(
+                    update={
+                        "accuracy_status": "rolled_back",
+                        "decided_at": utcnow_iso(),
+                        "decided_by": "rollback",
+                    }
+                )
+                self.update_anchor_candidate(updated)
+                count += 1
+        return count
+
+    def save_anchor_audit(
+        self,
+        action: str,
+        anchor_id: str,
+        *,
+        related_id: str = "",
+        details: dict[str, Any] | None = None,
+    ) -> int:
+        with self._lock:
+            cursor = self._conn.execute(
+                """INSERT INTO anchor_audit
+                   (action, anchor_id, related_id, details_json, created_at)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (
+                    action,
+                    anchor_id,
+                    related_id,
+                    json.dumps(details or {}, ensure_ascii=False),
+                    utcnow_iso(),
+                ),
+            )
+            self._conn.commit()
+        return int(cursor.lastrowid or 0)
+
+    def list_anchor_audit(self, limit: int = 100) -> list[dict[str, Any]]:
+        with self._lock:
+            rows = self._conn.execute(
+                """SELECT id, action, anchor_id, related_id, details_json, created_at
+                   FROM anchor_audit ORDER BY id DESC LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        result = []
+        for row in rows:
+            result.append(
+                {
+                    "id": row["id"],
+                    "action": row["action"],
+                    "anchor_id": row["anchor_id"],
+                    "related_id": row["related_id"],
+                    "details": json.loads(row["details_json"] or "{}"),
+                    "created_at": row["created_at"],
+                }
+            )
+        return result
 
     def update_anchor(self, anchor: Anchor) -> Anchor:
         with self._lock:

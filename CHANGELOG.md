@@ -16,6 +16,13 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Final submission package: one primary README, slides, demo video; independent second labeler for accuracy.
 
+## [0.3.3] - 2026-11-02
+
+### Fixed
+
+- Admin candidate creation dedupes `pending/rejected` candidates for the same anchor/normalized value/decision (B5).
+- Rollback marks applied candidates `rolled_back`, writes `anchor_audit`, and exposes `GET /admin/anchors/audit` + `/admin` Audit table (B7).
+
 ## [0.3.2] - 2026-11-02
 
 ### Fixed

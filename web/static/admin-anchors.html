@@ -46,6 +46,10 @@
     <h2>Candidates</h2>
     <table><thead><tr><th>状态</th><th>gate</th><th>旧 → 新</th><th>confidence</th><th>reason</th><th>操作</th></tr></thead><tbody id="candidates"></tbody></table>
   </div>
+  <div class="panel">
+    <h2>Audit</h2>
+    <table><thead><tr><th>id</th><th>action</th><th>anchor</th><th>related</th><th>time</th></tr></thead><tbody id="audit"></tbody></table>
+  </div>
 </main>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -66,13 +70,15 @@ async function load() {
   token = $("token").value.trim();
   sessionStorage.setItem("adminToken", token);
   try {
-    const [anchors, candidates] = await Promise.all([
+    const [anchors, candidates, audit] = await Promise.all([
       api("/admin/anchors"),
       api("/admin/anchors/candidates"),
+      api("/admin/anchors/audit"),
     ]);
     $("status").textContent = `anchors=${anchors.anchors.length} candidates=${candidates.candidates.length}`;
     renderAnchors(anchors.anchors);
     renderCandidates(candidates.candidates);
+    renderAudit(audit.audit);
   } catch (error) {
     $("status").textContent = `加载失败：${error.message}`;
   }
@@ -98,6 +104,16 @@ function renderCandidates(items) {
     <td>${candidate.confidence}</td>
     <td class="muted">${esc(candidate.gate_reason)}</td>
     <td>${candidate.accuracy_status === "pending" ? `<button onclick="approve('${esc(candidate.id)}')">Approve</button><button class="ghost" onclick="reject('${esc(candidate.id)}')">Reject</button>` : ""}</td>
+  </tr>`).join("");
+}
+
+function renderAudit(items) {
+  $("audit").innerHTML = items.map((item) => `<tr>
+    <td class="mono">${item.id}</td>
+    <td><span class="badge">${esc(item.action)}</span></td>
+    <td class="mono">${esc(item.anchor_id)}</td>
+    <td class="mono">${esc(item.related_id || "—")}</td>
+    <td class="muted">${esc(item.created_at)}</td>
   </tr>`).join("");
 }
 

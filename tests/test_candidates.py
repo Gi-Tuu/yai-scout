@@ -185,9 +185,17 @@ def test_approved_candidate_can_be_rolled_back():
         )
         assert rolled.status_code == 200
         assert rolled.json()["restored"]["id"] == anchor.id
+        assert rolled.json()["rolled_back_candidates"] == 1
+        assert rolled.json()["audit_id"] > 0
+        rolled_candidate = store.get_anchor_candidate(candidate["id"])
+        assert rolled_candidate is not None
+        assert rolled_candidate.accuracy_status == "rolled_back"
         assert store.get_anchor(anchor.id).status == "active"  # type: ignore[union-attr]
         assert store.get_anchor(replacement.id).status == "rolled_back"  # type: ignore[union-attr]
         assert [item.id for item in store.list_anchors()] == [anchor.id]
+        audit = client.get("/admin/anchors/audit", headers=AUTH).json()["audit"]
+        assert audit[0]["action"] == "rollback"
+        assert audit[0]["anchor_id"] == replacement.id
     store.close()
 
 
@@ -199,3 +207,22 @@ def test_admin_page_is_served():
         assert client.get("/label").status_code == 200
     store.close()
 
+
+def test_duplicate_candidate_api_is_deduped():
+    store = Store(":memory:")
+    anchor = _anchor(store)
+    app = _app(store)
+    with TestClient(app) as client:
+        first = client.post(
+            f"/admin/anchors/{anchor.id}/candidates",
+            json={"observations": _observations()},
+            headers=AUTH,
+        ).json()
+        second = client.post(
+            f"/admin/anchors/{anchor.id}/candidates",
+            json={"observations": _observations()},
+            headers=AUTH,
+        ).json()
+        assert first["id"] == second["id"]
+        assert len(store.list_anchor_candidates()) == 1
+    store.close()

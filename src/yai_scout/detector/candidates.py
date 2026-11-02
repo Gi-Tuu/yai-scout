@@ -159,14 +159,11 @@ def create_candidate_from_observations(
     best = _best_observation(gate_observations)
     if best is None:
         return None
-    for existing in store.list_anchor_candidates(limit=200):
-        if (
-            existing.anchor_id == anchor.id
-            and existing.normalized_new == gate.normalized_new
-            and existing.gate_decision == gate.decision.value
-            and existing.accuracy_status in {"pending", "rejected"}
-        ):
-            return existing
+    existing = store.find_anchor_candidate(
+        anchor.id, gate.normalized_new, gate.decision.value
+    )
+    if existing is not None:
+        return existing
     candidate = AnchorCandidate(
         id=f"cand_{uuid.uuid4().hex[:12]}",
         anchor_id=anchor.id,

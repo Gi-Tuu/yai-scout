@@ -215,7 +215,12 @@ class AnchorCandidate(BaseModel):
     gate_version: str = ""
     confidence: float = 0.0
     accuracy_status: Literal[
-        "pending", "approved", "rejected", "auto_applied", "no_change"
+        "pending",
+        "approved",
+        "rejected",
+        "auto_applied",
+        "no_change",
+        "rolled_back",
     ] = "pending"
     created_at: str = Field(default_factory=utcnow_iso)
     decided_at: str | None = None
@@ -392,6 +397,7 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
 
 
 
