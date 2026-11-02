@@ -20,7 +20,7 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 8 | Independent-label metrics + adjudication | blocked by #1 | inter-annotator agreement; then recompute false-update rate |
+| 8 | Independent-label metrics + adjudication | **tooling ready** (`private_worksheet.json`, `/label?worksheet=private`, `eval_accuracy_gate.py --worksheet`, `adjudicate_labels.py`); blocked on annotators | inter-annotator agreement; then recompute false-update rate |
 | 9 | B4 residual: async SQLite writes | **deferred** | reads use `asyncio.to_thread`; writes remain synchronous. Only revisit if write concurrency grows |
 | 10 | Public Bifrost deployment | optional | costs an extra service; local/video proof is enough for submission |
 | 11 | Refresh fixed demo cache | as needed | `benchmarks/demo/responses.json` recorded 2026-11-01; re-record if facts/API change |

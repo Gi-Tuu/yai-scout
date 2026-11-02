@@ -127,3 +127,24 @@ python scripts/eval_accuracy_gate.py \
 
 
 
+
+
+## Private worksheet
+
+The original 60-case key is public, so its 60/60 is rule-following, not
+independent validation.
+
+Use the private worksheet instead:
+
+```powershell
+python scripts/make_private_worksheet.py   # 30 cases, no expected decisions
+# annotate: /label?worksheet=private
+python scripts/eval_accuracy_gate.py `
+  --worksheet benchmarks/accuracy_gate/private_worksheet.json `
+  --labels accuracy_labels_private_<name>.json
+```
+
+- `private_worksheet.json` contains **cases only**; answers are never committed;
+- exported label files are **gitignored**;
+- two annotators + `adjudicate_labels.py` for disagreements;
+- do not update labels to make metrics look better.

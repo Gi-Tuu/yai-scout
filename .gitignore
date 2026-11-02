@@ -39,3 +39,9 @@ snapshots/
 Thumbs.db
 .idea/
 .vscode/
+
+# Private evaluation labels (never commit)
+.private/
+accuracy_labels_private_*.json
+adjudication_disagreements.json
+

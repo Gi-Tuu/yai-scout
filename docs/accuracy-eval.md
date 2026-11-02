@@ -51,3 +51,16 @@ confusion: 18 auto / 22 review / 10 reject / 10 no_change 全部一致
   --labels benchmarks\accuracy_gate\independent_labels_001.json `
   --key benchmarks\accuracy_gate\holdout_key.json
 ```
+
+
+## Private worksheet (v0.3.6 tooling)
+
+The public key is compromised. A 30-case private worksheet (cases only, no
+answers) is now available; labels stay outside the repo. Metrics are only
+meaningful after an independent annotator and adjudication.
+
+```powershell
+python scripts/eval_accuracy_gate.py `
+  --worksheet benchmarks/accuracy_gate/private_worksheet.json `
+  --labels accuracy_labels_private_<name>.json
+```

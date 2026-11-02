@@ -52,11 +52,14 @@ const esc = (s) => (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","
 const DECISIONS = ["auto_update", "review", "reject", "no_change"];
 let worksheet = [];
 let index = 0;
-let labels = JSON.parse(localStorage.getItem("accuracyLabels") || "{}");
+const privateMode = new URLSearchParams(location.search).get("worksheet") === "private";
+const storageKey = privateMode ? "accuracyLabelsPrivate" : "accuracyLabels";
+let labels = JSON.parse(localStorage.getItem(storageKey) || "{}");
 $("labeler").value = localStorage.getItem("accuracyLabeler") || "";
 
 async function init() {
-  const response = await fetch("/static/accuracy_worksheet.json");
+  const source = privateMode ? "/static/private_worksheet.json" : "/static/accuracy_worksheet.json";
+  const response = await fetch(source);
   worksheet = (await response.json()).cases;
   render();
 }
@@ -82,7 +85,7 @@ function render() {
   document.querySelectorAll("[data-decision]").forEach((button) => {
     button.onclick = () => {
       labels[item.worksheet_id] = button.dataset.decision;
-      localStorage.setItem("accuracyLabels", JSON.stringify(labels));
+      localStorage.setItem(storageKey, JSON.stringify(labels));
       if (index < worksheet.length - 1) index += 1;
       render();
     };
@@ -92,14 +95,18 @@ $("prev").onclick = () => { if (index > 0) index -= 1; render(); };
 $("next").onclick = () => { if (index < worksheet.length - 1) index += 1; render(); };
 $("export").onclick = () => {
   const payload = {
-    version: "accuracy-gate-labels-independent/0.1",
+    version: privateMode
+      ? "accuracy-gate-labels-private/0.1"
+      : "accuracy-gate-labels-independent/0.1",
     labeler: $("labeler").value || "anonymous",
     labels,
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `accuracy_labels_${payload.labeler}.json`;
+  a.download = privateMode
+    ? `accuracy_labels_private_${payload.labeler}.json`
+    : `accuracy_labels_${payload.labeler}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
   $("status").textContent = `picked ${Object.keys(labels).length}/${worksheet.length}`;
