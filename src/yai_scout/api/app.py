@@ -636,7 +636,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="admin endpoint disabled")
         if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
             raise HTTPException(status_code=401, detail="unauthorized")
-        anchor = store.get_anchor(anchor_id)
+        anchor = await asyncio.to_thread(store.get_anchor, anchor_id)
         if anchor is None:
             raise HTTPException(status_code=404, detail="anchor not found")
         observations = [
@@ -658,8 +658,11 @@ def create_app(
             observations=observations,
             claim_text=anchor.claim_text,
         )
-        existing = store.find_anchor_candidate(
-            anchor.id, gate.normalized_new, gate.decision.value
+        existing = await asyncio.to_thread(
+            store.find_anchor_candidate,
+            anchor.id,
+            gate.normalized_new,
+            gate.decision.value,
         )
         if existing is not None:
             return existing.model_dump(mode="json")
@@ -689,13 +692,13 @@ def create_app(
             gate_version="accuracy-gate-v0",
             confidence=gate.confidence,
         )
-        store.save_anchor_candidate(candidate)
+        await asyncio.to_thread(store.save_anchor_candidate, candidate)
 
         if gate.decision.value == "no_change":
             candidate = candidate.model_copy(
                 update={"accuracy_status": "no_change", "decided_at": utcnow_iso()}
             )
-            store.update_anchor_candidate(candidate)
+            await asyncio.to_thread(store.update_anchor_candidate, candidate)
         elif gate.decision.value == "reject":
             candidate = candidate.model_copy(
                 update={
@@ -704,12 +707,16 @@ def create_app(
                     "decided_by": "gate",
                 }
             )
-            store.update_anchor_candidate(candidate)
+            await asyncio.to_thread(store.update_anchor_candidate, candidate)
         elif gate.decision.value == "auto_update" and cfg.accuracy_auto_update:
             if best is None:
                 raise HTTPException(status_code=400, detail="no usable observation")
-            candidate = apply_candidate(
-                store, candidate, status="auto_applied", decided_by="auto-gate"
+            candidate = await asyncio.to_thread(
+                apply_candidate,
+                store,
+                candidate,
+                status="auto_applied",
+                decided_by="auto-gate",
             )
         return candidate.model_dump(mode="json")
 
@@ -734,20 +741,24 @@ def create_app(
             raise HTTPException(status_code=404, detail="admin endpoint disabled")
         if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
             raise HTTPException(status_code=401, detail="unauthorized")
-        candidate = store.get_anchor_candidate(candidate_id)
+        candidate = await asyncio.to_thread(store.get_anchor_candidate, candidate_id)
         if candidate is None:
             raise HTTPException(status_code=404, detail="candidate not found")
         if candidate.accuracy_status != "pending":
             raise HTTPException(status_code=409, detail="candidate is not pending")
-        anchor = store.get_anchor(candidate.anchor_id)
+        anchor = await asyncio.to_thread(store.get_anchor, candidate.anchor_id)
         if anchor is None:
             raise HTTPException(status_code=404, detail="anchor not found")
         if anchor.status != "active":
             raise HTTPException(status_code=409, detail="anchor is no longer active")
         if not candidate.evidence:
             raise HTTPException(status_code=400, detail="candidate has no evidence")
-        updated = apply_candidate(
-            store, candidate, status="approved", decided_by="admin"
+        updated = await asyncio.to_thread(
+            apply_candidate,
+            store,
+            candidate,
+            status="approved",
+            decided_by="admin",
         )
         return updated.model_dump(mode="json")
 
@@ -759,7 +770,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="admin endpoint disabled")
         if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
             raise HTTPException(status_code=401, detail="unauthorized")
-        candidate = store.get_anchor_candidate(candidate_id)
+        candidate = await asyncio.to_thread(store.get_anchor_candidate, candidate_id)
         if candidate is None:
             raise HTTPException(status_code=404, detail="candidate not found")
         if candidate.accuracy_status != "pending":
@@ -771,7 +782,7 @@ def create_app(
                 "decided_by": "admin",
             }
         )
-        store.update_anchor_candidate(updated)
+        await asyncio.to_thread(store.update_anchor_candidate, updated)
         return updated.model_dump(mode="json")
 
     @app.get("/admin/anchors/audit")
@@ -804,19 +815,22 @@ def create_app(
             raise HTTPException(status_code=404, detail="admin endpoint disabled")
         if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
             raise HTTPException(status_code=401, detail="unauthorized")
-        anchor = store.get_anchor(anchor_id)
+        anchor = await asyncio.to_thread(store.get_anchor, anchor_id)
         if anchor is None:
             raise HTTPException(status_code=404, detail="anchor not found")
         if anchor.status != "active" or not anchor.supersedes:
             raise HTTPException(
                 status_code=409, detail="anchor is not an active replacement"
             )
-        result = store.rollback_anchor(anchor_id)
+        result = await asyncio.to_thread(store.rollback_anchor, anchor_id)
         if result is None:
             raise HTTPException(status_code=409, detail="rollback failed")
         restored, rolled_back = result
-        rolled_candidates = store.mark_candidates_rolled_back(rolled_back.id)
-        audit_id = store.save_anchor_audit(
+        rolled_candidates = await asyncio.to_thread(
+            store.mark_candidates_rolled_back, rolled_back.id
+        )
+        audit_id = await asyncio.to_thread(
+            store.save_anchor_audit,
             "rollback",
             rolled_back.id,
             related_id=restored.id,
@@ -894,10 +908,10 @@ def create_app(
     @app.get("/api/benchmark/sessions/{session_id}")
     @app.get("/benchmark/runs/{session_id}")
     async def benchmark_session(session_id: str, request: Request) -> dict[str, Any]:
-        session = store.get_bench_session(session_id)
+        session = await asyncio.to_thread(store.get_bench_session, session_id)
         if session is None or not can_access(session.owner_id, request):
             raise HTTPException(status_code=404, detail="session not found")
-        results = store.list_bench_results(session_id)
+        results = await asyncio.to_thread(store.list_bench_results, session_id)
         return {
             "session": session.model_dump(mode="json"),
             "results": [result.model_dump(mode="json") for result in results],
@@ -908,10 +922,10 @@ def create_app(
     @app.get("/benchmark/runs/{session_id}/verify")
     @app.get("/api/benchmark/runs/{session_id}/verify")
     async def verify_benchmark_run(session_id: str, request: Request) -> dict[str, Any]:
-        session = store.get_bench_session(session_id)
+        session = await asyncio.to_thread(store.get_bench_session, session_id)
         if session is None or not can_access(session.owner_id, request):
             raise HTTPException(status_code=404, detail="session not found")
-        results = store.list_bench_results(session_id)
+        results = await asyncio.to_thread(store.list_bench_results, session_id)
         computed = compute_result_hash(results)
         return {
             "session_id": session_id,
@@ -925,10 +939,10 @@ def create_app(
     async def benchmark_leaderboard(
         session_id: str, request: Request
     ) -> dict[str, Any]:
-        session = store.get_bench_session(session_id)
+        session = await asyncio.to_thread(store.get_bench_session, session_id)
         if session is None or not can_access(session.owner_id, request):
             raise HTTPException(status_code=404, detail="session not found")
-        results = store.list_bench_results(session_id)
+        results = await asyncio.to_thread(store.list_bench_results, session_id)
         return {
             "session_id": session_id,
             "status": session.status,

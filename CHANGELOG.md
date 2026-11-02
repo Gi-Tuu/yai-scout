@@ -28,7 +28,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   URL-scoped snapshot replay; restart reconciliation for running work;
   core API SQLite calls offloaded with asyncio.to_thread;
   pytest-cov added; claim_key collision behavior documented in tests;
-  benchmark sessions are owner-scoped (migration 5).
+  benchmark sessions are owner-scoped (migration 5); admin candidate and
+  benchmark read paths offloaded to worker threads.
 
 ### Fixed
 

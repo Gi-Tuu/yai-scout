@@ -79,7 +79,7 @@ Docker      : built
 ## Still open (P2)
 
 - no FK constraints / duplicated JSON columns;
-- API is still a single large module; remaining admin/benchmark paths use sync SQLite;
+- API is still a single large module; admin candidate/benchmark reads are now offloaded, but the revalidation pipeline still uses sync SQLite internally;
 - `claim_key` numeric normalization can merge distinct facts;
 - no line-coverage tool installed;
 - benchmark endpoints are session-scoped but still have no separate api-key auth.
