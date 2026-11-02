@@ -66,10 +66,18 @@ Tests:
 - Benchmark sessions now carry `owner_id` (migration 5); run/session/verify/
   leaderboard endpoints are session-scoped, with admin bypass.
 
+## JSON/column consistency
+
+- `Store.consistency_report()` checks anchor/candidate/report/benchmark
+  payload-vs-column drift and orphan rows.
+- `scripts/db_consistency.py --db ...` exits non-zero on issues.
+- Bench lifecycle updates now keep `config_json` in sync; migration 6
+  backfills legacy sessions.
+
 ## Verification
 
 ```text
-pytest      : 218 passed
+pytest      : 222 passed
 ruff        : pass
 mypy        : pass (50 files)
 architecture: ok
@@ -79,10 +87,10 @@ Docker      : built
 ## Still open (P2)
 
 - no FK constraints / duplicated JSON columns;
-- Page, benchmark, research and freshness/admin routes are now in
-  `api/pages.py`, `api/benchmark_routes.py`, `api/research_routes.py`, and
-  `api/freshness_routes.py`; `api/app.py` is down to wiring/health. The
-  revalidation pipeline still uses sync SQLite internally;
+- Page, benchmark, research, freshness and admin routes are now in separate
+  modules (`api/pages.py`, `api/benchmark_routes.py`, `api/research_routes.py`,
+  `api/freshness_routes.py`, `api/admin_routes.py`); `api/app.py` is wiring/health.
+  The revalidation pipeline still uses sync SQLite internally.
 - `claim_key` numeric normalization can merge distinct facts;
 - no line-coverage tool installed;
 - benchmark endpoints are session-scoped but still have no separate api-key auth.

@@ -33,6 +33,15 @@ python scripts/db_admin.py restore `
 To replace the live DB, stop the app first and use `--force` only after a
 verified backup exists.
 
+## Consistency check
+
+```powershell
+python scripts/db_consistency.py --db data/scout.sqlite3
+# {"issues": [], "count": 0}
+```
+
+Checks JSON payload vs duplicated columns and orphan rows; read-only.
+
 ## Migrations
 
 - `schema_version` records applied versions;

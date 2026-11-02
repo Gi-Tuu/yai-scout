@@ -29,6 +29,7 @@ from ..pipeline.director import ResearchDirector
 from ..retrieval.tavily import TavilyClient
 from ..sources.seed import seed_snapshots
 from ..store import Store
+from .admin_routes import register_admin_routes
 from .benchmark_routes import register_benchmark_routes
 from .freshness_routes import register_freshness_routes
 from .limits import UsageLimiter
@@ -235,12 +236,18 @@ def create_app(
         tavily=tavily,
         llm=llm,
         detector=detector,
-        discovery=discovery,
         guard_cost=guard_cost,
         session_id=session_id,
         can_access=can_access,
         is_admin=is_admin,
         validated_as_of=validated_as_of,
+    )
+
+    register_admin_routes(
+        app,
+        cfg=cfg,
+        store=store,
+        discovery=discovery,
     )
 
     register_benchmark_routes(

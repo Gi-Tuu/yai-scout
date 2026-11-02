@@ -52,7 +52,7 @@ def test_migrations_upgrade_old_database_idempotently(tmp_path: Path):
     versions = [
         row["version"] for row in store._conn.execute("SELECT version FROM schema_version")
     ]
-    assert versions == [1, 2, 3, 4, 5]
+    assert versions == [1, 2, 3, 4, 5, 6]
     old_task = store.get_task("t1")
     assert old_task is not None
     assert old_task.question == "old question"
@@ -64,7 +64,7 @@ def test_migrations_upgrade_old_database_idempotently(tmp_path: Path):
     versions = [
         row["version"] for row in store._conn.execute("SELECT version FROM schema_version")
     ]
-    assert versions == [1, 2, 3, 4, 5]
+    assert versions == [1, 2, 3, 4, 5, 6]
     assert store.get_task("t1") is not None
     store.close()
 
@@ -113,4 +113,5 @@ def test_migration_backfills_anchor_status_and_owner_columns(tmp_path: Path):
     anchor = store.get_anchor("a1")
     assert anchor is not None and anchor.status == "superseded"
     store.close()
+
 
