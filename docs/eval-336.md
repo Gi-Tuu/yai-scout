@@ -1,7 +1,7 @@
 # Evaluation Report — labeler 336
 
 > Date: 2026-11-02  
-> Label file: ccuracy_labels_336.json (confirmed public /label, BL-001..BL-060)  
+> Label file: `accuracy_labels_336.json` (confirmed public `/label`, `BL-001..BL-060`)  
 > Key: `benchmarks/accuracy_gate/holdout_key.json` (**public/compromised**)
 
 ## 1. Critical evaluator bug found and fixed
