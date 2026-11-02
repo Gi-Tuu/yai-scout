@@ -42,6 +42,14 @@ def parse_published(value: str | None) -> datetime | None:
     return None
 
 
+def evidence_published(item: EvidenceRef) -> datetime | None:
+    """Prefer updated_at, but fall back to published_at if it is malformed."""
+    updated = parse_published(item.updated_at)
+    if updated is not None:
+        return updated
+    return parse_published(item.published_at)
+
+
 def days_between(published: datetime | None, as_of: datetime) -> int | None:
     if published is None:
         return None
@@ -103,7 +111,7 @@ def score_claim(
     # 版本类 claim：只比较"最新一次发布"，旧版本不是矛盾证据。
     if claim.type is ClaimType.VERSION and eligible:
         dated = [
-            (parse_published(item.updated_at or item.published_at), item, state)
+            (evidence_published(item), item, state)
             for item, state in eligible
         ]
         known = [when for when, _, _ in dated if when is not None]
@@ -125,7 +133,7 @@ def score_claim(
     dated_count = sum(
         1
         for item in usable_items
-        if parse_published(item.updated_at or item.published_at) is not None
+        if evidence_published(item) is not None
     )
     date_coverage = round(dated_count / len(usable_items), 3) if usable_items else 0.0
     supports = [e for e in effective if e.relation == "supports"]
@@ -220,7 +228,7 @@ def score_claim(
 
 
 def _temporal_state(item: EvidenceRef, target: datetime, window: int) -> str:
-    published = parse_published(item.updated_at or item.published_at)
+    published = evidence_published(item)
     if published is None:
         return "unknown"
     age = (target - published).days
@@ -232,7 +240,7 @@ def _temporal_state(item: EvidenceRef, target: datetime, window: int) -> str:
 
 
 def _age_days(item: EvidenceRef, target: datetime) -> int | None:
-    published = parse_published(item.updated_at or item.published_at)
+    published = evidence_published(item)
     return None if published is None else (target - published).days
 
 
@@ -265,7 +273,7 @@ def date_coverage_stats(
     dated = sum(
         1
         for item in evidence
-        if parse_published(item.updated_at or item.published_at) is not None
+        if evidence_published(item) is not None
     )
     undated = len(evidence) - dated
     return {

@@ -74,9 +74,7 @@ async def replay_anchor_result(
     if target is None:
         return None
     candidates = []
-    for snapshot in store.list_snapshots(limit=1000):
-        if snapshot.url != anchor.url:
-            continue
+    for snapshot in store.list_snapshots_for_url(anchor.url):
         published = _parse(snapshot.published_at)
         if published is None or published > target:
             continue

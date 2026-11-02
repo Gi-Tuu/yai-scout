@@ -24,6 +24,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - P1-2: URL scheme sanitization + CSP/security headers.
 - P1-3: detector_report owner column/index and SQL owner filtering.
 - P1-4: unreachable anchors are not marked as freshly checked.
+- P2: invalid updated_at fallback; anchor status SQL filter/migration 4;
+  URL-scoped snapshot replay; restart reconciliation for running work.
 
 ### Fixed
 

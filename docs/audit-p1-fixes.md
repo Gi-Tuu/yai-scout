@@ -49,10 +49,20 @@ Tests:
 
 - `tests/test_revalidate.py::test_unreachable_anchor_is_not_marked_freshly_checked`
 
+## P2 follow-up fixes
+
+- Invalid `updated_at` now falls back to `published_at` (freshness.py).
+- `anchor.status` is a SQL column with a status/created index (migration 4);
+  active filtering happens before `LIMIT`.
+- Snapshots are queried by URL (`list_snapshots_for_url`) so replay does not
+  depend on the latest 1000 global rows.
+- Startup reconciles `pending`/`running` research tasks and `running`
+  benchmark sessions as failed after a process restart.
+
 ## Verification
 
 ```text
-pytest      : 208 passed
+pytest      : 213 passed
 ruff        : pass
 mypy        : pass (50 files)
 architecture: ok
@@ -61,12 +71,8 @@ Docker      : built
 
 ## Still open (P2)
 
-- status filters still happen after SQL `LIMIT` for anchors;
-- snapshot replay has 1000-row caps;
 - no FK constraints / duplicated JSON columns;
 - monolithic API and sync SQLite calls in async handlers;
-- `updated_at` invalid value does not fall back to `published_at`;
 - `claim_key` numeric normalization can merge distinct facts;
-- running tasks/benchmarks are not reconciled after restart;
 - no line-coverage tool installed;
 - benchmark endpoints have no owner/auth model (supporting only).

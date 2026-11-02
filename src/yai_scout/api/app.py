@@ -231,6 +231,7 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        store.mark_interrupted_work()
         yield
         await director.shutdown()
         await runner.shutdown()
@@ -552,7 +553,7 @@ def create_app(
         if allowed_hosts and parsed.hostname.lower() not in allowed_hosts:
             raise HTTPException(status_code=400, detail="anchor host not allowed")
         latest = next(
-            (snap for snap in store.list_snapshots(limit=1000) if snap.url == payload.url),
+            iter(store.list_snapshots_for_url(payload.url, limit=1)),
             None,
         )
         anchor = Anchor(

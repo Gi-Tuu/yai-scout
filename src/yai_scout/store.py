@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS anchor (
     id TEXT PRIMARY KEY,
     claim_key TEXT NOT NULL,
     url TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
     payload_json TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
@@ -166,6 +167,7 @@ CREATE TABLE IF NOT EXISTS snapshot (
     notes TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_bench_result_session ON bench_result(session_id);
+CREATE INDEX IF NOT EXISTS idx_snapshot_url ON snapshot(url, fetched_at);
 """
 
 
@@ -196,6 +198,7 @@ class Store:
             (1, self._ensure_bench_columns),
             (2, self._ensure_task_columns),
             (3, self._ensure_detector_columns),
+            (4, self._ensure_anchor_columns),
         )
         for version, migrate in migrations:
             if version in applied:
@@ -248,6 +251,27 @@ class Store:
             self._conn.execute(
                 "ALTER TABLE research_task ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''"
             )
+
+    def _ensure_anchor_columns(self) -> None:
+        columns = {
+            row["name"] for row in self._conn.execute("PRAGMA table_info(anchor)")
+        }
+        if "status" not in columns:
+            self._conn.execute(
+                "ALTER TABLE anchor ADD COLUMN status TEXT NOT NULL DEFAULT 'active'"
+            )
+        for row in self._conn.execute("SELECT id, payload_json FROM anchor"):
+            try:
+                status = str(json.loads(row["payload_json"]).get("status") or "active")
+            except (TypeError, ValueError):
+                status = "active"
+            self._conn.execute(
+                "UPDATE anchor SET status = ? WHERE id = ?", (status, row["id"])
+            )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_anchor_status "
+            "ON anchor(status, created_at)"
+        )
 
     # ------------------------------------------------------------------ lifecycle
     def close(self) -> None:
@@ -327,6 +351,24 @@ class Store:
         vals.append(task_id)
         with self._lock:
             self._conn.execute(f"UPDATE research_task SET {', '.join(sets)} WHERE id = ?", vals)
+            self._conn.commit()
+
+    def mark_interrupted_work(self) -> None:
+        """Mark tasks/sessions left running by a previous process as failed."""
+        now = utcnow_iso()
+        with self._lock:
+            self._conn.execute(
+                """UPDATE research_task
+                   SET status = 'failed', finished_at = ?, error = ?
+                   WHERE status IN ('pending', 'running')""",
+                (now, "interrupted by process restart"),
+            )
+            self._conn.execute(
+                """UPDATE bench_session
+                   SET status = 'failed', finished_at = ?, error = ?
+                   WHERE status = 'running'""",
+                (now, "interrupted by process restart"),
+            )
             self._conn.commit()
 
     # ------------------------------------------------------------------ plan
@@ -622,12 +664,14 @@ class Store:
     def save_anchor(self, anchor: Anchor) -> Anchor:
         with self._lock:
             self._conn.execute(
-                """INSERT INTO anchor (id, claim_key, url, payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?)""",
+                """INSERT INTO anchor
+                   (id, claim_key, url, status, payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
                 (
                     anchor.id,
                     anchor.claim_key,
                     anchor.url,
+                    anchor.status,
                     anchor.model_dump_json(),
                     anchor.last_verified_at,
                 ),
@@ -644,16 +688,15 @@ class Store:
         if claim_key is not None:
             clauses.append("claim_key = ?")
             vals.append(claim_key)
+        if active_only:
+            clauses.append("status = 'active'")
         if clauses:
             query += " WHERE " + " AND ".join(clauses)
         query += " ORDER BY created_at DESC LIMIT ?"
         vals.append(limit)
         with self._lock:
             rows = self._conn.execute(query, vals).fetchall()
-        anchors = [Anchor.model_validate_json(row["payload_json"]) for row in rows]
-        if active_only:
-            anchors = [anchor for anchor in anchors if anchor.status == "active"]
-        return anchors
+        return [Anchor.model_validate_json(row["payload_json"]) for row in rows]
 
     def get_anchor(self, anchor_id: str) -> Anchor | None:
         with self._lock:
@@ -766,19 +809,25 @@ class Store:
             )
             try:
                 self._conn.execute(
-                    """INSERT INTO anchor (id, claim_key, url, payload_json, created_at)
-                       VALUES (?, ?, ?, ?, ?)""",
+                    """INSERT INTO anchor
+                       (id, claim_key, url, status, payload_json, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
                     (
                         new_anchor.id,
                         new_anchor.claim_key,
                         new_anchor.url,
+                        new_anchor.status,
                         new_anchor.model_dump_json(),
                         new_anchor.last_verified_at,
                     ),
                 )
                 self._conn.execute(
-                    "UPDATE anchor SET payload_json = ? WHERE id = ?",
-                    (superseded.model_dump_json(), old_anchor.id),
+                    "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
+                    (
+                        superseded.model_dump_json(),
+                        superseded.status,
+                        old_anchor.id,
+                    ),
                 )
                 self._conn.execute(
                     "UPDATE anchor_candidate SET status = ?, payload_json = ? WHERE id = ?",
@@ -904,8 +953,8 @@ class Store:
     def update_anchor(self, anchor: Anchor) -> Anchor:
         with self._lock:
             self._conn.execute(
-                "UPDATE anchor SET payload_json = ? WHERE id = ?",
-                (anchor.model_dump_json(), anchor.id),
+                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
+                (anchor.model_dump_json(), anchor.status, anchor.id),
             )
             self._conn.commit()
         return anchor
@@ -923,12 +972,12 @@ class Store:
         )
         with self._lock:
             self._conn.execute(
-                "UPDATE anchor SET payload_json = ? WHERE id = ?",
-                (rolled_back.model_dump_json(), rolled_back.id),
+                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
+                (rolled_back.model_dump_json(), rolled_back.status, rolled_back.id),
             )
             self._conn.execute(
-                "UPDATE anchor SET payload_json = ? WHERE id = ?",
-                (restored.model_dump_json(), restored.id),
+                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
+                (restored.model_dump_json(), restored.status, restored.id),
             )
             self._conn.commit()
         return restored, rolled_back
@@ -946,8 +995,9 @@ class Store:
                 update={"status": "superseded", "superseded_by": new_anchor.id}
             )
             self._conn.execute(
-                """INSERT INTO anchor (id, claim_key, url, payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?)""",
+                """INSERT INTO anchor
+                   (id, claim_key, url, status, payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
                 (
                     new_anchor.id,
                     new_anchor.claim_key,
@@ -957,8 +1007,8 @@ class Store:
                 ),
             )
             self._conn.execute(
-                "UPDATE anchor SET payload_json = ? WHERE id = ?",
-                (superseded.model_dump_json(), old_id),
+                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
+                (superseded.model_dump_json(), superseded.status, old_id),
             )
             self._conn.commit()
         return True
@@ -970,8 +1020,8 @@ class Store:
         updated = anchor.model_copy(update={"status": "superseded", "superseded_by": new_id})
         with self._lock:
             self._conn.execute(
-                "UPDATE anchor SET payload_json = ? WHERE id = ?",
-                (updated.model_dump_json(), old_id),
+                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
+                (updated.model_dump_json(), updated.status, old_id),
             )
             self._conn.commit()
 
@@ -1004,6 +1054,17 @@ class Store:
             )
             self._conn.commit()
         return snapshot
+
+    def list_snapshots_for_url(
+        self, url: str, limit: int = 500
+    ) -> list[EvidenceSnapshot]:
+        with self._lock:
+            rows = self._conn.execute(
+                """SELECT * FROM snapshot WHERE url = ?
+                   ORDER BY fetched_at DESC LIMIT ?""",
+                (url, limit),
+            ).fetchall()
+        return [_row_to_snapshot(row) for row in rows]
 
     def get_snapshot(self, snapshot_id: str) -> EvidenceSnapshot | None:
         with self._lock:

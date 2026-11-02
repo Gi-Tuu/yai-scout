@@ -263,3 +263,15 @@ def test_stable_old_contradiction_is_insufficient():
     assert verdict.status is FreshnessStatus.INSUFFICIENT
 
 
+
+def test_invalid_updated_at_falls_back_to_published_at():
+    ev = EvidenceRef(
+        url="https://example.com/x",
+        published_at="2026-10-30T00:00:00Z",
+        updated_at="not-a-date",
+        tier=1,
+        relation="supports",
+    )
+    verdict = score([ev])
+    assert verdict.status is FreshnessStatus.FRESH
+    assert verdict.date_coverage == 1.0

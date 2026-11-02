@@ -1,5 +1,7 @@
 from yai_scout.domain.models import (
+    Anchor,
     CostEntry,
+    EvidenceSnapshot,
     Plan,
     ResearchTask,
     RunEvent,
@@ -80,3 +82,50 @@ def test_events_and_cost():
     assert credits == 3.0 and usd == 0.0
     store.close()
 
+
+def test_active_anchor_filter_happens_before_limit():
+    store = Store(":memory:")
+    store.save_anchor(
+        Anchor(
+            id="active_old",
+            claim_key="k",
+            url="https://example.com/a",
+            status="active",
+            last_verified_at="2025-01-01T00:00:00Z",
+        )
+    )
+    for index in range(5):
+        store.save_anchor(
+            Anchor(
+                id=f"superseded_{index}",
+                claim_key="k",
+                url="https://example.com/s",
+                status="superseded",
+                last_verified_at=f"2026-01-0{index + 1}T00:00:00Z",
+            )
+        )
+    anchors = store.list_anchors(active_only=True, limit=2)
+    assert [anchor.id for anchor in anchors] == ["active_old"]
+    store.close()
+
+def test_snapshot_url_query_does_not_use_global_limit():
+    store = Store(":memory:")
+    for index in range(1001):
+        store.save_snapshot(
+            EvidenceSnapshot(
+                id=f"snap_mass_{index}",
+                url=f"https://mass.example/{index}",
+                fetched_at="2026-10-01T00:00:00Z",
+            )
+        )
+    store.save_snapshot(
+        EvidenceSnapshot(
+            id="snap_target",
+            url="https://docs.example.com/target",
+            fetched_at="2025-01-01T00:00:00Z",
+            published_at="2025-01-01T00:00:00Z",
+        )
+    )
+    snapshots = store.list_snapshots_for_url("https://docs.example.com/target")
+    assert [snapshot.id for snapshot in snapshots] == ["snap_target"]
+    store.close()
