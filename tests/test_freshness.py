@@ -123,7 +123,13 @@ def test_slow_law_with_weak_support_is_insufficient():
 def test_t7_support_is_fresh_and_explainable():
     verdict = score([evidence("supports", 1, tier=1)])
     assert verdict.status is FreshnessStatus.FRESH
-    assert set(verdict.breakdown) == {"relation", "recency", "authority", "coverage"}
+    assert set(verdict.breakdown) == {
+        "relation",
+        "recency",
+        "authority",
+        "coverage",
+        "date_coverage",
+    }
     assert 0 <= verdict.confidence <= 1
 
 
@@ -255,4 +261,5 @@ def test_stable_old_contradiction_is_insufficient():
     )
     verdict = score([evidence("contradicts", 4000, tier=1)], c)
     assert verdict.status is FreshnessStatus.INSUFFICIENT
+
 

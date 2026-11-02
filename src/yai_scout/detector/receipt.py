@@ -32,6 +32,7 @@ class ReportReceipt(BaseModel):
     policy_version: str
     weights_version: str
     coverage: float = 0.0
+    publication_date_coverage: float = 0.0
     claims: list[ClaimReceipt] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
 
@@ -76,7 +77,9 @@ def build_report_receipt(report: DetectorReport) -> ReportReceipt:
         policy_version=report.policy_version or POLICY_VERSION,
         weights_version=report.weights_version or WEIGHTS_VERSION,
         coverage=report.coverage,
+        publication_date_coverage=report.publication_date_coverage,
         claims=claims,
         limitations=_limitations(report),
     )
+
 

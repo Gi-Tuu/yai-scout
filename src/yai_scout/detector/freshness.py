@@ -122,6 +122,12 @@ def score_claim(
         and not (state == "expired" and item.relation == "contradicts")
     ]
     usable_items = [item for item, _ in usable]
+    dated_count = sum(
+        1
+        for item in usable_items
+        if parse_published(item.updated_at or item.published_at) is not None
+    )
+    date_coverage = round(dated_count / len(usable_items), 3) if usable_items else 0.0
     supports = [e for e in effective if e.relation == "supports"]
     contradicts = [e for e in effective if e.relation == "contradicts"]
     auth_supports = [e for e in supports if e.tier <= 2]
@@ -191,6 +197,7 @@ def score_claim(
         0.4 * authority + 0.3 * min(1.0, n_eff / 2.0) + 0.3 * agreement,
         2,
     )
+    confidence = round(confidence * (0.7 + 0.3 * date_coverage), 2)
     if status in {FreshnessStatus.INSUFFICIENT, FreshnessStatus.UNKNOWN}:
         confidence = min(confidence, 0.3)
 
@@ -200,11 +207,13 @@ def score_claim(
         score=score,
         confidence=confidence,
         rationale=rationale,
+        date_coverage=date_coverage,
         breakdown={
             "relation": round(relation_norm, 3),
             "recency": round(recency, 3),
             "authority": round(authority, 3),
             "coverage": coverage,
+            "date_coverage": date_coverage,
         },
         evidence=usable_items[:5],
     )
@@ -249,6 +258,25 @@ def _recency(supports: list[EvidenceRef], target: datetime, window: int) -> floa
     return max(0.0, min(1.0, 1.0 - min(ages) / max(1, window)))
 
 
+def date_coverage_stats(
+    verdicts: list[FreshnessVerdict],
+) -> dict[str, float | int]:
+    evidence = [item for verdict in verdicts for item in verdict.evidence]
+    dated = sum(
+        1
+        for item in evidence
+        if parse_published(item.updated_at or item.published_at) is not None
+    )
+    undated = len(evidence) - dated
+    return {
+        "dated_evidence": dated,
+        "undated_evidence": undated,
+        "publication_date_coverage": round(dated / len(evidence), 3)
+        if evidence
+        else 0.0,
+    }
+
+
 def coverage_stats(
     verdicts: list[FreshnessVerdict], total_claims: int | None = None
 ) -> dict[str, float | int]:
@@ -286,6 +314,7 @@ __all__ = [
     "days_between",
     "overall_score",
     "coverage_stats",
+    "date_coverage_stats",
     "parse_published",
     "score_claim",
 ]

@@ -28,6 +28,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 ### Added
 
 - Coverage/abstention fields and versioned evidence receipt endpoint.
+- Publication-date coverage / missing-date confidence.
+- Drift diff: same-URL content hash, evidence kind and date changes.
 
 ### Added
 

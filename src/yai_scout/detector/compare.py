@@ -16,6 +16,17 @@ from ..domain.models import DetectorReport, FreshnessVerdict
 NUMBER_RE = re.compile(r"\d[\d,\.]*")
 
 
+class EvidenceChange(BaseModel):
+    url: str
+    change: Literal["content_changed", "kind_changed", "date_changed"]
+    old_hash: str = ""
+    new_hash: str = ""
+    old_kind: str = ""
+    new_kind: str = ""
+    old_published_at: str | None = None
+    new_published_at: str | None = None
+
+
 class ClaimDiff(BaseModel):
     claim_key: str
     text_left: str = ""
@@ -28,6 +39,8 @@ class ClaimDiff(BaseModel):
     freshness_delta: float | None = None
     evidence_added: list[str] = Field(default_factory=list)
     evidence_removed: list[str] = Field(default_factory=list)
+    evidence_changes: list[EvidenceChange] = Field(default_factory=list)
+    content_hash_changed: bool = False
 
 
 class DriftReport(BaseModel):
@@ -79,6 +92,39 @@ def compare_reports(left: DetectorReport, right: DetectorReport) -> DriftReport:
         rv = right_verdicts.get(rc.id) if rc else None
         left_urls = _evidence_urls(lv)
         right_urls = _evidence_urls(rv)
+        left_evidence = {item.url: item for item in (lv.evidence if lv else [])}
+        right_evidence = {item.url: item for item in (rv.evidence if rv else [])}
+        changes: list[EvidenceChange] = []
+        for url in sorted(left_urls & right_urls):
+            old = left_evidence[url]
+            new = right_evidence[url]
+            if (old.content_hash or new.content_hash) and old.content_hash != new.content_hash:
+                changes.append(
+                    EvidenceChange(
+                        url=url,
+                        change="content_changed",
+                        old_hash=old.content_hash,
+                        new_hash=new.content_hash,
+                    )
+                )
+            elif old.evidence_kind is not new.evidence_kind:
+                changes.append(
+                    EvidenceChange(
+                        url=url,
+                        change="kind_changed",
+                        old_kind=old.evidence_kind.value,
+                        new_kind=new.evidence_kind.value,
+                    )
+                )
+            elif old.published_at != new.published_at:
+                changes.append(
+                    EvidenceChange(
+                        url=url,
+                        change="date_changed",
+                        old_published_at=old.published_at,
+                        new_published_at=new.published_at,
+                    )
+                )
         left_score = lv.score if lv and lv.score is not None else None
         right_score = rv.score if rv and rv.score is not None else None
         delta = (
@@ -99,6 +145,10 @@ def compare_reports(left: DetectorReport, right: DetectorReport) -> DriftReport:
                 freshness_delta=delta,
                 evidence_added=sorted(right_urls - left_urls),
                 evidence_removed=sorted(left_urls - right_urls),
+                evidence_changes=changes,
+                content_hash_changed=any(
+                    item.change == "content_changed" for item in changes
+                ),
             )
         )
         summary[change] += 1

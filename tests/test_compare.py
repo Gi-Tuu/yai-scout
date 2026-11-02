@@ -3,6 +3,7 @@ from yai_scout.domain.models import (
     Claim,
     ClaimType,
     DetectorReport,
+    EvidenceKind,
     EvidenceRef,
     FreshnessStatus,
     FreshnessVerdict,
@@ -87,3 +88,35 @@ def test_compare_same_as_of_is_live_mode():
     assert drift.mode == "live"
     assert drift.summary["stable"] == 1
 
+
+def test_compare_detects_same_url_content_hash_change():
+    def report(report_id: str, content_hash: str) -> DetectorReport:
+        claim = Claim(id="c1", text="Tavily 免费 500 credits", numbers=["500"])
+        verdict = FreshnessVerdict(
+            claim_id="c1",
+            status=FreshnessStatus.FRESH,
+            score=80,
+            evidence=[
+                EvidenceRef(
+                    url="https://docs.tavily.com/x",
+                    relation="supports",
+                    tier=1,
+                    evidence_kind=EvidenceKind.FETCHED_PAGE,
+                    content_hash=content_hash,
+                )
+            ],
+        )
+        return DetectorReport(
+            id=report_id,
+            answer="a",
+            as_of="2026-11-01",
+            claims=[claim],
+            verdicts=[verdict],
+        )
+
+    drift = compare_reports(report("l", "hash-a"), report("r", "hash-b"))
+    diff = drift.diffs[0]
+    assert diff.content_hash_changed is True
+    assert diff.evidence_changes[0].change == "content_changed"
+    assert diff.evidence_changes[0].old_hash == "hash-a"
+    assert diff.evidence_changes[0].new_hash == "hash-b"

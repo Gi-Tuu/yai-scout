@@ -10,7 +10,7 @@ Each receipt is versioned (`yai_scout.receipt.v1`) and contains:
 
 - report id / as_of / mode;
 - policy and weights versions;
-- coverage;
+- coverage and publication-date coverage;
 - per-claim status, score, rationale, claim-level LLM assessment;
 - evidence URL, title, domain, tier, relation, kind, fetch status, content hash,
   published_at, retrieved_at;

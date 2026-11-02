@@ -260,6 +260,7 @@ class FreshnessVerdict(BaseModel):
     breakdown: dict[str, float] = Field(default_factory=dict)
     evidence: list[EvidenceRef] = Field(default_factory=list)
     claim_assessment: ClaimAssessment | None = None
+    date_coverage: float = Field(default=0.0, ge=0.0, le=1.0)
     anchor_id: str | None = None
     anchor_status: Literal[
         "used", "changed", "needs_revalidation", "unreachable", "not_found"
@@ -280,6 +281,9 @@ class DetectorReport(BaseModel):
     unknown_claims: int = 0
     coverage: float = 0.0
     abstention_rate: float = 0.0
+    dated_evidence: int = 0
+    undated_evidence: int = 0
+    publication_date_coverage: float = 0.0
     stale_claims: int = 0
     conflicted_claims: int = 0
     insufficient_claims: int = 0
