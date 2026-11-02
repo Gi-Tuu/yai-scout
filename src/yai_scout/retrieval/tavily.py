@@ -13,7 +13,7 @@ from typing import Any
 
 import httpx
 
-from ..domain.models import utcnow_iso
+from ..domain.models import EvidenceKind, utcnow_iso
 
 # 官方计价：basic=1、advanced=2（credit/次）；缺失 usage 时按此估算。
 DEPTH_CREDITS = {"basic": 1.0, "advanced": 2.0}
@@ -36,6 +36,8 @@ class SearchResult:
     published_date: str | None = None
     retrieved_at: str = ""
     content_hash: str = ""
+    evidence_kind: EvidenceKind = EvidenceKind.SEARCH_SNIPPET
+    fetch_status: str = "snippet"
 
 
 def estimate_credits(depth: str) -> float:

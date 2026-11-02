@@ -123,7 +123,7 @@ function render(report) {
     const v = byId[c.id] || { status: "unknown", score: null, rationale: "", evidence: [] };
     const ev = (v.evidence || []).map((e) =>
       `<div class="ev"><span class="rel">${e.relation}</span><a href="${e.url}" target="_blank" rel="noopener">${esc(e.title || e.url)}</a>
-       <span class="muted"> · ${e.domain} · ${e.published_at ? new Date(e.published_at).toLocaleDateString() : "时间未知"} · T${e.tier} · conf ${e.relation_confidence ?? "-"}</span><div class="muted">${esc(e.relation_reason || "")}</div>
+       <span class="muted"> · ${e.domain} · ${e.published_at ? new Date(e.published_at).toLocaleDateString() : "时间未知"} · ${esc(e.evidence_kind || "unknown")} · T${e.tier} · conf ${e.relation_confidence ?? "-"}</span><div class="muted">${esc(e.relation_reason || "")}</div>
        <div class="muted">${esc((e.snippet || "").slice(0, 160))}</div></div>`).join("");
     return `<div class="claim">
       <div><span class="badge ${STATUS_CLASS[v.status]}">${STATUS_LABEL[v.status]}</span>

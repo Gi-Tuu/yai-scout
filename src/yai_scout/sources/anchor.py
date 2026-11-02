@@ -18,7 +18,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from ..domain.models import Anchor
+from ..domain.models import Anchor, EvidenceKind
 from ..retrieval.tavily import SearchResult
 from ..store import Store
 from .snapshot import html_to_text
@@ -96,6 +96,8 @@ async def replay_anchor_result(
         published_date=snapshot.published_at,
         retrieved_at=snapshot.fetched_at,
         content_hash=snapshot.content_hash,
+        evidence_kind=EvidenceKind.ARCHIVED_SOURCE,
+        fetch_status="snapshot",
     )
 
 
@@ -171,6 +173,8 @@ async def live_anchor_result(
             published_date=None,  # retrieval time is not publication time
             retrieved_at=datetime.now(UTC).isoformat(timespec="seconds"),
             content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            evidence_kind=EvidenceKind.FETCHED_PAGE,
+            fetch_status="ok",
         )
     except (httpx.HTTPError, TimeoutError):
         return None

@@ -115,6 +115,15 @@ class ClaimType(StrEnum):
     OTHER = "other"
 
 
+class EvidenceKind(StrEnum):
+    SEARCH_SNIPPET = "search_snippet"
+    FETCHED_PAGE = "fetched_page"
+    OFFICIAL_DOCUMENT = "official_document"
+    VERSION_HISTORY = "version_history"
+    ARCHIVED_SOURCE = "archived_source"
+    USER_PROVIDED_EVIDENCE = "user_provided_evidence"
+
+
 class TemporalSensitivity(StrEnum):
     STABLE = "stable"
     SLOW = "slow"
@@ -139,6 +148,9 @@ class EvidenceRef(BaseModel):
     retrieved_at: str | None = None
     tier: int = 3
     snippet: str = ""
+    evidence_kind: EvidenceKind = EvidenceKind.SEARCH_SNIPPET
+    fetch_status: str = ""
+    content_hash: str = ""
     relation: Literal["supports", "contradicts", "mentions", "insufficient"] = "mentions"
     relation_reason: str = ""
     relation_confidence: float = 0.5

@@ -17,6 +17,7 @@ def test_parse_search_payload_uses_usage_credits():
     assert len(results) == 1
     assert credits == 2.0
     assert results[0].title == "T"
+    assert results[0].evidence_kind.value == "search_snippet"
 
 
 def test_parse_search_payload_falls_back_to_depth_estimate():
@@ -69,3 +70,4 @@ async def test_http_error_becomes_tavily_error_without_key_leak():
     await client.aclose()
     assert exc.value.status_code == 429
     assert "tvly-secret-key" not in str(exc.value)
+

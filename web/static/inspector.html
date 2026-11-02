@@ -126,7 +126,7 @@ function render() {
     </div>` : "";
     const evidence = (v.evidence || []).map((e) => `<div class="ev">
       <div><span class="rel">${esc(e.relation)}</span><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title || e.url)}</a></div>
-      <div class="muted">${esc(e.domain)} · 发布 ${esc(e.published_at || "unknown")} · T${e.tier} · conf ${e.relation_confidence ?? "-"}</div>
+      <div class="muted">${esc(e.domain)} · 发布 ${esc(e.published_at || "unknown")} · ${esc(e.evidence_kind || "unknown")} · T${e.tier} · conf ${e.relation_confidence ?? "-"}</div>
       <div class="muted">${esc(e.relation_reason || "")}</div>
       <div>${esc((e.snippet || "").slice(0, 220))}</div>
     </div>`).join("");
