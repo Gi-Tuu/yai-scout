@@ -1,52 +1,65 @@
 # Open Tasks — YAI Scout
 
-> Snapshot: 2026-11-02 · release `v0.3.5` · 145 tests · live `0.3.5`  
-> Primary submission: **Tavily Track, Problem 05 (Stale-answer detector)**  
+> Snapshot: 2026-11-02 · release `v0.3.6` · 204 tests · live build `ef45a66dbcb4`
+> Primary submission: **Tavily Track, Problem 05 (Stale-answer detector)**
 > Deadline: **2026-11-15 23:59 IST** (Beijing 2026-11-16 02:29)
 
 ## P0 — submission blockers
 
-| # | Task | Owner | Due | Depends on | Done when |
-|---|---|---|---|---|---|
-| 1 | **Second independent labeler** labels 60 blind cases at `/label` | you + one person | 11/05 | human availability | exported JSON; run `eval_accuracy_gate.py --labels`; record agreement / false-update rate |
-| 2 | **3-minute demo video** | you (record), Lead (script) | 11/10 | local Bifrost + fixed cases | shows `gateway=bifrost`, Bifrost `POST /v1/chat/completions`, STALE correction, repo/architecture |
-| 3 | **Final PPT** (edit `deliverables/YAI_Scout_Submission.pptx`) | Lead/you | 11/11 | real Bifrost screenshot | deck matches shipped version; no overclaiming |
-| 4 | **Submission form** | you | 11/14 | official form fields | one primary challenge, repo URL, demo URL, video URL, both-tech explanation |
-| 5 | **Final submit** | you | **11/15 23:59 IST** | #1–#4 | confirmation captured |
-| 6 | Join official Discord / monitor updates | you | ongoing | — | announcements checked; form/credits updates captured |
-| 7 | Tavily credits status | you | ongoing | organizer | credits available or documented fallback |
+| # | Task | Owner | Due | Done when |
+|---|---|---|---|---|
+| 1 | **3-minute demo video** | you (record), Lead (script) | 11/10 | shows fixed-case FRESH→STALE, live Tavily, local `gateway=bifrost` + Bifrost `POST /v1/chat/completions`, repo/architecture |
+| 2 | **Final PPT** (`deliverables/YAI_Scout_Submission.pptx`) | you/Lead | 11/11 | matches shipped `0.3.6`; no overclaim |
+| 3 | **Submission copy / 200-word description** | Lead/you | 11/12 | maps official requirements to evidence (`docs/submission.md`) |
+| 4 | **Submission form** | you | 11/14 | one primary challenge, repo/demo/video URLs, both-tech explanation |
+| 5 | **Final submit** | you | **11/15 23:59 IST** | confirmation captured |
+| 6 | Final repo/page check | you | before submit | README, demo, `/label`, `/admin` 404 without token, healthz version |
 
 ## P1 — quality / evidence
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 8 | Independent-label metrics + adjudication | **tooling ready** (`private_worksheet.json`, `/label?worksheet=private`, `eval_accuracy_gate.py --worksheet`, `adjudicate_labels.py`); blocked on annotators | inter-annotator agreement; then recompute false-update rate |
-| 9 | B4 residual: async SQLite writes | **deferred** | reads use `asyncio.to_thread`; writes remain synchronous. Only revisit if write concurrency grows |
-| 10 | Public Bifrost deployment | optional | costs an extra service; local/video proof is enough for submission |
-| 11 | Refresh fixed demo cache | as needed | `benchmarks/demo/responses.json` recorded 2026-11-01; re-record if facts/API change |
-| 12 | Final repo/page check | pending | README links, release tag, `/label`, `/admin` 404 without token, healthz version |
-| 13 | Submission copy / 200-word description | pending | map each official requirement to evidence (`docs/submission.md`) |
+| 7 | Independent human metrics + adjudication | **blocked / on hold** | tooling exists; public key compromised; 336 public-set agreement 0.267; private `jin` failed quality (12 impossible `no_change`); other 1/30. Do not claim independent accuracy. |
+| 8 | Full-page fetch for authoritative snippets | **frozen** | needs SSRF-safe fetch, allowlist, budget, size/time limits; not worth before deadline. Current evidence honestly marked `search_snippet`. |
+| 9 | Public Bifrost deployment | optional | extra service; local/video proof is enough; public Render stays direct fallback. |
+| 10 | Refresh fixed demo cache | as needed | `benchmarks/demo/responses.json` recorded 2026-11-01; re-record only if demo facts change. |
+| 11 | B4 residual: async SQLite writes | deferred | reads use `asyncio.to_thread`; writes synchronous. |
+| 12 | Join Discord / monitor updates / Tavily credits | ongoing | announcements, form changes, credits status. |
 
-## P2 — optional, only if time remains
+## P2 — optional, only after P0
 
 | # | Task | Notes |
 |---|---|---|
-| 14 | B10: benchmark failure injection / repeated runs / step traces | only if the benchmark becomes primary; currently explicitly **not** Bifrost 02 |
-| 15 | Full async DB layer | large refactor; not worth before deadline |
-| 16 | More adversarial accuracy cases | helps B9 but needs independent labels to be meaningful |
-| 17 | Post-submission cleanup / blog | not required |
+| 13 | Benchmark failure injection / repeated runs / step traces | only if benchmark becomes primary; it is **not** Bifrost-02 |
+| 14 | Full async DB layer | large refactor; not before deadline |
+| 15 | More adversarial accuracy cases | only meaningful with independent labels |
+| 16 | Post-submission cleanup / blog | not required |
+
+## Recently completed (do not re-open)
+
+- P0-1 temporal eligibility: old/future/unknown contradictions fixed.
+- P0-2 LLM aggregate assessment separated from `evidence[0]`.
+- P0-3 latest vs historical version relation.
+- P0-4 gate time guard: missing/invalid/future time → REVIEW.
+- Coverage / abstention fields.
+- Publication-date coverage / missing-date confidence.
+- Versioned Evidence Receipt endpoint.
+- Drift diff: content hash / kind / date changes.
+- Evaluator bug fixed (Gate vs human label).
+- 204 tests; CI/CodeQL green; deployed `0.3.6` build `ef45a66dbcb4`.
 
 ## Explicitly out of scope
 
-- Re-submitting the benchmark as a second project: **one submission per team**.
-- Claiming the public Render demo is Bifrost-routed: it is **direct fallback** unless a public Bifrost is deployed.
-- Claiming independent human ground truth: labeler 001 matched the key 60/60 → rule-following only.
-- Enabling `AUTO_UPDATE`: stays **false**.
+- Re-submitting the benchmark as a second project.
+- Claiming public Render is Bifrost-routed.
+- Claiming independent human ground truth.
+- Enabling `AUTO_UPDATE`.
+- Recruiting more labelers before freeze; labels are not a submission blocker.
 
 ## Recommended order
 
-1. #1 second labeler (parallel, can start today)
-2. #2 video (needs local Bifrost; script exists)
-3. #3 PPT + #13 submission copy
-4. #4 form + #5 submit
-5. #8 metrics if labels arrive before freeze
+1. Video
+2. PPT + submission copy
+3. Repo/page check
+4. Form + submit
+5. Optional P2 only after confirmation
