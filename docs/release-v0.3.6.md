@@ -12,7 +12,7 @@ Fixes confirmed against the GPT audit, without adopting the stale parts of that 
 - **P1-2**: session-scoped ownership for research tasks and freshness reports; admin bypass; anchor writes admin-only by default. Legacy `owner_id=""` rows stay public demo data.
 - **P1-3**: live-fetch explicit timeout plus adversarial tests for private/mixed DNS, pinned Host/SNI, redirects, content-type, and response cap.
 - **P1-4 tooling**: private 30-case worksheet with no answers in repo, `/label?worksheet=private`, private worksheet evaluator, and adjudication script. Human labels still pending.
-- **P2 partial**: `schema_version` migration runner with old-DB upgrade test, architecture import-boundary CI, pinned action SHAs, Dependabot.
+- **P2 partial**: `schema_version` migration runner with old-DB upgrade test, architecture import-boundary CI, pinned action SHAs, Dependabot, CodeQL workflow, offline backup/restore/integrity scripts.
 
 ## Still open
 

@@ -28,7 +28,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - **P1-2**: session-scoped research/report ownership with admin bypass; public anchor writes require admin by default.
 - **P1-3**: explicit live-fetch timeout and adversarial SSRF/DNS/redirect/content-type/size tests.
 - **P1-4 tooling**: private 30-case worksheet (no answers in repo), `/label?worksheet=private`, worksheet evaluator, adjudication script; human labels pending.
-- **P2 partial**: schema_version migrations, architecture import CI, pinned actions, Dependabot.
+- **P2 partial**: schema_version migrations, architecture import CI, pinned actions, Dependabot, CodeQL, offline backup/restore/integrity scripts.
 
 ## [0.3.5] - 2026-11-02
 
