@@ -7,6 +7,7 @@ by default and must be enabled explicitly; this is not a general URL fetcher.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import ipaddress
 import socket
@@ -117,23 +118,24 @@ async def live_anchor_result(
     *,
     client: httpx.AsyncClient | None = None,
     resolver: Callable[[str], str | None] | None = None,
+    timeout_s: float = LIVE_TIMEOUT_S,
 ) -> SearchResult | None:
     if not host_allowed(anchor.url, allowlist):
         return None
     host = (urlsplit(anchor.url).hostname or "").lower()
     owns_client = client is None
     client = client or httpx.AsyncClient(
-        timeout=LIVE_TIMEOUT_S,
+        timeout=timeout_s,
         follow_redirects=False,
         trust_env=False,
         headers={"User-Agent": "yai-scout-anchor/1.0"},
     )
     response: httpx.Response | None = None
     try:
-        if client is not None and not owns_client:
-            # Injected client (tests): normal URL, no pinning.
-            response = await client.get(anchor.url)
-        else:
+        async def _get_response() -> httpx.Response | None:
+            if client is not None and not owns_client and resolver is None:
+                # Injected client without resolver (MockTransport tests).
+                return await client.get(anchor.url)
             ip = (resolver or _resolve_public_ip)(host)
             if not ip:
                 return None
@@ -148,13 +150,15 @@ async def live_anchor_result(
                 headers={"Host": host},
                 extensions={"sni_hostname": host},
             )
-            response = await client.send(request, stream=True)
-        if response.status_code != 200:
+            return await client.send(request, stream=True)
+
+        response = await asyncio.wait_for(_get_response(), timeout=timeout_s)
+        if response is None or response.status_code != 200:
             return None
         content_type = response.headers.get("content-type", "")
         if "text/html" not in content_type and "text/plain" not in content_type:
             return None
-        raw = await _read_capped(response)
+        raw = await asyncio.wait_for(_read_capped(response), timeout=timeout_s)
         text = html_to_text(raw.decode("utf-8", errors="replace"))
         if not text.strip():
             return None
@@ -166,13 +170,10 @@ async def live_anchor_result(
             published_date=datetime.now(UTC).isoformat(timespec="seconds"),
             content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
         )
-    except httpx.HTTPError:
+    except (httpx.HTTPError, TimeoutError):
         return None
     finally:
         if response is not None:
             await response.aclose()
         if owns_client:
             await client.aclose()
-
-
-

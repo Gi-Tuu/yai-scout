@@ -10,6 +10,7 @@ Fixes confirmed against the GPT audit, without adopting the stale parts of that 
 - **P0-3**: public-suffix grouping, known GitHub publisher aliases, active-anchor guard, and transactional single-winner candidate approval (CAS in SQLite).
 - **P1-1**: `/api/research` research bucket, daily limit, active-task cap, wall-clock timeout, and conservative per-query credit reservation; `RESEARCH_ENABLED=false` switch.
 - **P1-2**: session-scoped ownership for research tasks and freshness reports; admin bypass; anchor writes admin-only by default. Legacy `owner_id=""` rows stay public demo data.
+- **P1-3**: live-fetch explicit timeout plus adversarial tests for private/mixed DNS, pinned Host/SNI, redirects, content-type, and response cap.
 
 ## Still open
 
@@ -20,7 +21,7 @@ P0-3 residual unknown cross-domain publishers, P1 research budget/ownership, P1 
 ```text
 ruff  : pass
 mypy  : pass (49 files)
-pytest: 157 passed
+pytest: 162 passed
 gate  : 60/60
 Docker: built
 ```

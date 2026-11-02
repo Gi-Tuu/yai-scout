@@ -26,6 +26,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - **P0-3**: public-suffix grouping, known GitHub publisher aliases, active-anchor guard, and transactional single-winner candidate approval.
 - **P1-1**: research bucket/daily cap/active-task cap, wall-clock timeout, conservative credit reservation, `RESEARCH_ENABLED` switch.
 - **P1-2**: session-scoped research/report ownership with admin bypass; public anchor writes require admin by default.
+- **P1-3**: explicit live-fetch timeout and adversarial SSRF/DNS/redirect/content-type/size tests.
 
 ## [0.3.5] - 2026-11-02
 

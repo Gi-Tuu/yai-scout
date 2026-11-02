@@ -13,7 +13,7 @@
 | P0-4 revalidation wiring | **Confirmed broken**: admin API called `revalidate_due()` without `discovery`/`auto_update` | **Fixed** |
 | P1-1 research limits | Confirmed not fixed | **Fixed (rate/daily/active cap/budget reservation/timeout); XFF trust noted** |
 | P1-2 ownership isolation | Confirmed not fixed | **Fixed via session owner + admin bypass; anchor writes admin-only** |
-| P1-3 live fetch hardening | Mostly fixed in v0.3.5 (stream cap, `trust_env=False`) | Tests partial |
+| P1-3 live fetch hardening | Mostly fixed in v0.3.5 (stream cap, `trust_env=False`) | **Adversarial tests added; timeout enforced in code** |
 | P1-4 evaluation independence | Confirmed not fixed | Deferred (blocked on human) |
 | P2 architecture/DB/CI | Not done | Deferred |
 
@@ -86,7 +86,7 @@ Added API → replay observation → discovery → candidate integration test; d
 
 - **P1-1** `/api/research` now uses a dedicated `research` bucket (`DAILY_RESEARCH_LIMIT`), active-task cap (`MAX_ACTIVE_RESEARCH_TASKS`), wall-clock timeout, and conservative per-query credit reservation. `RESEARCH_ENABLED=false` disables it. X-Forwarded-For still trusted for per-IP limits; the global per-minute/daily caps cap spoofing damage.
 - **P1-2** session cookie (`scout_sid`) + `owner_id` now scopes research tasks and freshness reports: lists filter to the current session, detail/export/cancel/events return 404 for other sessions, and `ADMIN_TOKEN` bypasses. Legacy rows (`owner_id=""`) remain public demo data. Anchor creation is admin-only by default (`PUBLIC_ANCHOR_WRITES=false`) and still rate-limited. Residual: this is a browser-session capability, not full user authentication; clearing cookies loses access.
-- **P1-3** live fetch is HTTPS-only, allowlisted, pinned-IP, no redirects, stream-capped, no proxy env; adversarial DNS/redirect tests are still thin.
+- **P1-3** live fetch is HTTPS-only, exact-allowlisted, pinned-IP with Host/SNI, no redirects, stream-capped, no proxy env, and now has an explicit `asyncio.wait_for` timeout. Tests cover private/mixed DNS, single resolution, pinned Host/SNI, redirect refusal, non-text content-type, timeout, and 500KB cap.
 - **P1-4** holdout key is public; 60/60 is rule-following, not independent ground truth. Need a private set + second labeler.
 - **P2** schema version/migration runner, module-boundary CI, CodeQL/Gitleaks/Dependabot are not done.
 
@@ -95,7 +95,7 @@ Added API → replay observation → discovery → candidate integration test; d
 ```text
 ruff  : pass
 mypy  : pass (49 files)
-pytest: 157 passed
+pytest: 162 passed
 gate  : 60/60 rule-consistent labels, auto precision 1.000
 Bifrost app E2E: MockTransport + local real gateway
 Docker: pending CI
