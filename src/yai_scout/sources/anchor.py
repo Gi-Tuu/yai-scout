@@ -97,6 +97,20 @@ async def replay_anchor_result(
     )
 
 
+async def _read_capped(response: httpx.Response) -> bytes:
+    """Read at most LIVE_MAX_BYTES from a (possibly streaming) response."""
+    chunks: list[bytes] = []
+    total = 0
+    async for chunk in response.aiter_bytes():
+        take = chunk[: LIVE_MAX_BYTES - total]
+        if take:
+            chunks.append(take)
+            total += len(take)
+        if total >= LIVE_MAX_BYTES:
+            break
+    return b"".join(chunks)
+
+
 async def live_anchor_result(
     anchor: Anchor,
     allowlist: set[str],
@@ -114,6 +128,7 @@ async def live_anchor_result(
         trust_env=False,
         headers={"User-Agent": "yai-scout-anchor/1.0"},
     )
+    response: httpx.Response | None = None
     try:
         if client is not None and not owns_client:
             # Injected client (tests): normal URL, no pinning.
@@ -133,13 +148,13 @@ async def live_anchor_result(
                 headers={"Host": host},
                 extensions={"sni_hostname": host},
             )
-            response = await client.send(request)
+            response = await client.send(request, stream=True)
         if response.status_code != 200:
             return None
         content_type = response.headers.get("content-type", "")
         if "text/html" not in content_type and "text/plain" not in content_type:
             return None
-        raw = response.content[:LIVE_MAX_BYTES]
+        raw = await _read_capped(response)
         text = html_to_text(raw.decode("utf-8", errors="replace"))
         if not text.strip():
             return None
@@ -154,6 +169,8 @@ async def live_anchor_result(
     except httpx.HTTPError:
         return None
     finally:
+        if response is not None:
+            await response.aclose()
         if owns_client:
             await client.aclose()
 

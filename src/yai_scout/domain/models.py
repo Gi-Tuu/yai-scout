@@ -192,6 +192,15 @@ class AnchorObservation(BaseModel):
     note: str = ""
 
 
+class CandidateEvidence(BaseModel):
+    url: str
+    source_tier: int = Field(default=3, ge=1, le=4)
+    independent_group: str = ""
+    value: str = ""
+    published_at: str | None = None
+    content_hash: str = ""
+
+
 class AnchorCandidate(BaseModel):
     id: str
     anchor_id: str
@@ -200,8 +209,8 @@ class AnchorCandidate(BaseModel):
     new_value: str = ""
     normalized_old: str = ""
     normalized_new: str = ""
-    evidence: list[dict[str, Any]] = Field(default_factory=list)
-    gate_decision: str = ""
+    evidence: list[CandidateEvidence] = Field(default_factory=list)
+    gate_decision: Literal["auto_update", "review", "reject", "no_change"] = "review"
     gate_reason: str = ""
     gate_version: str = ""
     confidence: float = 0.0
@@ -383,6 +392,7 @@ class BenchSession(BaseModel):
     created_at: str = Field(default_factory=utcnow_iso)
     finished_at: str | None = None
     error: str | None = None
+
 
 
 

@@ -4,9 +4,16 @@ from __future__ import annotations
 
 import re
 import uuid
+from typing import Literal, cast
 from urllib.parse import urlsplit
 
-from ..domain.models import Anchor, AnchorCandidate, AnchorObservation, utcnow_iso
+from ..domain.models import (
+    Anchor,
+    AnchorCandidate,
+    AnchorObservation,
+    CandidateEvidence,
+    utcnow_iso,
+)
 from ..store import Store
 from .accuracy_gate import GateDecision, GateObservation, evaluate_gate
 
@@ -169,17 +176,20 @@ def create_candidate_from_observations(
         normalized_old=gate.normalized_old,
         normalized_new=gate.normalized_new,
         evidence=[
-            {
-                "url": item.url,
-                "source_tier": item.source_tier,
-                "independent_group": item.independent_group,
-                "value": item.value,
-                "published_at": item.published_at,
-                "content_hash": item.observed_hash,
-            }
+            CandidateEvidence(
+                url=item.url,
+                source_tier=item.source_tier,
+                independent_group=item.independent_group,
+                value=item.value,
+                published_at=item.published_at,
+                content_hash=item.observed_hash,
+            )
             for item in observations
         ],
-        gate_decision=gate.decision.value,
+        gate_decision=cast(
+            Literal["auto_update", "review", "reject", "no_change"],
+            gate.decision.value,
+        ),
         gate_reason=gate.reason,
         gate_version="accuracy-gate-v0",
         confidence=gate.confidence,
@@ -209,20 +219,17 @@ def apply_candidate(
         return candidate
     best = max(
         candidate.evidence,
-        key=lambda item: (
-            int(item.get("source_tier") or 4) * -1,
-            str(item.get("published_at") or ""),
-        ),
+        key=lambda item: (item.source_tier * -1, item.published_at or ""),
     )
     new_anchor = Anchor(
         id=f"anc_{uuid.uuid4().hex[:12]}",
         claim_key=anchor.claim_key,
         claim_text=anchor.claim_text,
-        url=str(best.get("url") or anchor.url),
-        source_tier=int(best.get("source_tier") or anchor.source_tier),
-        last_value=str(best.get("value") or candidate.new_value),
-        content_hash=str(best.get("content_hash") or ""),
-        published_at=str(best.get("published_at") or "") or None,
+        url=best.url or anchor.url,
+        source_tier=best.source_tier or anchor.source_tier,
+        last_value=best.value or candidate.new_value,
+        content_hash=best.content_hash,
+        published_at=best.published_at,
         last_verified_at=utcnow_iso(),
         supersedes=anchor.id,
         temporal_sensitivity=anchor.temporal_sensitivity,
@@ -239,6 +246,8 @@ def apply_candidate(
     )
     store.update_anchor_candidate(updated)
     return updated
+
+
 
 
 

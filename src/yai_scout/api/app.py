@@ -35,6 +35,7 @@ from ..domain.models import (
     AgentSpec,
     Anchor,
     AnchorCandidate,
+    CandidateEvidence,
     ResearchTask,
     RunEvent,
     TaskStatus,
@@ -526,14 +527,14 @@ def create_app(
             normalized_old=gate.normalized_old,
             normalized_new=gate.normalized_new,
             evidence=[
-                {
-                    "url": item.url,
-                    "source_tier": item.source_tier,
-                    "independent_group": item.independent_group,
-                    "value": item.value,
-                    "published_at": item.published_at,
-                    "content_hash": item.content_hash,
-                }
+                CandidateEvidence(
+                    url=item.url,
+                    source_tier=item.source_tier,
+                    independent_group=item.independent_group,
+                    value=item.value,
+                    published_at=item.published_at,
+                    content_hash=item.content_hash,
+                )
                 for item in observations
             ],
             gate_decision=gate.decision.value,
@@ -594,7 +595,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="anchor not found")
         best = max(
             candidate.evidence,
-            key=lambda item: str(item.get("published_at") or ""),
+            key=lambda item: item.published_at or "",
         )
         if not best:
             raise HTTPException(status_code=400, detail="candidate has no evidence")
@@ -828,6 +829,9 @@ def create_app(
 
 
 app = create_app()
+
+
+
 
 
 

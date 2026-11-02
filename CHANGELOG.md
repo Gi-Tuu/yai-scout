@@ -16,6 +16,14 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Final submission package: one primary README, slides, demo video; independent second labeler for accuracy.
 
+## [0.3.2] - 2026-11-02
+
+### Fixed
+
+- Typed `CandidateEvidence` model for `AnchorCandidate.evidence` (B1).
+- `AnchorCandidate.gate_decision` is now a Literal (B2).
+- Live anchor fetch streams through `aiter_bytes`, caps at `LIVE_MAX_BYTES`, and closes the response (B3).
+
 ## [0.3.1] - 2026-11-02
 
 ### Fixed

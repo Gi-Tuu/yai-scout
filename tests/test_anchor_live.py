@@ -4,6 +4,8 @@ import httpx
 
 from yai_scout.domain.models import Anchor
 from yai_scout.sources.anchor import (
+    LIVE_MAX_BYTES,
+    _read_capped,
     host_allowed,
     live_anchor_result,
 )
@@ -51,4 +53,12 @@ async def test_live_fetch_happy_path_with_mock_transport():
     assert result is not None
     assert "1,000 credits" in result.content
     assert result.content_hash
+
+
+
+
+async def test_read_capped_limits_body():
+    response = httpx.Response(200, content=b"x" * (LIVE_MAX_BYTES + 100))
+    data = await _read_capped(response)
+    assert len(data) == LIVE_MAX_BYTES
 
