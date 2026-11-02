@@ -102,7 +102,7 @@ function render() {
   const verdicts = Object.fromEntries((r.verdicts || []).map((v) => [v.claim_id, v]));
   const counts = STATUS.map((s) => `${s}: ${(r.verdicts || []).filter((v) => v.status === s).length}`).join(" · ");
   const head = `<div class="muted" style="font-size:12px">
-    report <span class="mono">${esc(r.id)}</span> · as_of ${esc(r.as_of)} · overall <b>${r.overall_score ?? "—"}</b>
+    report <span class="mono">${esc(r.id)}</span> · as_of ${esc(r.as_of)} · overall <b>${r.overall_score ?? "—"}</b> · coverage ${r.coverage == null ? "—" : Math.round(r.coverage * 100) + "%"}
     · policy ${esc(r.policy_version)} / weights ${esc(r.weights_version)} · ${counts}</div>
     <div class="toolbar" style="margin-top:10px">
       ${["all", ...STATUS].map((s) => `<button class="ghost" data-filter="${s}" ${filter === s ? 'style="border-color:#7a5314;color:var(--accent)"' : ""}>${s}</button>`).join("")}

@@ -18,6 +18,17 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ## [0.3.6] - 2026-11-02
 
+### Fixed
+
+- P0-1: temporal eligibility (future/expired/unknown contradictions no longer become current STALE).
+- P0-2: LLM aggregate assessment no longer overwrites evidence[0].
+- P0-3: historical versions no longer support current-version claims.
+- P0-4: gate requires known, non-future observation times; unknown time -> REVIEW.
+
+### Added
+
+- Coverage/abstention fields and versioned evidence receipt endpoint.
+
 ### Added
 
 - Private label quality checker (`scripts/check_label_quality.py`) and plain-language `/label` instructions; first private label batch reviewed and rejected as incomplete/inconsistent (`docs/eval-private-2026-11-02.md`).

@@ -241,6 +241,15 @@ class AnchorCandidate(BaseModel):
     applied_anchor_id: str | None = None
 
 
+class ClaimAssessment(BaseModel):
+    """Claim-level LLM assessment, separate from per-evidence relations."""
+
+    relation: Literal["supports", "contradicts", "mentions"]
+    reason: str = ""
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    source: Literal["llm"] = "llm"
+
+
 class FreshnessVerdict(BaseModel):
     claim_id: str
     status: FreshnessStatus
@@ -250,6 +259,7 @@ class FreshnessVerdict(BaseModel):
     suggestion: str = ""
     breakdown: dict[str, float] = Field(default_factory=dict)
     evidence: list[EvidenceRef] = Field(default_factory=list)
+    claim_assessment: ClaimAssessment | None = None
     anchor_id: str | None = None
     anchor_status: Literal[
         "used", "changed", "needs_revalidation", "unreachable", "not_found"
@@ -265,6 +275,11 @@ class DetectorReport(BaseModel):
     claims: list[Claim] = Field(default_factory=list)
     verdicts: list[FreshnessVerdict] = Field(default_factory=list)
     overall_score: float | None = None
+    total_claims: int = 0
+    scored_claims: int = 0
+    unknown_claims: int = 0
+    coverage: float = 0.0
+    abstention_rate: float = 0.0
     stale_claims: int = 0
     conflicted_claims: int = 0
     insufficient_claims: int = 0

@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from typing import Any
 
@@ -54,14 +55,16 @@ def parse_search_payload(
         url = str(item.get("url") or "").strip()
         if not url:
             continue
+        content = str(item.get("content") or "").strip()
         results.append(
             SearchResult(
                 title=str(item.get("title") or "").strip(),
                 url=url,
-                content=str(item.get("content") or "").strip(),
+                content=content,
                 score=float(item.get("score") or 0.0),
                 published_date=item.get("published_date"),
                 retrieved_at=utcnow_iso(),
+                content_hash=hashlib.sha256(content.encode("utf-8")).hexdigest(),
             )
         )
     usage = payload.get("usage") or {}

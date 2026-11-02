@@ -116,7 +116,7 @@ function render(report) {
   $("bar").style.width = report.overall_score + "%";
   $("summary").textContent =
     `${report.claims.length} 条 claim · ${report.stale_claims} 条可能过时 · ${report.credits} credits · 报告 ${report.id}`;
-  $("hint").textContent = "as_of " + report.as_of;
+  $("hint").textContent = "as_of " + report.as_of + " · coverage " + (report.coverage == null ? "—" : Math.round(report.coverage * 100) + "%");
   const byId = {};
   report.verdicts.forEach((v) => { byId[v.claim_id] = v; });
   $("claims").innerHTML = report.claims.map((c) => {

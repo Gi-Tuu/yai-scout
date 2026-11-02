@@ -11,7 +11,7 @@ from .anchor_policy import select_anchors
 from .claims import extract_claims
 from .compare import claim_key
 from .extract_llm import extract_claims_llm
-from .freshness import WEIGHTS_VERSION, overall_score
+from .freshness import WEIGHTS_VERSION, coverage_stats, overall_score
 from .suggest import generate_suggestions
 from .temporal import apply_temporal_classification
 from .verify import AnchorFetcher, ClaimVerifier, Searcher
@@ -99,6 +99,7 @@ class StaleAnswerDetector:
         def count(status: FreshnessStatus) -> int:
             return sum(1 for v in verdicts if v.status is status)
 
+        stats = coverage_stats(verdicts, len(claims))
         return DetectorReport(
             id=f"det_{uuid.uuid4().hex[:12]}",
             answer=answer,
@@ -106,6 +107,11 @@ class StaleAnswerDetector:
             claims=claims,
             verdicts=verdicts,
             overall_score=overall_score(verdicts),
+            total_claims=int(stats["total_claims"]),
+            scored_claims=int(stats["scored_claims"]),
+            unknown_claims=int(stats["unknown_claims"]),
+            coverage=float(stats["coverage"]),
+            abstention_rate=float(stats["abstention_rate"]),
             stale_claims=count(FreshnessStatus.STALE),
             conflicted_claims=count(FreshnessStatus.CONFLICTED),
             insufficient_claims=count(FreshnessStatus.INSUFFICIENT),

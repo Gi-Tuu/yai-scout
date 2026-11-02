@@ -80,3 +80,57 @@ def test_labeled_cases_match_gate_rules():
         result = evaluate_label_case(case)
         assert result.decision.value == case["expected"]["decision"], case["id"]
 
+
+def test_unknown_anchor_time_goes_to_review_not_auto():
+    result = evaluate_gate(
+        anchor_value="500",
+        anchor_published_at=None,
+        observations=[_obs("1000", group="docs"), _obs("1,000", tier=2, group="github")],
+    )
+    assert result.decision is GateDecision.REVIEW
+    assert "anchor publication time" in result.reason
+
+
+def test_invalid_anchor_time_goes_to_review():
+    result = evaluate_gate(
+        anchor_value="500",
+        anchor_published_at="not-a-date",
+        observations=[_obs("1000", group="docs"), _obs("1,000", tier=2, group="github")],
+    )
+    assert result.decision is GateDecision.REVIEW
+
+
+def test_unknown_observation_time_goes_to_review():
+    result = evaluate_gate(
+        anchor_value="500",
+        anchor_published_at="2025-01-01T00:00:00Z",
+        observations=[
+            _obs("1000", group="docs", published=None),
+            _obs("1,000", tier=2, group="github", published=None),
+        ],
+    )
+    assert result.decision is GateDecision.REVIEW
+
+
+def test_invalid_observation_time_goes_to_review():
+    result = evaluate_gate(
+        anchor_value="500",
+        anchor_published_at="2025-01-01T00:00:00Z",
+        observations=[
+            _obs("1000", group="docs", published="not-a-date"),
+            _obs("1,000", tier=2, group="github", published="not-a-date"),
+        ],
+    )
+    assert result.decision is GateDecision.REVIEW
+
+
+def test_future_observation_time_is_not_current_evidence():
+    result = evaluate_gate(
+        anchor_value="500",
+        anchor_published_at="2025-01-01T00:00:00Z",
+        observations=[
+            _obs("1000", group="docs", published="2099-01-01T00:00:00Z"),
+            _obs("1,000", tier=2, group="github", published="2099-01-01T00:00:00Z"),
+        ],
+    )
+    assert result.decision is GateDecision.REVIEW

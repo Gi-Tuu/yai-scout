@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Any
 
@@ -216,15 +216,39 @@ def evaluate_gate(
         )
 
     anchor_time = _parse_date(anchor_published_at)
-    newer = [
-        (observation, value)
-        for observation, value, _ in normalized
-        if anchor_time is None
-        or (
-            observation.published_at
-            and (_parse_date(observation.published_at) or anchor_time) >= anchor_time
+    if anchor_time is None:
+        reason = (
+            "anchor publication time invalid"
+            if anchor_published_at
+            else "anchor publication time missing"
         )
-    ]
+        return GateResult(
+            GateDecision.REVIEW,
+            reason,
+            0.4,
+            normalized_old=old_norm,
+            observations=usable,
+        )
+
+    now = datetime.now(UTC)
+    newer: list[tuple[GateObservation, str]] = []
+    unknown_different = False
+    for observation, value, _ in normalized:
+        parsed = _parse_date(observation.published_at)
+        if parsed is None or parsed > now + timedelta(days=1):
+            if value != old_norm:
+                unknown_different = True
+            continue
+        if parsed >= anchor_time:
+            newer.append((observation, value))
+    if unknown_different:
+        return GateResult(
+            GateDecision.REVIEW,
+            "observation publication time missing or invalid",
+            0.4,
+            normalized_old=old_norm,
+            observations=usable,
+        )
     if not newer:
         return GateResult(
             GateDecision.REJECT,

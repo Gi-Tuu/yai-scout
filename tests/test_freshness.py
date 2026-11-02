@@ -195,7 +195,7 @@ def test_version_claim_uses_only_newest_release_timestamp():
 def test_old_authoritative_support_is_not_fresh():
     verdict = score([evidence("supports", 1000, tier=1)])
     assert verdict.status is FreshnessStatus.INSUFFICIENT
-    assert "有效期" in verdict.rationale or "发布时间" in verdict.rationale
+    assert verdict.score is None
 
 
 def test_undated_authoritative_support_is_not_fresh():
@@ -208,3 +208,51 @@ def test_undated_authoritative_support_is_not_fresh():
     )
     verdict = score([ev])
     assert verdict.status is FreshnessStatus.INSUFFICIENT
+
+def test_old_contradiction_is_not_current_stale():
+    verdict = score([evidence("contradicts", 1000, tier=1)])
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
+
+
+def test_old_support_plus_new_contradiction_is_stale_not_conflicted():
+    verdict = score(
+        [evidence("supports", 1000, tier=1), evidence("contradicts", 2, tier=1)]
+    )
+    assert verdict.status is FreshnessStatus.STALE
+
+
+def test_old_contradiction_plus_new_support_is_fresh():
+    verdict = score(
+        [evidence("contradicts", 1000, tier=1), evidence("supports", 2, tier=1)]
+    )
+    assert verdict.status is FreshnessStatus.FRESH
+
+
+def test_future_support_never_proves_current():
+    verdict = score([evidence("supports", -10, tier=1)])
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
+
+
+def test_undated_contradiction_is_not_current_stale():
+    ev = EvidenceRef(
+        url="https://example.com/x",
+        title="official",
+        domain="example.com",
+        tier=1,
+        relation="contradicts",
+    )
+    verdict = score([ev])
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
+
+
+def test_stable_old_contradiction_is_insufficient():
+    c = claim(
+        "光速约为 299792 km/s。",
+        ClaimType.STATISTIC,
+        TemporalSensitivity.STABLE,
+        3650,
+        ["299792"],
+    )
+    verdict = score([evidence("contradicts", 4000, tier=1)], c)
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
+

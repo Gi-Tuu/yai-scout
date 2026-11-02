@@ -33,7 +33,8 @@
 - `target_time`：该 claim 需要被验证的时点（默认题目 as_of；历史回放时为历史时点）。
 - `effective_date(e) = updated_at or published_at`（来源声明的内容时间）。
 - `age(e) = target_time - effective_date(e)`（按天，负数表示来源晚于目标时间——当前核验允许，历史回放不允许）。
-- **历史回放约束**：`effective_date(e) > target_time` 的证据不可用（防未来信息泄漏）。
+- **未来证据**：`effective_date(e) > target_time` 的证据不可用于当前判定（live 与 replay 一致）。
+- **证据时间资格**：`current`（在窗口内）可参与判定；`expired` 只允许支持 STABLE 事实；`unknown` 不得证明当前事实；`future` 一律排除。
 
 ## 3. 证据关系（Relation）
 
@@ -54,12 +55,12 @@
 | # | 条件 | 状态 | 说明 |
 |---|---|---|---|
 | 1 | 无证据，或仅 MENTIONS | `INSUFFICIENT` | score=null |
-| 2 | 存在 auth CONTRADICTS 且 valid | `STALE` | 权威来源在有效期内给出不同值 |
+| 2 | 存在 auth CONTRADICTS 且 valid（current） | `STALE` | 权威来源在有效期内给出不同值；过期/未知矛盾不判 STALE |
 | 3 | 存在 auth SUPPORTS 且无 auth CONTRADICTS，且（STABLE/SLOW 或有 valid SUPPORTS） | `FRESH` | 权威支持 |
-| 4 | auth SUPPORTS 与 auth CONTRADICTS 并存（均 valid） | `CONFLICTED` | 并列展示，不给单一结论 |
+| 4 | auth SUPPORTS 与 auth CONTRADICTS 并存（均 current） | `CONFLICTED` | 并列展示，不给单一结论 |
 | 5 | 只有非权威 SUPPORTS（T3/T4） | `INSUFFICIENT` | 低权威不足以判 fresh |
-| 6 | 只有过期 SUPPORTS（超出 H），且类别为 SENSITIVE/VOLATILE | `STALE` | 证据早于有效期（outdated） |
-| 7 | 只有过期 SUPPORTS（STABLE/SLOW） | `FRESH` | 稳定事实不因来源旧扣分 |
+| 6 | 只有过期/未知 SUPPORTS（超出 H），且类别为 SENSITIVE/VOLATILE | `INSUFFICIENT` | 不能证明当前事实，不得用旧证据判 STALE |
+| 7 | 只有过期 SUPPORTS（STABLE） | `FRESH` | 稳定事实不因来源旧扣分；SLOW 过期支持仍为 INSUFFICIENT |
 | 8 | claim 不可验证/非事实 | `UNKNOWN` | 不做判断 |
 
 > 规则 4 与规则 2 的优先级：先检查"是否存在 auth contradict → STALE"；若同时有 auth support，升级为 CONFLICTED（更诚实）。

@@ -11,6 +11,7 @@ from typing import Literal, Protocol
 from ..domain.models import (
     Anchor,
     Claim,
+    ClaimAssessment,
     ClaimType,
     EvidenceRef,
     FreshnessStatus,
@@ -177,26 +178,33 @@ class ClaimVerifier:
                 )
             evidence.append(ev)
         llm_cost = 0.0
-        llm_reason = ""
+        claim_assessment: ClaimAssessment | None = None
         if self._should_use_llm(claim, evidence):
             relation, reason, llm_cost = await self._llm_relation(claim, evidence)
             if relation is not None:
-                evidence[0] = evidence[0].model_copy(
-                    update={
-                        "relation": relation,
-                        "relation_reason": reason,
-                        "relation_confidence": 0.8,
-                    }
+                # Aggregate LLM judgement is claim-level. It must not overwrite
+                # any individual evidence relation or source attribution.
+                claim_assessment = ClaimAssessment(
+                    relation=relation,
+                    reason=reason,
+                    confidence=0.8,
                 )
-                llm_reason = reason
         verdict = score_claim(
             claim,
             evidence,
             as_of=self.as_of,
-            allow_future=self.mode == "live",
+            allow_future=False,
         )
-        if llm_reason:
-            verdict.rationale = f"{verdict.rationale}（LLM 判定：{llm_reason}）"
+        if claim_assessment is not None:
+            verdict = verdict.model_copy(
+                update={
+                    "claim_assessment": claim_assessment,
+                    "rationale": (
+                        f"{verdict.rationale}"
+                        f"（LLM claim-level 判定：{claim_assessment.reason}）"
+                    ),
+                }
+            )
         if anchors:
             verdict.anchor_id = anchor_ids[0] if anchor_ids else anchors[0].id
             verdict.anchor_status = anchor_status
@@ -280,12 +288,26 @@ class ClaimVerifier:
         claim_versions = _versions(claim_text)
         result_versions = _versions(text)
         if claim.type is ClaimType.VERSION:
-            if claim_versions and result_versions:
-                if claim_versions & result_versions:
+            if not claim_versions or not result_versions:
+                return "mentions"
+            latest, historical, unmarked = _version_contexts(text)
+            if latest:
+                if claim_versions & latest:
+                    return "supports"
+                if _HISTORICAL_CLAIM_RE.search(claim_text) and (
+                    claim_versions & historical
+                ):
                     return "supports"
                 return "contradicts"
-            if claim_versions:
+            if historical and claim_versions & historical:
+                if _CURRENT_CLAIM_RE.search(claim_text):
+                    return "contradicts"
                 return "mentions"
+            if result_versions == claim_versions:
+                return "supports"
+            if len(result_versions) == 1 and claim_versions & result_versions:
+                return "supports"
+            return "mentions"
 
         if claim.type is ClaimType.DATE:
             # A year alone cannot establish support; require explicit relation.
@@ -320,6 +342,46 @@ class ClaimVerifier:
 
 
 VERSION_TOKEN_RE = re.compile(r"v?\d+\.\d+(?:\.\d+)?", re.I)
+LATEST_RE = re.compile(r"latest|current|newest|最新|当前|现在", re.I)
+HISTORICAL_RE = re.compile(
+    r"previous|prior|older|old|deprecated|历史|上一|旧版|旧版本", re.I
+)
+_CURRENT_CLAIM_RE = re.compile(r"current|latest|最新|当前|现在", re.I)
+_HISTORICAL_CLAIM_RE = re.compile(r"previous|prior|older|历史|上一|旧版", re.I)
+
+
+def _version_contexts(text: str) -> tuple[set[str], set[str], set[str]]:
+    """Classify versions by the nearest marker in their preceding segment."""
+    matches = list(VERSION_TOKEN_RE.finditer(text))
+    latest: set[str] = set()
+    historical: set[str] = set()
+    unmarked: set[str] = set()
+    cursor = 0
+    for index, match in enumerate(matches):
+        version = match.group(0).lstrip("vV").lower()
+        prefix = text[cursor : match.start()]
+        next_start = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        suffix = text[match.end() : next_start]
+        kind = _last_marker(prefix) or _last_marker(suffix)
+        if kind == "latest":
+            latest.add(version)
+        elif kind == "historical":
+            historical.add(version)
+        else:
+            unmarked.add(version)
+        cursor = match.end()
+    return latest, historical, unmarked
+
+
+def _last_marker(segment: str) -> str | None:
+    latest = list(LATEST_RE.finditer(segment))
+    historical = list(HISTORICAL_RE.finditer(segment))
+    if not latest and not historical:
+        return None
+    if latest and (not historical or latest[-1].start() > historical[-1].start()):
+        return "latest"
+    return "historical"
+
 
 
 def _versions(text: str) -> set[str]:

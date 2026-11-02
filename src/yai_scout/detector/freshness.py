@@ -73,7 +73,7 @@ def score_claim(
     evidence: list[EvidenceRef],
     *,
     as_of: datetime | None = None,
-    allow_future: bool = True,
+    allow_future: bool = False,
     weights: dict[str, float] | None = None,
 ) -> FreshnessVerdict:
     """按决策表给出状态 + 可空分数 + 拆解。"""
@@ -82,30 +82,46 @@ def score_claim(
     sensitivity = _sensitivity(claim)
     window = _window(claim, sensitivity)
 
-    usable: list[EvidenceRef] = []
+    usable: list[tuple[EvidenceRef, str]] = []
     for item in evidence:
-        published = parse_published(item.updated_at or item.published_at)
-        if published is None:
-            usable.append(item)  # 时间未知：仅当 mentions 使用，不参与时效判断
+        state = _temporal_state(item, target, window)
+        if state == "future":
+            # Future evidence can never prove the as_of fact. Keep it only for
+            # display when explicitly requested; never use it in the verdict.
+            if allow_future:
+                usable.append((item, state))
             continue
-        age = (target - published).days
-        if age < 0 and not allow_future:
-            continue  # 历史回放：未来证据不可用
-        usable.append(item)
+        usable.append((item, state))
+
+    # Expired support may establish a STABLE fact; expired contradictions never
+    # make a current STALE verdict. Unknown dates are display-only.
+    eligible: list[tuple[EvidenceRef, str]] = []
+    for item, state in usable:
+        if state == "current" or state == "expired" and sensitivity is TemporalSensitivity.STABLE:
+            eligible.append((item, state))
 
     # 版本类 claim：只比较"最新一次发布"，旧版本不是矛盾证据。
-    if claim.type is ClaimType.VERSION and usable:
+    if claim.type is ClaimType.VERSION and eligible:
         dated = [
-            (parse_published(item.updated_at or item.published_at), item) for item in usable
+            (parse_published(item.updated_at or item.published_at), item, state)
+            for item, state in eligible
         ]
-        known = [when for when, _ in dated if when is not None]
+        known = [when for when, _, _ in dated if when is not None]
         if known:
             newest = max(known)
-            usable = [
-                item for when, item in dated if when is not None and when == newest
+            eligible = [
+                (item, state)
+                for when, item, state in dated
+                if when is not None and when == newest
             ]
 
-    effective = [e for e in usable if e.relation in {"supports", "contradicts"}]
+    effective = [
+        item
+        for item, state in eligible
+        if item.relation in {"supports", "contradicts"}
+        and not (state == "expired" and item.relation == "contradicts")
+    ]
+    usable_items = [item for item, _ in usable]
     supports = [e for e in effective if e.relation == "supports"]
     contradicts = [e for e in effective if e.relation == "contradicts"]
     auth_supports = [e for e in supports if e.tier <= 2]
@@ -190,8 +206,20 @@ def score_claim(
             "authority": round(authority, 3),
             "coverage": coverage,
         },
-        evidence=usable[:5],
+        evidence=usable_items[:5],
     )
+
+
+def _temporal_state(item: EvidenceRef, target: datetime, window: int) -> str:
+    published = parse_published(item.updated_at or item.published_at)
+    if published is None:
+        return "unknown"
+    age = (target - published).days
+    if age < 0:
+        return "future"
+    if age > window:
+        return "expired"
+    return "current"
 
 
 def _age_days(item: EvidenceRef, target: datetime) -> int | None:
@@ -221,6 +249,29 @@ def _recency(supports: list[EvidenceRef], target: datetime, window: int) -> floa
     return max(0.0, min(1.0, 1.0 - min(ages) / max(1, window)))
 
 
+def coverage_stats(
+    verdicts: list[FreshnessVerdict], total_claims: int | None = None
+) -> dict[str, float | int]:
+    total = total_claims if total_claims is not None else len(verdicts)
+    scored = sum(1 for verdict in verdicts if verdict.score is not None)
+    insufficient = sum(
+        1 for verdict in verdicts if verdict.status is FreshnessStatus.INSUFFICIENT
+    )
+    unknown = sum(
+        1 for verdict in verdicts if verdict.status is FreshnessStatus.UNKNOWN
+    )
+    return {
+        "total_claims": total,
+        "scored_claims": scored,
+        "insufficient_claims": insufficient,
+        "unknown_claims": unknown,
+        "coverage": round(scored / total, 3) if total else 0.0,
+        "abstention_rate": round((insufficient + unknown) / total, 3)
+        if total
+        else 0.0,
+    }
+
+
 def overall_score(verdicts: list[FreshnessVerdict]) -> float | None:
     scored = [v.score for v in verdicts if v.score is not None]
     if not scored:
@@ -234,6 +285,7 @@ __all__ = [
     "as_of_datetime",
     "days_between",
     "overall_score",
+    "coverage_stats",
     "parse_published",
     "score_claim",
 ]

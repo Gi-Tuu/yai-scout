@@ -32,6 +32,7 @@ from ..detector.accuracy_gate import GateObservation, evaluate_gate
 from ..detector.candidates import apply_candidate, independent_group_from_url
 from ..detector.compare import claim_key, compare_reports
 from ..detector.discovery import CachedDiscovery
+from ..detector.receipt import build_report_receipt
 from ..detector.revalidate import revalidate_due
 from ..detector.service import StaleAnswerDetector
 from ..detector.snapshot_search import SnapshotSearcher
@@ -445,6 +446,13 @@ def create_app(
         if report is None or not can_access(report.owner_id, request):
             raise HTTPException(status_code=404, detail="report not found")
         return report.model_dump(mode="json")
+
+    @app.get("/freshness/reports/{report_id}/receipt")
+    async def get_receipt(report_id: str, request: Request) -> dict[str, Any]:
+        report = store.get_detector_report(report_id)
+        if report is None or not can_access(report.owner_id, request):
+            raise HTTPException(status_code=404, detail="report not found")
+        return build_report_receipt(report).model_dump(mode="json")
 
     @app.get("/freshness/reports")
     async def list_detector_reports(
