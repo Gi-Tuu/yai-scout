@@ -1,4 +1,4 @@
-# Submission Checklist — Tavily Track, Problem 05
+# Submission Checklist — Tavily Track, Problem 05 (Tavily-01)
 
 > Primary problem statement: **05 / Stale-answer detector [Proposed]**  
 > One team, one submission. Deadline: **15 Nov 2026, 23:59 IST**.
@@ -16,7 +16,7 @@
 | Working project/demo | Render link + `/label` + fixed demo script |
 | Repository, setup, architecture | `README.md`, `docs/`, Docker/uv setup |
 | Explanation of AI use | README “AI usage” + deterministic-code boundary |
-| Test/measurement evidence | 145 tests; fixed replay cases; 60 rule-labeled claims + Gate eval; benchmark appendix |
+| Test/measurement evidence | 149 tests; fixed replay cases; 60 rule-labeled claims + Gate eval; benchmark appendix |
 | Safety/authorization | read-only web research; no pentest/security claims |
 
 ## 2. Both technologies — proof to show

@@ -5,6 +5,8 @@ from fastapi.testclient import TestClient
 from yai_scout.api.app import create_app
 from yai_scout.config import Settings
 from yai_scout.domain.models import Anchor, TemporalSensitivity
+from yai_scout.retrieval.tavily import SearchResult
+from yai_scout.sources.snapshot import save_snapshot
 from yai_scout.store import Store
 
 AUTH = {"Authorization": "Bearer secret"}
@@ -225,4 +227,96 @@ def test_duplicate_candidate_api_is_deduped():
         ).json()
         assert first["id"] == second["id"]
         assert len(store.list_anchor_candidates()) == 1
+    store.close()
+
+def test_admin_revalidate_runs_discovery_and_creates_candidate(tmp_path):
+    store = Store(":memory:")
+    snapshot = save_snapshot(
+        store,
+        url="https://example.com/pricing",
+        text="current price 1000 credits",
+        origin="live",
+        snapshots_dir=tmp_path,
+        published_at="2026-01-01T00:00:00Z",
+    )
+    store.save_anchor(
+        Anchor(
+            id="anc_due",
+            claim_key="tavily 免费计划每月提供 # credits",
+            claim_text="Tavily 免费计划每月提供 500 credits",
+            url=snapshot.url,
+            source_tier=1,
+            last_value="500",
+            content_hash="old-hash",
+            published_at="2025-01-01T00:00:00Z",
+            last_verified_at="2025-01-01T00:00:00Z",
+            temporal_sensitivity=TemporalSensitivity.SENSITIVE,
+        )
+    )
+
+    class DiscoveryTavily(FakeTavily):
+        async def search(self, *args: object, **kwargs: object):
+            return [
+                SearchResult(
+                    title="docs",
+                    url="https://docs.example.org/pricing",
+                    content="current price 1000 credits",
+                    published_date="2026-10-01T00:00:00Z",
+                    content_hash="new-a",
+                ),
+                SearchResult(
+                    title="github",
+                    url="https://github.com/org/repo",
+                    content="current price 1000 credits",
+                    published_date="2026-10-02T00:00:00Z",
+                    content_hash="new-b",
+                ),
+            ], 0.0
+
+    settings = Settings(
+        _env_file=None,
+        db_path=":memory:",
+        openai_api_key="",
+        tavily_api_key="",
+        demo_limits_enabled=False,
+        admin_token="secret",
+    )
+    app = create_app(
+        settings=settings,
+        tavily=DiscoveryTavily(),  # type: ignore[arg-type]
+        store=store,
+    )
+    with TestClient(app) as client:
+        response = client.post(
+            "/admin/anchors/revalidate",
+            headers={"Authorization": "Bearer secret"},
+        )
+        assert response.status_code == 200
+        assert response.json()["checked"] == 1
+        candidates = client.get(
+            "/admin/anchors/candidates", headers={"Authorization": "Bearer secret"}
+        ).json()["candidates"]
+        assert candidates
+        assert candidates[0]["gate_decision"] == "auto_update"
+        assert candidates[0]["accuracy_status"] == "pending"
+        assert len(candidates[0]["evidence"]) >= 2
+    store.close()
+
+
+def test_approve_refuses_candidate_for_superseded_anchor():
+    store = Store(":memory:")
+    anchor = _anchor(store)
+    app = _app(store)
+    with TestClient(app) as client:
+        candidate = client.post(
+            f"/admin/anchors/{anchor.id}/candidates",
+            json={"observations": _observations()},
+            headers=AUTH,
+        ).json()
+        store.supersede_anchor(anchor.id, "anc_replaced")
+        response = client.post(
+            f"/admin/anchors/candidates/{candidate['id']}/approve",
+            headers=AUTH,
+        )
+        assert response.status_code == 409
     store.close()

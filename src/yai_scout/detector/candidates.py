@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import re
 import uuid
 from typing import Literal, cast
@@ -65,12 +66,30 @@ def _claim_kind(claim_text: str, old_value: str) -> str:
     return "numeric"
 
 
+PUBLIC_SUFFIXES = frozenset(
+    {
+        "co.uk", "org.uk", "ac.uk", "gov.uk",
+        "com.au", "net.au", "org.au",
+        "co.jp", "co.nz", "co.in", "co.za", "co.kr",
+        "com.cn", "com.br", "com.sg", "com.hk", "com.tw",
+        "com.mx", "com.tr", "com.ar",
+    }
+)
+
+
 def independent_group_from_url(url: str) -> str:
-    """Coarse publisher grouping: same registrable domain = one source group."""
-    host = (urlsplit(url).hostname or "").lower()
+    """Coarse publisher grouping: registrable domain (with common public suffixes)."""
+    host = (urlsplit(url).hostname or "").lower().rstrip(".")
     if host.startswith("www."):
         host = host[4:]
+    try:
+        ipaddress.ip_address(host)
+        return host
+    except ValueError:
+        pass
     parts = host.split(".")
+    if len(parts) >= 3 and ".".join(parts[-2:]) in PUBLIC_SUFFIXES:
+        return ".".join(parts[-3:])
     if len(parts) >= 2:
         return ".".join(parts[-2:])
     return host

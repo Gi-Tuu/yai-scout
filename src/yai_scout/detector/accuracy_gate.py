@@ -64,6 +64,72 @@ def _ambiguous_thousands(value: str) -> bool:
     return bool(re.fullmatch(r"\d{1,3}\.\d{3}", value.strip()))
 
 
+CURRENCY_SYMBOLS = {"$": "usd", "€": "eur", "£": "gbp", "¥": "cny"}
+CURRENCY_UNITS = {"usd", "eur", "gbp", "cny", "jpy"}
+AMOUNT_RE = re.compile(
+    r"^(?:(?P<symbol>[$€£¥])\s?(?P<symbol_number>\d[\d,]*(?:\.\d+)?)"
+    r"|(?P<number>\d[\d,]*(?:\.\d+)?)\s*"
+    r"(?P<unit>credits?|usd|eur|gbp|cny|jpy|%))"
+    r"(?:\s*(?:/|per)\s*(?P<period>month|year|day|week|hour|million|百万))?$",
+    re.I,
+)
+PLAIN_NUMBER_RE = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+
+def _claim_unit(claim_text: str) -> tuple[str | None, str | None]:
+    lower = claim_text.lower()
+    for symbol, currency in CURRENCY_SYMBOLS.items():
+        if symbol in claim_text:
+            return "currency", currency
+    if "credit" in lower:
+        return "credits", None
+    if "%" in claim_text:
+        return "pct", None
+    for unit in CURRENCY_UNITS:
+        if re.search(rf"\b{unit}\b", lower):
+            return "currency", unit
+    return None, None
+
+
+def _parse_amount(text: str, claim_text: str) -> tuple[str, bool] | None:
+    match = AMOUNT_RE.fullmatch(text)
+    claim_kind, claim_value = _claim_unit(claim_text)
+    if match:
+        number = (match.group("symbol_number") or match.group("number") or "").replace(
+            ",", ""
+        )
+        symbol = match.group("symbol")
+        unit = (match.group("unit") or "").lower()
+        period = match.group("period")
+        suffix = f"/{period.lower()}" if period else ""
+        if unit in {"%"}:
+            return f"pct:{number}{suffix}", False
+        if symbol:
+            currency = CURRENCY_SYMBOLS[symbol]
+            ambiguous = symbol == "¥" or (
+                claim_kind == "credits"
+            ) or (claim_kind == "currency" and claim_value != currency)
+            return f"{currency}:{number}{suffix}", ambiguous
+        if unit in {"credits", "credit"}:
+            ambiguous = claim_kind == "currency"
+            return f"credits:{number}{suffix}", ambiguous
+        if unit in CURRENCY_UNITS:
+            ambiguous = claim_kind == "currency" and claim_value != unit
+            return f"{unit}:{number}{suffix}", ambiguous
+        return f"num:{number}{suffix}", False
+
+    if PLAIN_NUMBER_RE.fullmatch(text):
+        number = text.replace(",", "")
+        if claim_kind == "currency" and claim_value:
+            return f"{claim_value}:{number}", False
+        if claim_kind == "credits":
+            return f"credits:{number}", False
+        if claim_kind == "pct":
+            return f"pct:{number}", False
+        return f"num:{number}", False
+    return None
+
+
 def normalize_value(raw: str, claim_text: str = "") -> tuple[str, bool]:
     """Return (normalized, ambiguous). Ambiguous must go to review."""
     text = " ".join(raw.strip().split())
@@ -103,27 +169,9 @@ def normalize_value(raw: str, claim_text: str = "") -> tuple[str, bool]:
     ):
         return f"ver:{version_match.group(1).lower()}", False
 
-    amount_match = re.fullmatch(
-        r"([$€£¥])?\s?(\d[\d,]*(?:\.\d+)?)\s*(credits?|usd|eur|cny|%)?",
-        lower,
-    )
-    if amount_match:
-        currency, number, unit = amount_match.groups()
-        normalized_number = number.replace(",", "")
-        if (
-            currency in {"$", "€", "£", "¥"}
-            or unit in {"usd", "eur", "cny"}
-            or any(symbol in claim_text for symbol in ("$", "€", "£", "¥"))
-        ):
-            if "credit" in claim_text.lower() and unit is None:
-                return f"amount:{normalized_number}", True
-            return f"amount:{normalized_number}", False
-        if unit == "credits" or unit == "%":
-            return f"num:{normalized_number}", False
-        return f"num:{normalized_number}", False
-
-    if re.fullmatch(r"\d{1,3}(?:,\d{3})+", text):
-        return f"num:{text.replace(',', '')}", False
+    amount = _parse_amount(lower, claim_text)
+    if amount is not None:
+        return amount
 
     return text.lower(), False
 

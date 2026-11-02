@@ -1,6 +1,6 @@
 # YAI Scout Freshness — Primary Submission
 
-> **Tavily Track, Problem 05（Proposed）· Stale-answer detector**  
+> **Tavily Track, Problem 05 (track-local Tavily-01) · Stale-answer detector**  
 > 不是再生成一个答案，而是审计“你已有的答案”是否仍然成立。  
 > **Bifrost 角色**：所有 claim 抽取 / 关系判断 / 修正建议的模型请求走 Bifrost gateway；见 [bifrost-integration](bifrost-integration.md)。
 

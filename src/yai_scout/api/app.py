@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -108,6 +109,7 @@ def create_app(
     settings: Settings | None = None,
     tavily: TavilyClient | None = None,
     store: Store | None = None,
+    llm_transport: httpx.AsyncBaseTransport | None = None,
 ) -> FastAPI:
     cfg = settings or get_settings()
     static_dir = cfg.web_dir / "static"
@@ -126,10 +128,14 @@ def create_app(
         max_results=cfg.max_results_per_query,
     )
     director = ResearchDirector(store, tavily, cfg)
+    llm_cfg = cfg.llm_connection()
     llm = LLMClient(
-        cfg.openai_api_key,
-        base_url=cfg.openai_base_url,
-        model=cfg.llm_model,
+        str(llm_cfg["api_key"]),
+        base_url=str(llm_cfg["base_url"]),
+        model=str(llm_cfg["model"]),
+        require_key=bool(llm_cfg["require_key"]),
+        gateway=str(llm_cfg["gateway"]),
+        transport=llm_transport,
     )
     detector = StaleAnswerDetector(
         tavily,
@@ -222,8 +228,8 @@ def create_app(
             "tavily": {"mode": tavily.mode, "authenticated": tavily.authenticated},
             "llm": {
                 "available": llm.available,
-                "gateway": "bifrost" if cfg.bifrost_base_url else "direct",
-                "model": cfg.bifrost_model or cfg.llm_model,
+                "gateway": llm.gateway,
+                "model": llm.model,
             },
         }
 
@@ -486,7 +492,11 @@ def create_app(
 
             fetcher = _live
         observations = await revalidate_due(
-            store, fetcher=fetcher, limit=payload.limit if payload else 50
+            store,
+            fetcher=fetcher,
+            discovery=discovery,
+            limit=payload.limit if payload else 50,
+            auto_update=cfg.accuracy_auto_update,
         )
         return {
             "checked": len(observations),
@@ -614,11 +624,9 @@ def create_app(
         anchor = store.get_anchor(candidate.anchor_id)
         if anchor is None:
             raise HTTPException(status_code=404, detail="anchor not found")
-        best = max(
-            candidate.evidence,
-            key=lambda item: item.published_at or "",
-        )
-        if not best:
+        if anchor.status != "active":
+            raise HTTPException(status_code=409, detail="anchor is no longer active")
+        if not candidate.evidence:
             raise HTTPException(status_code=400, detail="candidate has no evidence")
         updated = apply_candidate(
             store, candidate, status="approved", decided_by="admin"

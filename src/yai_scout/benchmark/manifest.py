@@ -138,10 +138,13 @@ def build_manifest(
     max_claims: int,
     detect_freshness: bool,
 ) -> ExperimentManifest:
-    provider = cfg.openai_base_url.rstrip("/")
+    llm_cfg = cfg.llm_connection()
+    provider = str(llm_cfg["base_url"] or "").rstrip("/")
     if "://" in provider:
         provider = provider.split("://", 1)[1]
     provider = provider.split("/", 1)[0]
+    model_name = str(llm_cfg["model"] or "")
+    model_api_key = str(llm_cfg["api_key"] or "")
     agent_payload = [
         redact(
             {
@@ -161,15 +164,17 @@ def build_manifest(
         task_ids=[task.id for task in tasks],
         agent_manifest=agent_payload,
         model_provider=provider,
-        model_name=cfg.llm_model,
-        model_version=cfg.llm_model,
+        model_name=model_name,
+        model_version=model_name,
         adapter_protocol_version=PROTOCOL_VERSION,
         tool_configuration={
             "search_depth": cfg.search_depth,
             "max_results_per_query": cfg.max_results_per_query,
+            "model_gateway": llm_cfg["gateway"],
+            "model_base_url": llm_cfg["base_url"],
             "model_credential_fingerprint": (
-                f"sha256:{stable_hash(cfg.openai_api_key, length=16)}"
-                if cfg.openai_api_key
+                f"sha256:{stable_hash(model_api_key, length=16)}"
+                if model_api_key
                 else "none"
             ),
         },

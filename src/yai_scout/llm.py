@@ -42,6 +42,7 @@ class LLMClient:
         output_price: float = DEFAULT_OUTPUT_PRICE,
         transport: httpx.AsyncBaseTransport | None = None,
         require_key: bool = True,
+        gateway: str = "direct",
     ) -> None:
         self.api_key = api_key.strip()
         self.base_url = base_url.rstrip("/")
@@ -51,6 +52,7 @@ class LLMClient:
         self.output_price = output_price
         self._transport = transport
         self._require_key = require_key
+        self.gateway = gateway
         self._client: httpx.AsyncClient | None = None
 
     @property
@@ -172,5 +174,6 @@ class LLMClient:
         if not isinstance(payload, dict):
             return None
         return payload, result
+
 
 

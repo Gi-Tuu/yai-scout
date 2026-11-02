@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "YAI Scout"
-    app_version: str = "0.3.5"
+    app_version: str = "0.3.6"
     # all | benchmark | freshness —— 用于独立部署/独立入口
     scout_mode: str = "all"
     snapshots_seed: str = "benchmarks/snapshots.json"
@@ -74,10 +74,29 @@ class Settings(BaseSettings):
     bifrost_api_key: str = ""
     bifrost_model: str = ""
 
+    def llm_connection(self) -> dict[str, str | bool]:
+        """Single source of truth for the effective LLM endpoint."""
+        if self.bifrost_base_url:
+            return {
+                "base_url": self.bifrost_base_url.rstrip("/"),
+                "api_key": self.bifrost_api_key,
+                "model": self.bifrost_model or self.llm_model,
+                "gateway": "bifrost",
+                "require_key": False,
+            }
+        return {
+            "base_url": self.openai_base_url.rstrip("/"),
+            "api_key": self.openai_api_key,
+            "model": self.llm_model,
+            "gateway": "direct",
+            "require_key": True,
+        }
+
 
 def get_settings() -> Settings:
     """返回配置（测试可替换）。"""
     return Settings()
+
 
 
 

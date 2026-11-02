@@ -38,6 +38,10 @@ def test_normalization_variants():
     assert normalize_value("v0.25.0")[0] == normalize_value("0.25.0")[0]
     assert normalize_value("Apache 2.0")[0] == normalize_value("Apache-2.0")[0]
     assert normalize_value("0.30", "$0.30 per M")[0] == normalize_value("$0.30", "$0.30 per M")[0]
+    assert normalize_value("$1000")[0] != normalize_value("€1000")[0]
+    assert normalize_value("1000 USD")[0] == normalize_value("$1,000")[0]
+    assert normalize_value("1000 credits")[0] != normalize_value("$1000")[0]
+    assert normalize_value("1000 credits/month")[0] != normalize_value("1000 credits/year")[0]
 
 
 def test_single_authoritative_source_goes_to_review():
@@ -75,3 +79,4 @@ def test_labeled_cases_match_gate_rules():
     for case in payload["cases"]:
         result = evaluate_label_case(case)
         assert result.decision.value == case["expected"]["decision"], case["id"]
+

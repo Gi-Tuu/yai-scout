@@ -2,7 +2,7 @@
 
 **Evidence-first stale-answer detector.** Audit any LLM answer claim by claim, verify it against live sources, and show what is still true, what changed, and what cannot be verified.
 
-**Primary submission: Tavily Track — Problem 05, Stale-answer detector (proposed).**  
+**Primary submission: Tavily Track — Problem 05, Stale-answer detector (track-local Tavily-01).**  
 **Both required technologies are used:** Tavily for live web research; **Bifrost by Maxim AI as the model gateway** for claim extraction, assessment and rewrite. The 24-task benchmark is evaluation evidence for the freshness work, not a second submission.
 
 [![CI](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml)
@@ -114,7 +114,7 @@ flowchart LR
 | Temporal replay | real GitHub release snapshots: 2026-10-28 FRESH vs 2026-11-01 STALE |
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
 | Benchmark (supporting) | 24 tasks, HTTP/Python/CLI adapters, Pareto, manifest + `result_hash` |
-| Quality gates | 145 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Quality gates | 149 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
