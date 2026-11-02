@@ -65,6 +65,15 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const safeUrl = (value) => {
+  try {
+    const parsed = new URL(String(value || ""), window.location.origin);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "#";
+  } catch {
+    return "#";
+  }
+};
+
 const STATUS = ["fresh", "stale", "conflicted", "insufficient", "unknown"];
 let current = null;
 let filter = "all";
@@ -117,7 +126,7 @@ function render() {
     const anchorBlock = anchorEvidence.length ? `<div class="anchor-box">
       <div class="k">ANCHOR EVIDENCE · 并列展示，不自动裁决</div>
       ${anchorEvidence.map((e) => `<div class="ev">
-        <div><span class="rel">${esc(e.relation)}</span><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title || e.url)}</a>
+        <div><span class="rel">${esc(e.relation)}</span><a href="${esc(safeUrl(e.url))}" target="_blank" rel="noopener noreferrer">${esc(e.title || e.url)}</a>
           <span class="badge">${esc(e.anchor_id)}</span>
           ${e.content_changed ? `<span class="badge stale">content changed</span>` : ""}</div>
         <div class="muted">T${e.tier} · 发布 ${esc(e.published_at || "unknown")} · anchor hash ${e.content_changed ? "changed" : "matched"}</div>
@@ -125,7 +134,7 @@ function render() {
       </div>`).join("")}
     </div>` : "";
     const evidence = (v.evidence || []).map((e) => `<div class="ev">
-      <div><span class="rel">${esc(e.relation)}</span><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title || e.url)}</a></div>
+      <div><span class="rel">${esc(e.relation)}</span><a href="${esc(safeUrl(e.url))}" target="_blank" rel="noopener noreferrer">${esc(e.title || e.url)}</a></div>
       <div class="muted">${esc(e.domain)} · 发布 ${esc(e.published_at || "unknown")} · ${esc(e.evidence_kind || "unknown")} · T${e.tier} · conf ${e.relation_confidence ?? "-"}</div>
       <div class="muted">${esc(e.relation_reason || "")}</div>
       <div>${esc((e.snippet || "").slice(0, 220))}</div>

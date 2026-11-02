@@ -145,6 +145,15 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
+const safeUrl = (value) => {
+  try {
+    const parsed = new URL(String(value || ""), window.location.origin);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "#";
+  } catch {
+    return "#";
+  }
+};
+
 const state = { taskId: null, es: null, sources: new Map(), domains: new Set(), credits: 0, t0: 0, timer: null };
 const EXAMPLES = [
   "2026 年全球 AI 芯片市场规模与主要厂商份额是多少？",
@@ -239,8 +248,8 @@ function handle(type, ev) {
       const [label, cls] = TIER[p.tier] || ["T?", ""];
       const card = document.createElement("div");
       card.className = "source";
-      card.innerHTML = `<a href="${p.url}" target="_blank" rel="noopener">${p.title || p.url}</a>
-        <div class="meta"><span class="tier ${cls}">${label}</span><span>${p.domain || ""}</span>
+      card.innerHTML = `<a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener noreferrer">${esc(p.title || p.url)}</a>
+        <div class="meta"><span class="tier ${cls}">${label}</span><span>${esc(p.domain || "")}</span>
         <span>${p.published_at ? new Date(p.published_at).toLocaleDateString() : "时间未知"}</span></div>`;
       $("sources").appendChild(card);
       $("c-sources").textContent = state.sources.size;

@@ -18,6 +18,13 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ## [0.3.6] - 2026-11-02
 
+### Fixed (deep audit)
+
+- P1-1: malformed upstream payload -> INSUFFICIENT, not 500; per-claim isolation.
+- P1-2: URL scheme sanitization + CSP/security headers.
+- P1-3: detector_report owner column/index and SQL owner filtering.
+- P1-4: unreachable anchors are not marked as freshly checked.
+
 ### Fixed
 
 - P0-1: temporal eligibility (future/expired/unknown contradictions no longer become current STALE).

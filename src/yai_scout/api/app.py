@@ -241,6 +241,22 @@ def create_app(
     app = FastAPI(title=cfg.app_name, version=cfg.app_version, lifespan=lifespan)
 
     @app.middleware("http")
+    async def security_headers(request: Request, call_next: Any) -> Any:
+        response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            "default-src 'self'; img-src 'self' data:; "
+            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "connect-src 'self'; object-src 'none'; base-uri 'self'; "
+            "frame-ancestors 'none'",
+        )
+        return response
+
+    @app.middleware("http")
     async def mode_guard(request: Request, call_next: Any) -> Any:
         path = request.url.path
         if not benchmark_enabled and path.startswith(("/benchmark", "/api/benchmark")):
@@ -300,11 +316,11 @@ def create_app(
 
     @app.get("/api/research")
     async def list_research(request: Request, limit: int = 20) -> dict[str, Any]:
-        tasks = [
-            task
-            for task in store.list_tasks(limit=200)
-            if can_access(task.owner_id, request)
-        ][:limit]
+        limit = max(1, min(limit, 100))
+        if is_admin(request):
+            tasks = store.list_tasks(limit=limit)
+        else:
+            tasks = store.list_tasks(limit=limit, owner_id=session_id(request))
         return {"tasks": [task.model_dump(mode="json") for task in tasks]}
 
     @app.get("/api/research/{task_id}")
@@ -458,11 +474,13 @@ def create_app(
     async def list_detector_reports(
         request: Request, limit: int = 20
     ) -> dict[str, Any]:
-        reports = [
-            report
-            for report in store.list_detector_reports(limit=200)
-            if can_access(report.owner_id, request)
-        ][:limit]
+        limit = max(1, min(limit, 100))
+        if is_admin(request):
+            reports = store.list_detector_reports(limit=limit)
+        else:
+            reports = store.list_detector_reports(
+                limit=limit, owner_id=session_id(request)
+            )
         return {
             "reports": [
                 {

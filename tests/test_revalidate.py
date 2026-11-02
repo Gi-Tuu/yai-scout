@@ -175,3 +175,21 @@ def test_independent_group_uses_registrable_domain():
 
 
 
+
+
+async def test_unreachable_anchor_is_not_marked_freshly_checked(tmp_path: Path):
+    store = _store_with_anchor(tmp_path)
+
+    async def fetcher(_anchor: Anchor, _target: str):
+        return None
+
+    observations = await revalidate_due(
+        store,
+        fetcher=fetcher,
+        now=datetime(2026, 11, 1, tzinfo=UTC),
+    )
+    assert observations[0].status == "unreachable"
+    anchor = store.list_anchors()[0]
+    assert anchor.last_checked_at is None
+    assert due_anchors(store, now=datetime(2026, 11, 2, tzinfo=UTC))
+    store.close()

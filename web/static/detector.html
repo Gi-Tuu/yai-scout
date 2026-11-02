@@ -91,6 +91,15 @@ const STATUS_LABEL = { fresh: "fresh", stale: "stale", conflicted: "conflicted",
 const STATUS_CLASS = { fresh: "fresh", stale: "stale", conflicted: "conflicted", insufficient: "insufficient", unknown: "unknown" };
 
 function esc(s) { return (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c])); }
+const safeUrl = (value) => {
+  try {
+    const parsed = new URL(String(value || ""), window.location.origin);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "#";
+  } catch {
+    return "#";
+  }
+};
+
 
 $("run").onclick = async () => {
   const answer = $("answer").value.trim();
@@ -122,7 +131,7 @@ function render(report) {
   $("claims").innerHTML = report.claims.map((c) => {
     const v = byId[c.id] || { status: "unknown", score: null, rationale: "", evidence: [] };
     const ev = (v.evidence || []).map((e) =>
-      `<div class="ev"><span class="rel">${e.relation}</span><a href="${e.url}" target="_blank" rel="noopener">${esc(e.title || e.url)}</a>
+      `<div class="ev"><span class="rel">${e.relation}</span><a href="${esc(safeUrl(e.url))}" target="_blank" rel="noopener noreferrer">${esc(e.title || e.url)}</a>
        <span class="muted"> · ${e.domain} · ${e.published_at ? new Date(e.published_at).toLocaleDateString() : "时间未知"} · ${esc(e.evidence_kind || "unknown")} · T${e.tier} · conf ${e.relation_confidence ?? "-"}</span><div class="muted">${esc(e.relation_reason || "")}</div>
        <div class="muted">${esc((e.snippet || "").slice(0, 160))}</div></div>`).join("");
     return `<div class="claim">

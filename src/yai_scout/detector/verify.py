@@ -19,7 +19,7 @@ from ..domain.models import (
 )
 from ..llm import LLMClient
 from ..retrieval.quality import classify_source
-from ..retrieval.tavily import SearchResult, TavilyError
+from ..retrieval.tavily import SearchResult
 from .anchor_policy import needs_revalidation
 from .claims import extract_numbers
 from .freshness import as_of_datetime, parse_published, score_claim
@@ -131,7 +131,7 @@ class ClaimVerifier:
                 self.searcher.search(query, max_results=self.max_results),
                 timeout=self.timeout_s,
             )
-        except (TimeoutError, TavilyError) as exc:
+        except Exception as exc:  # noqa: BLE001 - evidence failure must abstain
             verdict = FreshnessVerdict(
                 claim_id=claim.id,
                 status=FreshnessStatus.INSUFFICIENT,

@@ -83,9 +83,20 @@ class StaleAnswerDetector:
         async def one(claim_index: int) -> tuple[FreshnessVerdict, float, float]:
             claim = claims[claim_index]
             async with semaphore:
-                candidates = anchors_by_key.get(claim_key(claim.text), [])
-                selected = select_anchors(candidates) if candidates else []
-                verdict, credits, relation_cost = await verifier.verify(claim, selected)
+                try:
+                    candidates = anchors_by_key.get(claim_key(claim.text), [])
+                    selected = select_anchors(candidates) if candidates else []
+                    verdict, credits, relation_cost = await verifier.verify(
+                        claim, selected
+                    )
+                except Exception as exc:  # noqa: BLE001 - one claim must not kill the report
+                    verdict = FreshnessVerdict(
+                        claim_id=claim.id,
+                        status=FreshnessStatus.INSUFFICIENT,
+                        score=None,
+                        rationale=f"单条核验失败：{type(exc).__name__}",
+                    )
+                    return verdict, 0.0, 0.0
             return verdict, credits, relation_cost
 
         outcomes = await asyncio.gather(*(one(i) for i in range(len(claims))))
@@ -93,7 +104,12 @@ class StaleAnswerDetector:
         credits = sum(outcome[1] for outcome in outcomes)
         llm_cost += sum(outcome[2] for outcome in outcomes)
 
-        suggestions, suggestion_cost = await generate_suggestions(claims, verdicts, self.llm)
+        try:
+            suggestions, suggestion_cost = await generate_suggestions(
+                claims, verdicts, self.llm
+            )
+        except Exception:  # noqa: BLE001 - suggestions are optional
+            suggestions, suggestion_cost = {}, 0.0
         llm_cost += suggestion_cost
         if suggestions:
             verdicts = [

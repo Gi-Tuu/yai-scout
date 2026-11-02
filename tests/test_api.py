@@ -43,6 +43,8 @@ def test_api_create_and_poll():
         health = client.get("/api/healthz")
         assert health.status_code == 200
         assert health.json()["tavily"]["mode"] == "fake"
+        assert health.headers["x-content-type-options"] == "nosniff"
+        assert "default-src 'self'" in health.headers["content-security-policy"]
 
         created = client.post("/api/research", json={"question": "test question"})
         assert created.status_code == 202

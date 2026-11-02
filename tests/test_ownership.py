@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from yai_scout.api.app import create_app
 from yai_scout.config import Settings
+from yai_scout.domain.models import DetectorReport
 from yai_scout.store import Store
 
 
@@ -92,4 +93,28 @@ def test_research_task_is_scoped_to_session():
             item["id"] == task_id
             for item in client_a.get("/api/research").json()["tasks"]
         )
+    store.close()
+
+
+def test_owner_reports_are_not_crowded_out_by_other_sessions():
+    store = Store(":memory:")
+    for index in range(5):
+        store.save_detector_report(
+            DetectorReport(
+                id=f"other_{index}",
+                owner_id="other",
+                answer="a",
+                as_of="2026-11-01",
+            )
+        )
+    store.save_detector_report(
+        DetectorReport(
+            id="mine",
+            owner_id="me",
+            answer="a",
+            as_of="2026-11-01",
+        )
+    )
+    reports = store.list_detector_reports(limit=3, owner_id="me")
+    assert [report.id for report in reports] == ["mine"]
     store.close()

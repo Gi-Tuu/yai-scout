@@ -151,7 +151,10 @@ class TavilyClient:
             # 不回显请求头；仅保留状态码与服务端错误前缀
             detail = resp.text[:200].replace("\n", " ")
             raise TavilyError(f"HTTP {resp.status_code}: {detail}", status_code=resp.status_code)
-        data = resp.json()
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            raise TavilyError("响应格式异常：不是合法 JSON") from exc
         if not isinstance(data, dict):
             raise TavilyError("响应格式异常：不是 JSON object")
         return parse_search_payload(data, depth=depth)

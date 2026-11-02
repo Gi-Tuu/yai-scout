@@ -78,7 +78,12 @@ async def revalidate_anchor(
             published_at=str(getattr(result, "published_date", "") or "") or None,
         )
     store.save_anchor_observation(observation)
-    store.update_anchor(anchor.model_copy(update={"last_checked_at": current.isoformat()}))
+    if observation.status != "unreachable":
+        # An unreachable source is not a completed check. Keeping the old
+        # timestamp makes it retryable instead of suppressing it for the full TTL.
+        store.update_anchor(
+            anchor.model_copy(update={"last_checked_at": current.isoformat()})
+        )
     return observation
 
 

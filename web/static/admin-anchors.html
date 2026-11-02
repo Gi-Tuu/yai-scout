@@ -54,6 +54,15 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const safeUrl = (value) => {
+  try {
+    const parsed = new URL(String(value || ""), window.location.origin);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "#";
+  } catch {
+    return "#";
+  }
+};
+
 let token = sessionStorage.getItem("adminToken") || "";
 $("token").value = token;
 
@@ -90,7 +99,7 @@ function renderAnchors(items) {
     <td class="mono">${esc(anchor.id)}</td>
     <td class="mono">${esc(anchor.last_value)}</td>
     <td>T${anchor.source_tier}</td>
-    <td><a style="color:var(--accent)" href="${esc(anchor.url)}" target="_blank" rel="noopener">${esc(anchor.url)}</a></td>
+    <td><a style="color:var(--accent)" href="${esc(safeUrl(anchor.url))}" target="_blank" rel="noopener noreferrer">${esc(anchor.url)}</a></td>
     <td class="mono">${esc(anchor.supersedes || "—")}</td>
     <td>${anchor.status === "active" && anchor.supersedes ? `<button class="danger" onclick="rollback('${esc(anchor.id)}')">Rollback</button>` : ""}</td>
   </tr>`).join("");

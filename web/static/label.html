@@ -62,6 +62,15 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const safeUrl = (value) => {
+  try {
+    const parsed = new URL(String(value || ""), window.location.origin);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "#";
+  } catch {
+    return "#";
+  }
+};
+
 const DECISIONS = ["auto_update", "review", "reject", "no_change"];
 let worksheet = [];
 let index = 0;
@@ -89,7 +98,7 @@ function render() {
     <div class="case-title">${esc(item.claim_text)}</div>
     <div class="muted" style="font-size:12px">当前 Anchor：${esc(anchor.value)} · T${anchor.source_tier} · ${esc(anchor.url)}</div>
     <table style="margin-top:10px"><thead><tr><th>来源</th><th>tier</th><th>group</th><th>value</th><th>published</th><th>reachable</th></tr></thead><tbody>
-      ${observations.map((o) => `<tr><td><a style="color:var(--accent)" href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.url)}</a></td><td>T${o.source_tier}</td><td>${esc(o.independent_group)}</td><td class="mono">${esc(o.value)}</td><td>${esc(o.published_at || "—")}</td><td>${o.reachable === false ? "no" : "yes"}</td></tr>`).join("")}
+      ${observations.map((o) => `<tr><td><a style="color:var(--accent)" href="${esc(safeUrl(o.url))}" target="_blank" rel="noopener noreferrer">${esc(o.url)}</a></td><td>T${o.source_tier}</td><td>${esc(o.independent_group)}</td><td class="mono">${esc(o.value)}</td><td>${esc(o.published_at || "—")}</td><td>${o.reachable === false ? "no" : "yes"}</td></tr>`).join("")}
     </tbody></table>
     <div class="choices">
       ${DECISIONS.map((d) => `<button data-decision="${d}">${d}</button>`).join("")}

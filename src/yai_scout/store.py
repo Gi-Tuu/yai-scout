@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS cost_ledger (
 );
 CREATE TABLE IF NOT EXISTS detector_report (
     id TEXT PRIMARY KEY,
+    owner_id TEXT NOT NULL DEFAULT '',
     answer TEXT NOT NULL,
     as_of TEXT NOT NULL,
     payload_json TEXT NOT NULL,
@@ -191,7 +192,11 @@ class Store:
             int(row["version"])
             for row in self._conn.execute("SELECT version FROM schema_version")
         }
-        migrations = ((1, self._ensure_bench_columns), (2, self._ensure_task_columns))
+        migrations = (
+            (1, self._ensure_bench_columns),
+            (2, self._ensure_task_columns),
+            (3, self._ensure_detector_columns),
+        )
         for version, migrate in migrations:
             if version in applied:
                 continue
@@ -216,6 +221,24 @@ class Store:
                 self._conn.execute(
                     f"ALTER TABLE bench_session ADD COLUMN {name} {decl}"
                 )
+
+    def _ensure_detector_columns(self) -> None:
+        columns = {
+            row["name"]
+            for row in self._conn.execute("PRAGMA table_info(detector_report)")
+        }
+        if "owner_id" not in columns:
+            self._conn.execute(
+                "ALTER TABLE detector_report ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''"
+            )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_detector_report_owner "
+            "ON detector_report(owner_id, created_at)"
+        )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_research_task_owner "
+            "ON research_task(owner_id, created_at)"
+        )
 
     def _ensure_task_columns(self) -> None:
         columns = {
@@ -258,11 +281,18 @@ class Store:
             ).fetchone()
         return _row_to_task(row) if row else None
 
-    def list_tasks(self, limit: int = 20) -> list[ResearchTask]:
+    def list_tasks(
+        self, limit: int = 20, *, owner_id: str | None = None
+    ) -> list[ResearchTask]:
+        query = "SELECT * FROM research_task"
+        vals: list[Any] = []
+        if owner_id is not None:
+            query += " WHERE owner_id = ? OR owner_id = ''"
+            vals.append(owner_id)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        vals.append(limit)
         with self._lock:
-            rows = self._conn.execute(
-                "SELECT * FROM research_task ORDER BY created_at DESC LIMIT ?", (limit,)
-            ).fetchall()
+            rows = self._conn.execute(query, vals).fetchall()
         return [_row_to_task(r) for r in rows]
 
     def update_task(
@@ -421,14 +451,17 @@ class Store:
     def save_detector_report(self, report: DetectorReport) -> DetectorReport:
         with self._lock:
             self._conn.execute(
-                """INSERT INTO detector_report (id, answer, as_of, payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?)
+                """INSERT INTO detector_report
+                   (id, owner_id, answer, as_of, payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?)
                    ON CONFLICT(id) DO UPDATE SET
+                     owner_id = excluded.owner_id,
                      answer = excluded.answer,
                      as_of = excluded.as_of,
                      payload_json = excluded.payload_json""",
                 (
                     report.id,
+                    report.owner_id,
                     report.answer,
                     report.as_of,
                     report.model_dump_json(),
@@ -438,12 +471,18 @@ class Store:
             self._conn.commit()
         return report
 
-    def list_detector_reports(self, limit: int = 20) -> list[DetectorReport]:
+    def list_detector_reports(
+        self, limit: int = 20, *, owner_id: str | None = None
+    ) -> list[DetectorReport]:
+        query = "SELECT payload_json FROM detector_report"
+        vals: list[Any] = []
+        if owner_id is not None:
+            query += " WHERE owner_id = ? OR owner_id = ''"
+            vals.append(owner_id)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        vals.append(limit)
         with self._lock:
-            rows = self._conn.execute(
-                "SELECT payload_json FROM detector_report ORDER BY created_at DESC LIMIT ?",
-                (limit,),
-            ).fetchall()
+            rows = self._conn.execute(query, vals).fetchall()
         return [_parse_detector_report(row["payload_json"]) for row in rows]
 
     def get_detector_report(self, report_id: str) -> DetectorReport | None:
