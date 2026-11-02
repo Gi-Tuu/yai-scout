@@ -16,6 +16,13 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Final submission package: one primary README, slides, demo video; independent second labeler for accuracy.
 
+## [0.3.5] - 2026-11-02
+
+### Changed
+
+- Offloaded read-only anchor/admin/healthz/compare SQLite calls via `asyncio.to_thread`; writes stay sync (minimal B4 mitigation).
+- Concurrency smoke test for slow reads vs healthz.
+
 ## [0.3.4] - 2026-11-02
 
 ### Fixed

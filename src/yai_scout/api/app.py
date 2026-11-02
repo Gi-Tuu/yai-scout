@@ -213,7 +213,9 @@ def create_app(
             "app": cfg.app_name,
             "version": cfg.app_version,
             "mode": cfg.scout_mode,
-            "snapshots": len(store.list_snapshots(limit=1000)),
+            "snapshots": len(
+                await asyncio.to_thread(store.list_snapshots, limit=1000)
+            ),
             "discovery": discovery.usage(),
             "build": os.environ.get("RENDER_GIT_COMMIT", "dev")[:12],
             "limits": limiter.usage(),
@@ -495,7 +497,7 @@ def create_app(
 
     @app.get("/freshness/anchors")
     async def list_anchors(claim_key: str | None = None) -> dict[str, Any]:
-        anchors = store.list_anchors(claim_key=claim_key)
+        anchors = await asyncio.to_thread(store.list_anchors, claim_key=claim_key)
         return {"anchors": [anchor.model_dump(mode="json") for anchor in anchors]}
 
     @app.post("/admin/anchors/{anchor_id}/candidates", status_code=201)
@@ -591,7 +593,9 @@ def create_app(
             raise HTTPException(status_code=404, detail="admin endpoint disabled")
         if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
             raise HTTPException(status_code=401, detail="unauthorized")
-        candidates = store.list_anchor_candidates(status=status)
+        candidates = await asyncio.to_thread(
+            store.list_anchor_candidates, status=status
+        )
         return {"candidates": [item.model_dump(mode="json") for item in candidates]}
 
     @app.post("/admin/anchors/candidates/{candidate_id}/approve")
@@ -650,7 +654,10 @@ def create_app(
             raise HTTPException(status_code=404, detail="admin endpoint disabled")
         if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
             raise HTTPException(status_code=401, detail="unauthorized")
-        return {"audit": store.list_anchor_audit(limit=max(1, min(limit, 500)))}
+        audit = await asyncio.to_thread(
+            store.list_anchor_audit, limit=max(1, min(limit, 500))
+        )
+        return {"audit": audit}
 
     @app.get("/admin/anchors")
     async def admin_list_anchors(request: Request) -> dict[str, Any]:
@@ -658,7 +665,9 @@ def create_app(
             raise HTTPException(status_code=404, detail="admin endpoint disabled")
         if request.headers.get("authorization") != f"Bearer {cfg.admin_token}":
             raise HTTPException(status_code=401, detail="unauthorized")
-        anchors = store.list_anchors(active_only=False, limit=500)
+        anchors = await asyncio.to_thread(
+            store.list_anchors, active_only=False, limit=500
+        )
         return {"anchors": [anchor.model_dump(mode="json") for anchor in anchors]}
 
     @app.post("/admin/anchors/{anchor_id}/rollback")
@@ -696,8 +705,10 @@ def create_app(
 
     @app.get("/freshness/compare")
     async def compare_freshness_reports(left_id: str, right_id: str) -> dict[str, Any]:
-        left = store.get_detector_report(left_id)
-        right = store.get_detector_report(right_id)
+        left, right = await asyncio.gather(
+            asyncio.to_thread(store.get_detector_report, left_id),
+            asyncio.to_thread(store.get_detector_report, right_id),
+        )
         if left is None or right is None:
             raise HTTPException(status_code=404, detail="report not found")
         return compare_reports(left, right).model_dump(mode="json")
