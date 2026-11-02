@@ -1,7 +1,7 @@
 # Evaluation Report — labeler 336
 
 > Date: 2026-11-02  
-> Label file: `accuracy_labels_336.json` (public worksheet, `BL-001..BL-060`)  
+> Label file: ccuracy_labels_336.json (confirmed public /label, BL-001..BL-060)  
 > Key: `benchmarks/accuracy_gate/holdout_key.json` (**public/compromised**)
 
 ## 1. Critical evaluator bug found and fixed
@@ -51,8 +51,7 @@ Do not change Gate thresholds to fit this file.
 
 ## 4. Next steps
 
-1. Ask labeler 336 to confirm the URL used (`/label` vs
-   `/label?worksheet=private`) and whether the worksheet was refreshed.
+1. Confirmed: labeler 336 used the public `/label` worksheet (`BL-*`), not private.
 2. Run the **private** 30-case worksheet (`PV-*`) with the same labeler; it has no
    public answer key.
 3. Compare labeler 001 and 336 with `scripts/adjudicate_labels.py`; adjudicate
