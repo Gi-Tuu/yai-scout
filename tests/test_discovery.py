@@ -69,3 +69,15 @@ async def test_discovery_daily_budget_blocks_calls():
     assert results == []
     assert searcher.calls == 1
     assert discovery.usage()["budget_denied"] == 1
+
+async def test_discovery_cache_is_bounded():
+    searcher = FakeSearcher()
+    discovery = CachedDiscovery(
+        searcher, ttl_seconds=3600, daily_budget=10, max_cache_entries=2
+    )
+    await discovery.search("q1", max_results=3)
+    await discovery.search("q2", max_results=3)
+    await discovery.search("q3", max_results=3)
+    assert discovery.usage()["cache_size"] == 2
+    await discovery.search("q1", max_results=3)
+    assert searcher.calls == 4

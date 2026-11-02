@@ -10,6 +10,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
@@ -157,6 +158,7 @@ def create_app(
         tavily,
         ttl_seconds=cfg.anchor_discovery_ttl_seconds,
         daily_budget=cfg.anchor_discovery_daily_budget,
+        max_cache_entries=cfg.anchor_discovery_cache_entries,
     )
     limiter = UsageLimiter(
         per_minute=cfg.rate_limit_per_minute,
@@ -431,8 +433,18 @@ def create_app(
     @app.post("/freshness/anchors", status_code=201)
     async def create_anchor(payload: AnchorCreate, request: Request) -> dict[str, Any]:
         guard_cost(request, "anchor")
-        if not payload.url.startswith(("http://", "https://")):
+        parsed = urlsplit(payload.url)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
             raise HTTPException(status_code=400, detail="anchor url must be http(s)")
+        if parsed.username or parsed.password:
+            raise HTTPException(status_code=400, detail="anchor url must not contain credentials")
+        allowed_hosts = {
+            item.strip().lower()
+            for item in cfg.anchor_create_allowlist.split(",")
+            if item.strip()
+        }
+        if allowed_hosts and parsed.hostname.lower() not in allowed_hosts:
+            raise HTTPException(status_code=400, detail="anchor host not allowed")
         latest = next(
             (snap for snap in store.list_snapshots(limit=1000) if snap.url == payload.url),
             None,

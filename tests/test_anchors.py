@@ -212,3 +212,29 @@ async def test_unreachable_anchor_does_not_shift_evidence_anchor_ids():
     assert anchor_evidence[0].anchor_id == "anc_second"
     store.close()
 
+
+def test_anchor_create_host_allowlist():
+    settings = Settings(
+        _env_file=None,
+        db_path=":memory:",
+        openai_api_key="",
+        tavily_api_key="",
+        demo_limits_enabled=False,
+        anchor_create_allowlist="docs.tavily.com",
+    )
+    app = create_app(
+        settings=settings, tavily=FakeTavily(), store=Store(":memory:")  # type: ignore[arg-type]
+    )
+    body = {
+        "claim_text": "Tavily 免费计划每月提供 1,000 credits",
+        "url": "https://docs.tavily.com/documentation/api-credits",
+        "last_value": "1000",
+        "source_tier": 1,
+    }
+    with TestClient(app) as client:
+        assert client.post("/freshness/anchors", json=body).status_code == 201
+        blocked = client.post(
+            "/freshness/anchors",
+            json={**body, "url": "https://evil.example/page"},
+        )
+        assert blocked.status_code == 400

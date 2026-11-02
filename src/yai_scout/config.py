@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "YAI Scout"
-    app_version: str = "0.3.3"
+    app_version: str = "0.3.4"
     # all | benchmark | freshness —— 用于独立部署/独立入口
     scout_mode: str = "all"
     snapshots_seed: str = "benchmarks/snapshots.json"
@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     anchor_allowlist: str = ""
     anchor_discovery_ttl_seconds: int = 3600
     anchor_discovery_daily_budget: int = 50
+    anchor_discovery_cache_entries: int = 256
+    # 可选：公开创建 Anchor 的 host 白名单（逗号分隔）；空 = 不限制 host。
+    anchor_create_allowlist: str = ""
 
     # --- 公开 Demo 成本保护（单进程内存计数，重启清零）---
     demo_limits_enabled: bool = True

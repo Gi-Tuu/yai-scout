@@ -16,6 +16,13 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Final submission package: one primary README, slides, demo video; independent second labeler for accuracy.
 
+## [0.3.4] - 2026-11-02
+
+### Fixed
+
+- `CachedDiscovery` LRU cache bound (`ANCHOR_DISCOVERY_CACHE_ENTRIES`, default 256); healthz reports `cache_size` (B6).
+- Optional `ANCHOR_CREATE_ALLOWLIST`; anchor URLs with credentials rejected (B8).
+
 ## [0.3.3] - 2026-11-02
 
 ### Fixed
