@@ -60,11 +60,14 @@ Tests:
   benchmark sessions as failed after a process restart.
 - Core API paths (detector, research, report reads/writes, anchor reads/writes)
   now offload SQLite calls with `asyncio.to_thread`.
+- CI now runs `pytest-cov`; baseline is **86%** line coverage.
+- `claim_key` collision tests document the known period/quarter merge; the
+  key is kept unchanged for backward compatibility with existing anchors.
 
 ## Verification
 
 ```text
-pytest      : 214 passed
+pytest      : 217 passed
 ruff        : pass
 mypy        : pass (50 files)
 architecture: ok

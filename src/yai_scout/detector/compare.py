@@ -55,7 +55,12 @@ class DriftReport(BaseModel):
 
 
 def claim_key(text: str) -> str:
-    """把数字替换成占位符，让"同一事实不同值"落到同一个 key。"""
+    """把数字替换成占位符，让"同一事实不同值"落到同一个 key。
+
+    Known limitation: period/quarter numbers are also removed, so two
+    distinct facts can collide (e.g. "Q1 revenue 500" and "Q2 revenue 600").
+    This key is kept for backward compatibility with existing anchors.
+    """
     normalized = " ".join(text.lower().split())
     normalized = NUMBER_RE.sub("#", normalized)
     return normalized.strip("。 .")

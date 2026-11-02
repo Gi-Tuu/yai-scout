@@ -37,8 +37,8 @@ jobs:
         run: .venv/bin/mypy
       - name: Architecture boundaries
         run: .venv/bin/python scripts/check_imports.py
-      - name: Tests
-        run: .venv/bin/pytest -q
+      - name: Tests + coverage
+        run: .venv/bin/pytest -q --cov=yai_scout --cov-report=term-missing:skip-covered
 
   docker:
     runs-on: ubuntu-latest
