@@ -2,7 +2,7 @@
 
 > 项目：YAI Scout · Tavily Track **Problem 05**（track-local Tavily-01）  
 > 截止：**2026-11-15 23:59 IST**（北京 2026-11-16 02:29）  
-> 当前：`v0.3.6` · build `69b24e5161fd` · 213 tests · CI/CodeQL 绿
+> 当前：`v0.3.6` · build `69b24e5161fd` · 214 tests · CI/CodeQL 绿
 
 ## 1. 只交这 5 样
 
@@ -49,7 +49,7 @@ curl https://yai-scout.onrender.com/api/healthz
 # "version":"0.3.6"
 
 # 本地
-.\.venv\Scripts\python.exe -m pytest -q        # 213 passed
+.\.venv\Scripts\python.exe -m pytest -q        # 214 passed
 .\.venv\Scripts\python.exe -m ruff check src tests scripts examples
 .\.venv\Scripts\python.exe -m mypy
 ```

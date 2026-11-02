@@ -308,7 +308,7 @@ def create_app(
             question=" ".join(payload.question.split()),
             as_of=validated_as_of(payload.as_of),
         )
-        store.create_task(task)
+        await asyncio.to_thread(store.create_task, task)
         director.start(task)
         return {
             "task": task.model_dump(mode="json"),
@@ -319,29 +319,38 @@ def create_app(
     async def list_research(request: Request, limit: int = 20) -> dict[str, Any]:
         limit = max(1, min(limit, 100))
         if is_admin(request):
-            tasks = store.list_tasks(limit=limit)
+            tasks = await asyncio.to_thread(store.list_tasks, limit=limit)
         else:
-            tasks = store.list_tasks(limit=limit, owner_id=session_id(request))
+            tasks = await asyncio.to_thread(
+                store.list_tasks,
+                limit=limit,
+                owner_id=session_id(request),
+            )
         return {"tasks": [task.model_dump(mode="json") for task in tasks]}
 
     @app.get("/api/research/{task_id}")
     async def get_research(task_id: str, request: Request) -> dict[str, Any]:
-        task = store.get_task(task_id)
+        task = await asyncio.to_thread(store.get_task, task_id)
         if task is None or not can_access(task.owner_id, request):
             raise HTTPException(status_code=404, detail="task not found")
-        plan = store.get_plan(task_id)
-        credits, usd = store.cost_sum(task_id)
+        plan = await asyncio.to_thread(store.get_plan, task_id)
+        credits, usd = await asyncio.to_thread(store.cost_sum, task_id)
         return {
             "task": task.model_dump(mode="json"),
             "plan": plan.model_dump(mode="json") if plan else None,
-            "sources": [s.model_dump(mode="json") for s in store.list_sources(task_id)],
+            "sources": [
+                s.model_dump(mode="json")
+                for s in await asyncio.to_thread(store.list_sources, task_id)
+            ],
             "cost": {"credits": round(credits, 3), "usd": round(usd, 4)},
-            "event_count": len(store.list_events(task_id, 0, 10000)),
+            "event_count": len(
+                await asyncio.to_thread(store.list_events, task_id, 0, 10000)
+            ),
         }
 
     @app.post("/api/research/{task_id}/cancel")
     async def cancel_research(task_id: str, request: Request) -> dict[str, Any]:
-        task = store.get_task(task_id)
+        task = await asyncio.to_thread(store.get_task, task_id)
         if task is None or not can_access(task.owner_id, request):
             raise HTTPException(status_code=404, detail="task not found")
         cancelled = await director.cancel(task_id)
@@ -363,7 +372,9 @@ def create_app(
             while True:
                 if await request.is_disconnected():
                     return
-                events = store.list_events(task_id, cursor, 200)
+                events = await asyncio.to_thread(
+                    store.list_events, task_id, cursor, 200
+                )
                 for event in events:
                     cursor = event.seq
                     yield _sse(event)
@@ -374,7 +385,7 @@ def create_app(
                 if idle >= 15:
                     idle = 0.0
                     yield ": ping\n\n"
-                    task = store.get_task(task_id)
+                    task = await asyncio.to_thread(store.get_task, task_id)
                     if task is not None and task.status in {
                         TaskStatus.DELIVERED,
                         TaskStatus.FAILED,
@@ -403,7 +414,11 @@ def create_app(
         if payload.mode == "replay" and not payload.as_of:
             raise HTTPException(status_code=400, detail="replay requires explicit as_of")
         effective_as_of = validated_as_of(payload.as_of)
-        anchors = store.list_anchors() if payload.use_anchors else []
+        anchors = (
+            await asyncio.to_thread(store.list_anchors)
+            if payload.use_anchors
+            else []
+        )
         if payload.mode == "replay":
             async def _anchor_fetcher(anchor: Anchor, target: str) -> Any:
                 return await replay_anchor_result(store, anchor, target)
@@ -453,20 +468,20 @@ def create_app(
                 anchors=anchors,
             )
         report = report.model_copy(update={"owner_id": owner_id})
-        store.save_detector_report(report)
+        await asyncio.to_thread(store.save_detector_report, report)
         return report.model_dump(mode="json")
 
     @app.get("/api/detector/{report_id}")
     @app.get("/freshness/reports/{report_id}")
     async def get_detector_report(report_id: str, request: Request) -> dict[str, Any]:
-        report = store.get_detector_report(report_id)
+        report = await asyncio.to_thread(store.get_detector_report, report_id)
         if report is None or not can_access(report.owner_id, request):
             raise HTTPException(status_code=404, detail="report not found")
         return report.model_dump(mode="json")
 
     @app.get("/freshness/reports/{report_id}/receipt")
     async def get_receipt(report_id: str, request: Request) -> dict[str, Any]:
-        report = store.get_detector_report(report_id)
+        report = await asyncio.to_thread(store.get_detector_report, report_id)
         if report is None or not can_access(report.owner_id, request):
             raise HTTPException(status_code=404, detail="report not found")
         return build_report_receipt(report).model_dump(mode="json")
@@ -477,10 +492,14 @@ def create_app(
     ) -> dict[str, Any]:
         limit = max(1, min(limit, 100))
         if is_admin(request):
-            reports = store.list_detector_reports(limit=limit)
+            reports = await asyncio.to_thread(
+                store.list_detector_reports, limit=limit
+            )
         else:
-            reports = store.list_detector_reports(
-                limit=limit, owner_id=session_id(request)
+            reports = await asyncio.to_thread(
+                store.list_detector_reports,
+                limit=limit,
+                owner_id=session_id(request),
             )
         return {
             "reports": [
@@ -500,7 +519,7 @@ def create_app(
     async def export_detector_report(
         report_id: str, request: Request
     ) -> dict[str, Any]:
-        report = store.get_detector_report(report_id)
+        report = await asyncio.to_thread(store.get_detector_report, report_id)
         if report is None or not can_access(report.owner_id, request):
             raise HTTPException(status_code=404, detail="report not found")
         lines = [
@@ -552,10 +571,10 @@ def create_app(
         }
         if allowed_hosts and parsed.hostname.lower() not in allowed_hosts:
             raise HTTPException(status_code=400, detail="anchor host not allowed")
-        latest = next(
-            iter(store.list_snapshots_for_url(payload.url, limit=1)),
-            None,
+        snapshots = await asyncio.to_thread(
+            store.list_snapshots_for_url, payload.url, 1
         )
+        latest = snapshots[0] if snapshots else None
         anchor = Anchor(
             id=f"anc_{uuid.uuid4().hex[:12]}",
             claim_key=claim_key(payload.claim_text),
@@ -567,7 +586,7 @@ def create_app(
             published_at=payload.published_at or (latest.published_at if latest else None),
             temporal_sensitivity=payload.temporal_sensitivity,
         )
-        store.save_anchor(anchor)
+        await asyncio.to_thread(store.save_anchor, anchor)
         return anchor.model_dump(mode="json")
 
     @app.post("/admin/anchors/revalidate")

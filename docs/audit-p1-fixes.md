@@ -58,11 +58,13 @@ Tests:
   depend on the latest 1000 global rows.
 - Startup reconciles `pending`/`running` research tasks and `running`
   benchmark sessions as failed after a process restart.
+- Core API paths (detector, research, report reads/writes, anchor reads/writes)
+  now offload SQLite calls with `asyncio.to_thread`.
 
 ## Verification
 
 ```text
-pytest      : 213 passed
+pytest      : 214 passed
 ruff        : pass
 mypy        : pass (50 files)
 architecture: ok
@@ -72,7 +74,7 @@ Docker      : built
 ## Still open (P2)
 
 - no FK constraints / duplicated JSON columns;
-- monolithic API and sync SQLite calls in async handlers;
+- API is still a single large module; remaining admin/benchmark paths use sync SQLite;
 - `claim_key` numeric normalization can merge distinct facts;
 - no line-coverage tool installed;
 - benchmark endpoints have no owner/auth model (supporting only).
