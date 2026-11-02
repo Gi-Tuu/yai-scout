@@ -27,7 +27,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - P2: invalid updated_at fallback; anchor status SQL filter/migration 4;
   URL-scoped snapshot replay; restart reconciliation for running work;
   core API SQLite calls offloaded with asyncio.to_thread;
-  pytest-cov added; claim_key collision behavior documented in tests.
+  pytest-cov added; claim_key collision behavior documented in tests;
+  benchmark sessions are owner-scoped (migration 5).
 
 ### Fixed
 

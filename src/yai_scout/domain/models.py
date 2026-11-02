@@ -419,6 +419,7 @@ class ExperimentManifest(BaseModel):
 
 class BenchSession(BaseModel):
     id: str
+    owner_id: str = ""
     status: Literal["running", "done", "failed"] = "running"
     agent_ids: list[str] = Field(default_factory=list)
     task_ids: list[str] = Field(default_factory=list)

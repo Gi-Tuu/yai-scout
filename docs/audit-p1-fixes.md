@@ -63,11 +63,13 @@ Tests:
 - CI now runs `pytest-cov`; baseline is **86%** line coverage.
 - `claim_key` collision tests document the known period/quarter merge; the
   key is kept unchanged for backward compatibility with existing anchors.
+- Benchmark sessions now carry `owner_id` (migration 5); run/session/verify/
+  leaderboard endpoints are session-scoped, with admin bypass.
 
 ## Verification
 
 ```text
-pytest      : 217 passed
+pytest      : 218 passed
 ruff        : pass
 mypy        : pass (50 files)
 architecture: ok
@@ -80,4 +82,4 @@ Docker      : built
 - API is still a single large module; remaining admin/benchmark paths use sync SQLite;
 - `claim_key` numeric normalization can merge distinct facts;
 - no line-coverage tool installed;
-- benchmark endpoints have no owner/auth model (supporting only).
+- benchmark endpoints are session-scoped but still have no separate api-key auth.

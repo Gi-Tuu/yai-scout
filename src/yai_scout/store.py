@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS detector_report (
 );
 CREATE TABLE IF NOT EXISTS bench_session (
     id TEXT PRIMARY KEY,
+    owner_id TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL,
     config_json TEXT NOT NULL DEFAULT '{}',
     manifest_json TEXT NOT NULL DEFAULT '{}',
@@ -199,6 +200,7 @@ class Store:
             (2, self._ensure_task_columns),
             (3, self._ensure_detector_columns),
             (4, self._ensure_anchor_columns),
+            (5, self._ensure_bench_owner_column),
         )
         for version, migrate in migrations:
             if version in applied:
@@ -251,6 +253,20 @@ class Store:
             self._conn.execute(
                 "ALTER TABLE research_task ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''"
             )
+
+    def _ensure_bench_owner_column(self) -> None:
+        columns = {
+            row["name"]
+            for row in self._conn.execute("PRAGMA table_info(bench_session)")
+        }
+        if "owner_id" not in columns:
+            self._conn.execute(
+                "ALTER TABLE bench_session ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''"
+            )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_bench_session_owner "
+            "ON bench_session(owner_id, created_at)"
+        )
 
     def _ensure_anchor_columns(self) -> None:
         columns = {
@@ -539,11 +555,12 @@ class Store:
         with self._lock:
             self._conn.execute(
                 """INSERT INTO bench_session
-                   (id, status, config_json, manifest_json, result_hash, supersedes,
-                    created_at, finished_at, error)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (id, owner_id, status, config_json, manifest_json, result_hash,
+                    supersedes, created_at, finished_at, error)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     session.id,
+                    session.owner_id,
                     session.status,
                     session.model_dump_json(),
                     session.manifest.model_dump_json() if session.manifest else "{}",

@@ -93,6 +93,7 @@ class BenchmarkRunner:
         *,
         allow_hidden: bool = False,
         supersedes: str | None = None,
+        owner_id: str = "",
     ) -> BenchSession:
         chosen_agents = [agent_id for agent_id in (agent_ids or []) if agent_id in self.adapters]
         if agent_ids and not chosen_agents:
@@ -137,6 +138,7 @@ class BenchmarkRunner:
         manifest.config_hash = compute_config_hash(manifest)
         session = BenchSession(
             id=session_id,
+            owner_id=owner_id,
             status="running",
             agent_ids=chosen_agents,
             task_ids=chosen_tasks,

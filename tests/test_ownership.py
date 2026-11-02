@@ -118,3 +118,28 @@ def test_owner_reports_are_not_crowded_out_by_other_sessions():
     reports = store.list_detector_reports(limit=3, owner_id="me")
     assert [report.id for report in reports] == ["mine"]
     store.close()
+
+def test_benchmark_session_is_scoped_to_session():
+    store = Store(":memory:")
+    settings = Settings(
+        _env_file=None,
+        db_path=":memory:",
+        scout_mode="benchmark",
+        openai_api_key="",
+        tavily_api_key="",
+        demo_limits_enabled=False,
+    )
+    app = create_app(settings=settings, tavily=FakeTavily(), store=store)  # type: ignore[arg-type]
+    with TestClient(app) as client_a, TestClient(app) as client_b:
+        created = client_a.post(
+            "/api/benchmark/run",
+            json={
+                "agent_ids": ["mock_good"],
+                "task_ids": ["b_tavily_free_credits"],
+            },
+        )
+        assert created.status_code == 202
+        session_id = created.json()["session"]["id"]
+        assert client_a.get(f"/api/benchmark/sessions/{session_id}").status_code == 200
+        assert client_b.get(f"/api/benchmark/sessions/{session_id}").status_code == 404
+    store.close()
