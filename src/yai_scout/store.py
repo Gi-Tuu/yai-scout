@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS research_task (
     question TEXT NOT NULL,
     as_of TEXT NOT NULL,
     status TEXT NOT NULL,
+    owner_id TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL,
     finished_at TEXT,
     error TEXT,
@@ -178,6 +179,7 @@ class Store:
                 self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.executescript(SCHEMA)
             self._ensure_bench_columns()
+            self._ensure_task_columns()
             self._conn.commit()
 
     def _ensure_bench_columns(self) -> None:
@@ -196,6 +198,15 @@ class Store:
                     f"ALTER TABLE bench_session ADD COLUMN {name} {decl}"
                 )
 
+    def _ensure_task_columns(self) -> None:
+        columns = {
+            row["name"] for row in self._conn.execute("PRAGMA table_info(research_task)")
+        }
+        if "owner_id" not in columns:
+            self._conn.execute(
+                "ALTER TABLE research_task ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''"
+            )
+
     # ------------------------------------------------------------------ lifecycle
     def close(self) -> None:
         with self._lock:
@@ -206,10 +217,11 @@ class Store:
         with self._lock:
             self._conn.execute(
                 """INSERT INTO research_task
-                   (id, question, as_of, status, created_at, stats_json)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
+                   (id, owner_id, question, as_of, status, created_at, stats_json)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
                 (
                     task.id,
+                    task.owner_id,
                     task.question,
                     task.as_of,
                     str(task.status),
@@ -956,6 +968,7 @@ class Store:
 def _row_to_task(row: sqlite3.Row) -> ResearchTask:
     return ResearchTask(
         id=row["id"],
+        owner_id=row["owner_id"] or "",
         question=row["question"],
         as_of=row["as_of"],
         status=TaskStatus(row["status"]),

@@ -92,6 +92,7 @@ def test_anchor_api_create_and_list():
         openai_api_key="",
         tavily_api_key="",
         demo_limits_enabled=False,
+        public_anchor_writes=True,
     )
     app = create_app(
         settings=settings, tavily=FakeTavily(), store=Store(":memory:")  # type: ignore[arg-type]
@@ -220,6 +221,7 @@ def test_anchor_create_host_allowlist():
         openai_api_key="",
         tavily_api_key="",
         demo_limits_enabled=False,
+        public_anchor_writes=True,
         anchor_create_allowlist="docs.tavily.com",
     )
     app = create_app(
@@ -238,3 +240,27 @@ def test_anchor_create_host_allowlist():
             json={**body, "url": "https://evil.example/page"},
         )
         assert blocked.status_code == 400
+
+
+def test_anchor_create_requires_admin_by_default():
+    settings = Settings(
+        _env_file=None,
+        db_path=":memory:",
+        openai_api_key="",
+        tavily_api_key="",
+        demo_limits_enabled=False,
+    )
+    app = create_app(
+        settings=settings, tavily=FakeTavily(), store=Store(":memory:")  # type: ignore[arg-type]
+    )
+    with TestClient(app) as client:
+        response = client.post(
+            "/freshness/anchors",
+            json={
+                "claim_text": "Tavily 免费计划每月提供 1,000 credits",
+                "url": "https://docs.tavily.com/documentation/api-credits",
+                "last_value": "1000",
+                "source_tier": 1,
+            },
+        )
+        assert response.status_code == 403

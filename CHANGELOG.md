@@ -25,6 +25,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - **P0-4**: admin revalidation passes discovery + auto-update flag; API integration test.
 - **P0-3**: public-suffix grouping, known GitHub publisher aliases, active-anchor guard, and transactional single-winner candidate approval.
 - **P1-1**: research bucket/daily cap/active-task cap, wall-clock timeout, conservative credit reservation, `RESEARCH_ENABLED` switch.
+- **P1-2**: session-scoped research/report ownership with admin bypass; public anchor writes require admin by default.
 
 ## [0.3.5] - 2026-11-02
 

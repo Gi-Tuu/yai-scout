@@ -25,6 +25,7 @@ def _app(**overrides: object):
         "rate_limit_per_minute": 1,
         "daily_detector_limit": 10,
         "daily_benchmark_limit": 10,
+        "public_anchor_writes": True,
     }
     values.update(overrides)
     settings = Settings(**values)  # type: ignore[arg-type]
@@ -152,3 +153,4 @@ def test_research_active_task_cap():
         )
         assert response.status_code == 429
         assert "active research" in response.json()["detail"]
+

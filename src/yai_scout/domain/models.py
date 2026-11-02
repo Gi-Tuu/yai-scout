@@ -73,6 +73,7 @@ class SourceRecord(BaseModel):
 
 class ResearchTask(BaseModel):
     id: str
+    owner_id: str = ""
     question: str
     as_of: str
     status: TaskStatus = TaskStatus.PENDING
@@ -246,6 +247,7 @@ class FreshnessVerdict(BaseModel):
 
 class DetectorReport(BaseModel):
     id: str
+    owner_id: str = ""
     answer: str
     as_of: str
     claims: list[Claim] = Field(default_factory=list)

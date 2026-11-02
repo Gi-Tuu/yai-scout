@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     daily_research_limit: int = 5
     max_active_research_tasks: int = 2
     research_enabled: bool = True
+    # 公开 Demo 默认禁止匿名创建全局 Anchor；需要时显式打开或使用 ADMIN_TOKEN。
+    public_anchor_writes: bool = False
     # 可选：外部 Agent（scout-adapter/1.0）的 base URL
     http_agent_url: str = ""
 
@@ -99,6 +101,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """返回配置（测试可替换）。"""
     return Settings()
+
 
 
 

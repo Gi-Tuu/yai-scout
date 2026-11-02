@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import secrets
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -13,7 +14,7 @@ from typing import Any, Literal
 from urllib.parse import urlsplit
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -190,6 +191,30 @@ def create_app(
                 headers={"Retry-After": str(retry)},
             )
 
+    def session_id(request: Request, response: Response | None = None) -> str:
+        sid = request.cookies.get("scout_sid")
+        if not sid:
+            sid = secrets.token_urlsafe(24)
+            if response is not None:
+                response.set_cookie(
+                    "scout_sid",
+                    sid,
+                    max_age=60 * 60 * 24 * 30,
+                    httponly=True,
+                    samesite="lax",
+                    secure=request.url.scheme == "https",
+                )
+        return sid
+
+    def is_admin(request: Request) -> bool:
+        return bool(cfg.admin_token) and request.headers.get(
+            "authorization"
+        ) == f"Bearer {cfg.admin_token}"
+
+    def can_access(owner_id: str, request: Request) -> bool:
+        # Legacy/demo rows have owner_id="" and remain public.
+        return not owner_id or owner_id == session_id(request) or is_admin(request)
+
     benchmark_enabled = cfg.scout_mode in {"all", "benchmark"}
     freshness_enabled = cfg.scout_mode in {"all", "freshness"}
 
@@ -238,7 +263,7 @@ def create_app(
     # ------------------------------------------------------------------ research
     @app.post("/api/research", status_code=202)
     async def create_research(
-        payload: CreateResearchRequest, request: Request
+        payload: CreateResearchRequest, request: Request, response: Response
     ) -> dict[str, Any]:
         if not cfg.research_enabled:
             raise HTTPException(status_code=404, detail="research disabled")
@@ -251,6 +276,7 @@ def create_app(
             )
         task = ResearchTask(
             id=f"task_{uuid.uuid4().hex[:12]}",
+            owner_id=session_id(request, response),
             question=" ".join(payload.question.split()),
             as_of=payload.as_of or cfg.default_as_of,
         )
@@ -262,13 +288,18 @@ def create_app(
         }
 
     @app.get("/api/research")
-    async def list_research(limit: int = 20) -> dict[str, Any]:
-        return {"tasks": [t.model_dump(mode="json") for t in store.list_tasks(limit=limit)]}
+    async def list_research(request: Request, limit: int = 20) -> dict[str, Any]:
+        tasks = [
+            task
+            for task in store.list_tasks(limit=200)
+            if can_access(task.owner_id, request)
+        ][:limit]
+        return {"tasks": [task.model_dump(mode="json") for task in tasks]}
 
     @app.get("/api/research/{task_id}")
-    async def get_research(task_id: str) -> dict[str, Any]:
+    async def get_research(task_id: str, request: Request) -> dict[str, Any]:
         task = store.get_task(task_id)
-        if task is None:
+        if task is None or not can_access(task.owner_id, request):
             raise HTTPException(status_code=404, detail="task not found")
         plan = store.get_plan(task_id)
         credits, usd = store.cost_sum(task_id)
@@ -281,15 +312,17 @@ def create_app(
         }
 
     @app.post("/api/research/{task_id}/cancel")
-    async def cancel_research(task_id: str) -> dict[str, Any]:
-        if store.get_task(task_id) is None:
+    async def cancel_research(task_id: str, request: Request) -> dict[str, Any]:
+        task = store.get_task(task_id)
+        if task is None or not can_access(task.owner_id, request):
             raise HTTPException(status_code=404, detail="task not found")
         cancelled = await director.cancel(task_id)
         return {"cancelled": cancelled}
 
     @app.get("/api/research/{task_id}/events")
     async def research_events(task_id: str, request: Request) -> StreamingResponse:
-        if store.get_task(task_id) is None:
+        task = store.get_task(task_id)
+        if task is None or not can_access(task.owner_id, request):
             raise HTTPException(status_code=404, detail="task not found")
         cursor = 0
         header = request.headers.get("last-event-id") or request.headers.get("Last-Event-ID")
@@ -334,8 +367,11 @@ def create_app(
     # ------------------------------------------------------------------ detector
     @app.post("/api/detector")
     @app.post("/freshness/verify")
-    async def detect(payload: DetectRequest, request: Request) -> dict[str, Any]:
+    async def detect(
+        payload: DetectRequest, request: Request, response: Response
+    ) -> dict[str, Any]:
         guard_cost(request, "detector")
+        owner_id = session_id(request, response)
         effective_as_of = payload.as_of or cfg.default_as_of
         anchors = store.list_anchors() if payload.use_anchors else []
         if payload.mode == "replay":
@@ -386,20 +422,27 @@ def create_app(
                 max_claims=payload.max_claims,
                 anchors=anchors,
             )
+        report = report.model_copy(update={"owner_id": owner_id})
         store.save_detector_report(report)
         return report.model_dump(mode="json")
 
     @app.get("/api/detector/{report_id}")
     @app.get("/freshness/reports/{report_id}")
-    async def get_detector_report(report_id: str) -> dict[str, Any]:
+    async def get_detector_report(report_id: str, request: Request) -> dict[str, Any]:
         report = store.get_detector_report(report_id)
-        if report is None:
+        if report is None or not can_access(report.owner_id, request):
             raise HTTPException(status_code=404, detail="report not found")
         return report.model_dump(mode="json")
 
     @app.get("/freshness/reports")
-    async def list_detector_reports(limit: int = 20) -> dict[str, Any]:
-        reports = store.list_detector_reports(limit=limit)
+    async def list_detector_reports(
+        request: Request, limit: int = 20
+    ) -> dict[str, Any]:
+        reports = [
+            report
+            for report in store.list_detector_reports(limit=200)
+            if can_access(report.owner_id, request)
+        ][:limit]
         return {
             "reports": [
                 {
@@ -415,9 +458,11 @@ def create_app(
         }
 
     @app.get("/freshness/reports/{report_id}/export")
-    async def export_detector_report(report_id: str) -> dict[str, Any]:
+    async def export_detector_report(
+        report_id: str, request: Request
+    ) -> dict[str, Any]:
         report = store.get_detector_report(report_id)
-        if report is None:
+        if report is None or not can_access(report.owner_id, request):
             raise HTTPException(status_code=404, detail="report not found")
         lines = [
             f"# Freshness Report {report.id}",
@@ -454,6 +499,8 @@ def create_app(
     @app.post("/freshness/anchors", status_code=201)
     async def create_anchor(payload: AnchorCreate, request: Request) -> dict[str, Any]:
         guard_cost(request, "anchor")
+        if not cfg.public_anchor_writes and not is_admin(request):
+            raise HTTPException(status_code=403, detail="anchor writes require admin")
         parsed = urlsplit(payload.url)
         if parsed.scheme not in {"http", "https"} or not parsed.hostname:
             raise HTTPException(status_code=400, detail="anchor url must be http(s)")
@@ -725,12 +772,19 @@ def create_app(
         }
 
     @app.get("/freshness/compare")
-    async def compare_freshness_reports(left_id: str, right_id: str) -> dict[str, Any]:
+    async def compare_freshness_reports(
+        left_id: str, right_id: str, request: Request
+    ) -> dict[str, Any]:
         left, right = await asyncio.gather(
             asyncio.to_thread(store.get_detector_report, left_id),
             asyncio.to_thread(store.get_detector_report, right_id),
         )
-        if left is None or right is None:
+        if (
+            left is None
+            or right is None
+            or not can_access(left.owner_id, request)
+            or not can_access(right.owner_id, request)
+        ):
             raise HTTPException(status_code=404, detail="report not found")
         return compare_reports(left, right).model_dump(mode="json")
 
@@ -895,6 +949,7 @@ def create_app(
 
 
 app = create_app()
+
 
 
 
