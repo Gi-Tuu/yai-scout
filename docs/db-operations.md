@@ -42,6 +42,8 @@ python scripts/db_consistency.py --db data/scout.sqlite3
 
 Checks JSON payload vs duplicated columns and orphan rows; read-only.
 
+See [db-migration-plan.md](db-migration-plan.md) for the FK/JSON rebuild design.
+
 ## Migrations
 
 - `schema_version` records applied versions;
