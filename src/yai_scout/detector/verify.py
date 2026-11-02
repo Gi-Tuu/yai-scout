@@ -261,25 +261,106 @@ class ClaimVerifier:
     def _relation(
         claim: Claim, result: SearchResult
     ) -> Literal["supports", "contradicts", "mentions"]:
-        """支持 / 矛盾 / 仅提及。规则版：只对数字型 claim 做值比较。"""
+        """Rule relation: structured numbers + units + versions only.
+
+        Any-number overlap is not evidence of support. If units/periods conflict,
+        the result is a contradiction; if the value is absent or ambiguous, it is
+        only a mention.
+        """
         text = f"{result.title} {result.content}".lower()
-        if not claim.numbers:
+        claim_text = claim.text.lower()
+        if not claim.numbers and claim.type is not ClaimType.VERSION:
             return "mentions"
-        result_numbers = extract_numbers(text)
-        if any(num in result_numbers for num in claim.numbers):
-            return "supports"
-        if claim.type in {ClaimType.PRICING, ClaimType.VERSION, ClaimType.STATISTIC}:
-            shares_unit = any(token in text for token in UNIT_TOKENS) and any(
-                token in claim.text.lower() for token in UNIT_TOKENS
-            )
-            if result_numbers and shares_unit:
+
+        claim_versions = _versions(claim_text)
+        result_versions = _versions(text)
+        if claim.type is ClaimType.VERSION:
+            if claim_versions and result_versions:
+                if claim_versions & result_versions:
+                    return "supports"
                 return "contradicts"
+            if claim_versions:
+                return "mentions"
+
+        if claim.type is ClaimType.DATE:
+            # A year alone cannot establish support; require explicit relation.
+            return "mentions"
+
+        claim_numbers = [
+            number for number in claim.numbers if not YEAR_TOKEN_RE.fullmatch(number)
+        ]
+        result_numbers = [
+            number
+            for number in extract_numbers(text)
+            if not YEAR_TOKEN_RE.fullmatch(number)
+        ]
+        if not claim_numbers:
+            return "mentions"
+
+        claim_units = _units(claim_text)
+        result_units = _units(text)
+        if _units_conflict(claim_units, result_units):
+            return "contradicts"
+
+        if all(number in result_numbers for number in claim_numbers):
+            if claim_units and not (claim_units & result_units):
+                return "mentions"
+            return "supports"
+        if (
+            claim.type in {ClaimType.PRICING, ClaimType.VERSION, ClaimType.STATISTIC}
+            and result_numbers
+        ):
+            return "contradicts"
         return "mentions"
 
 
+VERSION_TOKEN_RE = re.compile(r"v?\d+\.\d+(?:\.\d+)?", re.I)
 
 
+def _versions(text: str) -> set[str]:
+    return {match.lstrip("vV").lower() for match in VERSION_TOKEN_RE.findall(text)}
+YEAR_TOKEN_RE = re.compile(r"(?:19|20)\d{2}")
+CURRENCY_CODES = {"usd": "usd", "eur": "eur", "gbp": "gbp", "cny": "cny", "jpy": "jpy"}
+CURRENCY_SYMBOLS = {"$": "usd", "€": "eur", "£": "gbp", "¥": "cny"}
+CURRENCY_WORDS = {"美元": "usd", "欧元": "eur", "英镑": "gbp", "人民币": "cny"}
+PERIODS = {"month", "year", "day", "week", "quarter"}
 
 
+def _units(text: str) -> set[str]:
+    units: set[str] = set()
+    for symbol, code in CURRENCY_SYMBOLS.items():
+        if symbol in text:
+            units.add(code)
+    for code in CURRENCY_CODES:
+        if re.search(rf"\b{code}\b", text):
+            units.add(code)
+    for word, code in CURRENCY_WORDS.items():
+        if word in text:
+            units.add(code)
+    if re.search(r"\bcredits?\b", text):
+        units.add("credits")
+    if "%" in text:
+        units.add("pct")
+    for period in PERIODS:
+        if re.search(rf"\b{period}\b", text):
+            units.add(f"period:{period}")
+    return units
 
+
+def _units_conflict(claim_units: set[str], result_units: set[str]) -> bool:
+    if not claim_units or not result_units:
+        return False
+    if claim_units.isdisjoint(result_units):
+        return True
+    claim_periods = {unit for unit in claim_units if unit.startswith("period:")}
+    result_periods = {unit for unit in result_units if unit.startswith("period:")}
+    if claim_periods and result_periods and claim_periods != result_periods:
+        return True
+    claim_currencies = {unit for unit in claim_units if unit in CURRENCY_CODES}
+    result_currencies = {unit for unit in result_units if unit in CURRENCY_CODES}
+    if claim_currencies and result_currencies and claim_currencies != result_currencies:
+        return True
+    if "credits" in claim_units and result_currencies:
+        return True
+    return bool(claim_currencies) and "credits" in result_units
 

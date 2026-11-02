@@ -191,3 +191,20 @@ def test_version_claim_uses_only_newest_release_timestamp():
         as_of=datetime(2026, 10, 28, tzinfo=UTC),
     )
     assert verdict.status is FreshnessStatus.FRESH
+
+def test_old_authoritative_support_is_not_fresh():
+    verdict = score([evidence("supports", 1000, tier=1)])
+    assert verdict.status is FreshnessStatus.INSUFFICIENT
+    assert "有效期" in verdict.rationale or "发布时间" in verdict.rationale
+
+
+def test_undated_authoritative_support_is_not_fresh():
+    ev = EvidenceRef(
+        url="https://example.com/x",
+        title="official",
+        domain="example.com",
+        tier=1,
+        relation="supports",
+    )
+    verdict = score([ev])
+    assert verdict.status is FreshnessStatus.INSUFFICIENT

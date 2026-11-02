@@ -81,7 +81,6 @@ def score_claim(
     target = _target_time(claim, fallback)
     sensitivity = _sensitivity(claim)
     window = _window(claim, sensitivity)
-    strict = sensitivity in {TemporalSensitivity.SENSITIVE, TemporalSensitivity.VOLATILE}
 
     usable: list[EvidenceRef] = []
     for item in evidence:
@@ -123,17 +122,24 @@ def score_claim(
         status = FreshnessStatus.STALE
         rationale = "权威来源给出了不同的值/事实，判定可能过时"
     elif auth_supports:
-        status = FreshnessStatus.FRESH
-        rationale = "权威来源支持该说法"
+        if sensitivity is TemporalSensitivity.STABLE:
+            status = FreshnessStatus.FRESH
+            rationale = "稳定事实，权威来源支持即可"
+        elif _has_recent_support(auth_supports, target, window):
+            status = FreshnessStatus.FRESH
+            rationale = "权威来源在有效期内支持该说法"
+        else:
+            status = FreshnessStatus.INSUFFICIENT
+            rationale = (
+                "权威来源支持，但发布时间缺失或已超出有效期；"
+                "不能仅凭来源权威判定仍新鲜"
+            )
     elif supports and sensitivity is TemporalSensitivity.STABLE:
         status = FreshnessStatus.FRESH
         rationale = "稳定事实，一般来源支持即可（不因来源旧扣分）"
-    elif strict and supports and _only_expired(supports, target, window):
-        status = FreshnessStatus.STALE
-        rationale = f"仅有超出有效期（{window} 天）的旧证据，判定过时"
     else:
         status = FreshnessStatus.INSUFFICIENT
-        rationale = "只有非权威来源支持，证据强度不足"
+        rationale = "只有非权威或过期的支持证据，证据强度不足"
 
     relation_raw = sum(
         (1.0 if e.relation == "supports" else -1.0) * TIER_WEIGHTS.get(e.tier, 0.25)
@@ -193,13 +199,15 @@ def _age_days(item: EvidenceRef, target: datetime) -> int | None:
     return None if published is None else (target - published).days
 
 
-def _only_expired(supports: list[EvidenceRef], target: datetime, window: int) -> bool:
-    known: list[int] = []
+def _has_recent_support(
+    supports: list[EvidenceRef], target: datetime, window: int
+) -> bool:
+    """At least one support with a known publication date inside the window."""
     for item in supports:
         age = _age_days(item, target)
-        if age is not None:
-            known.append(age)
-    return bool(known) and all(age > window for age in known)
+        if age is not None and age <= window:
+            return True
+    return False
 
 
 def _recency(supports: list[EvidenceRef], target: datetime, window: int) -> float:
@@ -229,6 +237,7 @@ __all__ = [
     "parse_published",
     "score_claim",
 ]
+
 
 
 

@@ -28,7 +28,8 @@ STABLE_RE = re.compile(
     r"定理|定律|常数|公式|历史事件|已于|成立于|theorem|constant|definition", re.I
 )
 MATH_RE = re.compile(r"等于多少|换算|公里|英里|千米|数学|物理", re.I)
-PAST_DATE_RE = re.compile(r"(19|20)\d{2}\s*年")
+YEAR_RE = re.compile(r"(?:19|20)\d{2}")
+PAST_DATE_RE = re.compile(r"((?:19|20)\d{2})\s*年")
 PAST_RELEASE_RE = re.compile(
     r"(?:19|20)\d{2}\s*年[^。；;]{0,20}(?:发布|成立|推出|上线)"
     r"|(?:发布|成立|推出|上线)[^。；;]{0,20}(?:19|20)\d{2}\s*年"
@@ -56,7 +57,12 @@ def classify_temporal(
     if VOLATILE_RE.search(text):
         sensitivity = TemporalSensitivity.VOLATILE
         reasons.append("含排名/股价/实时类信号")
-    elif PAST_RELEASE_RE.search(text) and not CURRENT_RE.search(text):
+    elif (
+        PAST_RELEASE_RE.search(text)
+        and not CURRENT_RE.search(text)
+        and (years := [int(y) for y in YEAR_RE.findall(text)])
+        and max(years) < target_dt.year
+    ):
         sensitivity = TemporalSensitivity.STABLE
         reasons.append("过去年份的发布/成立事实")
     elif STABLE_RE.search(text):
