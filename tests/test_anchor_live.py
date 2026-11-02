@@ -167,10 +167,13 @@ async def test_live_fetch_happy_path_with_mock_transport():
     assert result is not None
     assert "1,000 credits" in result.content
     assert result.content_hash
+    assert result.published_date is None
+    assert result.retrieved_at
 
 
 async def test_read_capped_limits_body():
     response = httpx.Response(200, content=b"x" * (LIVE_MAX_BYTES + 100))
     data = await _read_capped(response)
     assert len(data) == LIVE_MAX_BYTES
+
 

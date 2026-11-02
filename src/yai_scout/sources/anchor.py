@@ -94,6 +94,7 @@ async def replay_anchor_result(
         content=text[:1200],
         score=1.0,
         published_date=snapshot.published_at,
+        retrieved_at=snapshot.fetched_at,
         content_hash=snapshot.content_hash,
     )
 
@@ -167,7 +168,8 @@ async def live_anchor_result(
             url=anchor.url,
             content=text[:1200],
             score=1.0,
-            published_date=datetime.now(UTC).isoformat(timespec="seconds"),
+            published_date=None,  # retrieval time is not publication time
+            retrieved_at=datetime.now(UTC).isoformat(timespec="seconds"),
             content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
         )
     except (httpx.HTTPError, TimeoutError):

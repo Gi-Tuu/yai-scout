@@ -9,6 +9,7 @@ import secrets
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlsplit
@@ -191,6 +192,15 @@ def create_app(
                 headers={"Retry-After": str(retry)},
             )
 
+    def validated_as_of(value: str | None) -> str:
+        if not value:
+            return datetime.now(UTC).date().isoformat()
+        try:
+            datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="invalid as_of") from exc
+        return value
+
     def session_id(request: Request, response: Response | None = None) -> str:
         sid = request.cookies.get("scout_sid")
         if not sid:
@@ -278,7 +288,7 @@ def create_app(
             id=f"task_{uuid.uuid4().hex[:12]}",
             owner_id=session_id(request, response),
             question=" ".join(payload.question.split()),
-            as_of=payload.as_of or cfg.default_as_of,
+            as_of=validated_as_of(payload.as_of),
         )
         store.create_task(task)
         director.start(task)
@@ -372,7 +382,9 @@ def create_app(
     ) -> dict[str, Any]:
         guard_cost(request, "detector")
         owner_id = session_id(request, response)
-        effective_as_of = payload.as_of or cfg.default_as_of
+        if payload.mode == "replay" and not payload.as_of:
+            raise HTTPException(status_code=400, detail="replay requires explicit as_of")
+        effective_as_of = validated_as_of(payload.as_of)
         anchors = store.list_anchors() if payload.use_anchors else []
         if payload.mode == "replay":
             async def _anchor_fetcher(anchor: Anchor, target: str) -> Any:
@@ -411,14 +423,14 @@ def create_app(
             )
             report = await live_detector.detect(
                 payload.answer,
-                as_of=payload.as_of,
+                as_of=effective_as_of,
                 max_claims=payload.max_claims,
                 anchors=anchors,
             )
         else:
             report = await detector.detect(
                 payload.answer,
-                as_of=payload.as_of,
+                as_of=effective_as_of,
                 max_claims=payload.max_claims,
                 anchors=anchors,
             )

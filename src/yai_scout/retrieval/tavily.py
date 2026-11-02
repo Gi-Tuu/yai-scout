@@ -13,6 +13,8 @@ from typing import Any
 
 import httpx
 
+from ..domain.models import utcnow_iso
+
 # 官方计价：basic=1、advanced=2（credit/次）；缺失 usage 时按此估算。
 DEPTH_CREDITS = {"basic": 1.0, "advanced": 2.0}
 
@@ -32,6 +34,7 @@ class SearchResult:
     content: str
     score: float = 0.0
     published_date: str | None = None
+    retrieved_at: str = ""
     content_hash: str = ""
 
 
@@ -56,6 +59,7 @@ def parse_search_payload(
                 content=str(item.get("content") or "").strip(),
                 score=float(item.get("score") or 0.0),
                 published_date=item.get("published_date"),
+                retrieved_at=utcnow_iso(),
             )
         )
     usage = payload.get("usage") or {}

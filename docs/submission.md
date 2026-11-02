@@ -16,7 +16,7 @@
 | Working project/demo | Render link + `/label` + fixed demo script |
 | Repository, setup, architecture | `README.md`, `docs/`, Docker/uv setup |
 | Explanation of AI use | README “AI usage” + deterministic-code boundary |
-| Test/measurement evidence | 174 tests; fixed replay cases; 60 rule-labeled claims + Gate eval; benchmark appendix |
+| Test/measurement evidence | 178 tests; fixed replay cases; 60 rule-labeled claims + Gate eval; benchmark appendix |
 | Safety/authorization | read-only web research; no pentest/security claims |
 
 ## 2. Both technologies — proof to show

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import re
 from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
 from typing import Literal, Protocol
 
 from ..domain.models import (
@@ -34,13 +35,14 @@ UNIT_TOKENS = (
 )
 
 
-def build_query(claim: Claim) -> str:
-    """生成检索查询：去掉"旧资料显示"这类前缀与答案值，保留主题词。"""
+def build_query(claim: Claim, as_of: str | None = None) -> str:
+    """生成检索查询：去掉前缀/答案值，年份随目标时间变化，不硬编码。"""
     text = PREAMBLE_RE.sub("", claim.text).strip()
     if " 为 " in text:
         text = text.split(" 为 ", 1)[0]
     text = text.strip("，,。 .")
-    return (text or claim.text)[:VERIFY_QUERY_LIMIT] + " latest official 2026"
+    year = (as_of or datetime.now(UTC).isoformat())[:4]
+    return (text or claim.text)[:VERIFY_QUERY_LIMIT] + f" latest official {year}"
 
 
 class Searcher(Protocol):
@@ -122,7 +124,7 @@ class ClaimVerifier:
                 anchor_status = (
                     "changed" if changed else ("needs_revalidation" if stale else "used")
                 )
-        query = build_query(claim)
+        query = build_query(claim, self.as_of.isoformat())
         try:
             results, credits = await asyncio.wait_for(
                 self.searcher.search(query, max_results=self.max_results),
@@ -242,7 +244,7 @@ class ClaimVerifier:
             domain=self._domain(result.url),
             published_at=result.published_date,
             updated_at=None,
-            retrieved_at=result.published_date,
+            retrieved_at=result.retrieved_at or result.published_date,
             tier=tier,
             snippet=result.content[:400],
             relation=relation,

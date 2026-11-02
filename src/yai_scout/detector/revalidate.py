@@ -92,7 +92,8 @@ async def revalidate_due(
     auto_update: bool = False,
 ) -> list[AnchorObservation]:
     observations = []
-    for anchor in due_anchors(store, now=now, limit=limit):
+    current = now or datetime.now(UTC)
+    for anchor in due_anchors(store, now=current, limit=limit):
         observation = await revalidate_anchor(store, anchor, fetcher=fetcher, now=now)
         observations.append(observation)
         if not observation.content_changed or not observation.value:
@@ -102,7 +103,7 @@ async def revalidate_due(
             claim = Claim(id=anchor.id, text=anchor.claim_text)
             try:
                 results, _ = await discovery.search(
-                    build_query(claim), max_results=3
+                    build_query(claim, current.isoformat()), max_results=3
                 )
             except Exception:  # noqa: BLE001 - discovery failure must not break revalidation
                 results = []

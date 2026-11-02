@@ -31,6 +31,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - **P2 partial**: schema_version migrations, architecture import CI, pinned actions, Dependabot, CodeQL, offline backup/restore/integrity scripts.
 - Fixed independent-label evaluator to compare human labels, not key; labeler 336 report in `docs/eval-336.md`.
 - P0 freshness: old/undated authoritative support no longer FRESH; numeric relation checks versions, currencies, credits and periods; year regex/future-year classification fixed.
+- P0 as_of/timestamp: live uses current date, replay requires explicit as_of, invalid as_of rejected, query year dynamic; published_at and retrieved_at separated for live/replay evidence.
 
 ## [0.3.5] - 2026-11-02
 
