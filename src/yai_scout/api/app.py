@@ -171,6 +171,8 @@ def create_app(
         daily={
             "detector": cfg.daily_detector_limit,
             "benchmark": cfg.daily_benchmark_limit,
+            "anchor": cfg.daily_anchor_limit,
+            "research": cfg.daily_research_limit,
         },
     )
 
@@ -235,7 +237,18 @@ def create_app(
 
     # ------------------------------------------------------------------ research
     @app.post("/api/research", status_code=202)
-    async def create_research(payload: CreateResearchRequest) -> dict[str, Any]:
+    async def create_research(
+        payload: CreateResearchRequest, request: Request
+    ) -> dict[str, Any]:
+        if not cfg.research_enabled:
+            raise HTTPException(status_code=404, detail="research disabled")
+        guard_cost(request, "research")
+        if director.active_count() >= cfg.max_active_research_tasks:
+            raise HTTPException(
+                status_code=429,
+                detail="too many active research tasks; retry later",
+                headers={"Retry-After": "30"},
+            )
         task = ResearchTask(
             id=f"task_{uuid.uuid4().hex[:12]}",
             question=" ".join(payload.question.split()),
@@ -882,6 +895,8 @@ def create_app(
 
 
 app = create_app()
+
+
 
 
 

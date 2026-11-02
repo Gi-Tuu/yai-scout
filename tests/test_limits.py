@@ -117,3 +117,38 @@ def test_anchor_creation_is_rate_limited():
         blocked = client.post("/freshness/anchors", json=body)
         assert blocked.status_code == 429
         assert "anchor" in blocked.json()["detail"]
+
+def _research(client: TestClient) -> int:
+    return client.post(
+        "/api/research",
+        json={"question": "Tavily credits pricing"},
+    ).status_code
+
+
+def test_research_endpoint_is_rate_limited():
+    app = _app(rate_limit_per_minute=1)
+    with TestClient(app) as client:
+        assert _research(client) == 202
+        blocked = client.post(
+            "/api/research",
+            json={"question": "Tavily credits pricing"},
+        )
+        assert blocked.status_code == 429
+        assert "research" in blocked.json()["detail"]
+
+
+def test_research_can_be_disabled():
+    app = _app(research_enabled=False)
+    with TestClient(app) as client:
+        assert _research(client) == 404
+
+
+def test_research_active_task_cap():
+    app = _app(rate_limit_per_minute=10, max_active_research_tasks=0)
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/research",
+            json={"question": "Tavily credits pricing"},
+        )
+        assert response.status_code == 429
+        assert "active research" in response.json()["detail"]

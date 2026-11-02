@@ -44,6 +44,9 @@ class ResearchDirector:
         self._tasks[task.id] = job
         job.add_done_callback(lambda _job: self._tasks.pop(task.id, None))
 
+    def active_count(self) -> int:
+        return sum(1 for job in self._tasks.values() if not job.done())
+
     async def cancel(self, task_id: str) -> bool:
         job = self._tasks.get(task_id)
         if job is not None and not job.done():
@@ -133,23 +136,37 @@ class ResearchDirector:
             semaphore = asyncio.Semaphore(self.settings.max_concurrency)
             lock = asyncio.Lock()
             spent = 0.0
+            reserved = 0.0
             failed = 0
             budget_hit = False
+            # Reserve conservatively before each call; basic search costs 1 credit,
+            # advanced costs 2. This prevents concurrent queries from overrunning
+            # the task budget between the check and the actual charge.
+            per_query_reserve = 2.0 if self.settings.search_depth == "advanced" else 1.0
 
             async def run_query(query: str) -> None:
-                nonlocal spent, failed, budget_hit
-                async with lock:
-                    if spent >= self.settings.max_tavily_credits:
-                        budget_hit = True
-                        return
+                nonlocal spent, reserved, failed, budget_hit
                 if time.monotonic() - started > self.settings.max_wall_clock_seconds:
                     budget_hit = True
                     return
+                async with lock:
+                    if spent + reserved + per_query_reserve > self.settings.max_tavily_credits:
+                        budget_hit = True
+                        return
+                    reserved += per_query_reserve
                 async with semaphore:
+                    remaining = self.settings.max_wall_clock_seconds - (
+                        time.monotonic() - started
+                    )
                     try:
-                        results, credits = await self.tavily.search(query)
-                    except TavilyError as exc:
+                        if remaining <= 0:
+                            raise TimeoutError
+                        results, credits = await asyncio.wait_for(
+                            self.tavily.search(query), timeout=remaining
+                        )
+                    except (TavilyError, TimeoutError) as exc:
                         async with lock:
+                            reserved -= per_query_reserve
                             failed += 1
                         self._emit(
                             task_id,
@@ -159,6 +176,7 @@ class ResearchDirector:
                         )
                         return
                     async with lock:
+                        reserved -= per_query_reserve
                         spent += credits
                     self.store.add_cost(
                         CostEntry(
@@ -288,4 +306,5 @@ class ResearchDirector:
                 stats={"failed": True},
             )
             self._emit(task_id, Stage.DONE, "run_failed", {"error": message})
+
 

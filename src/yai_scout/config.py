@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     daily_detector_limit: int = 60
     daily_benchmark_limit: int = 20
     daily_anchor_limit: int = 30
+    daily_research_limit: int = 5
+    max_active_research_tasks: int = 2
+    research_enabled: bool = True
     # 可选：外部 Agent（scout-adapter/1.0）的 base URL
     http_agent_url: str = ""
 
@@ -96,6 +99,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """返回配置（测试可替换）。"""
     return Settings()
+
 
 
 

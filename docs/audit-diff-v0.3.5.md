@@ -11,7 +11,7 @@
 | P0-2 currency/units | **Confirmed broken**: `$1000` and `€1000` both `amount:1000`; credits/percent collapsed | **Fixed** |
 | P0-3 independence / write safety | **Partial**: PSL bug `.co.uk` → `co.uk`; approve could target a superseded anchor | **Fixed for known aliases + transactions; residual unknown publishers** |
 | P0-4 revalidation wiring | **Confirmed broken**: admin API called `revalidate_due()` without `discovery`/`auto_update` | **Fixed** |
-| P1-1 research limits | Confirmed not fixed | Deferred (P1) |
+| P1-1 research limits | Confirmed not fixed | **Fixed (rate/daily/active cap/budget reservation/timeout); XFF trust noted** |
 | P1-2 ownership isolation | Confirmed not fixed | Deferred (P1) |
 | P1-3 live fetch hardening | Mostly fixed in v0.3.5 (stream cap, `trust_env=False`) | Tests partial |
 | P1-4 evaluation independence | Confirmed not fixed | Deferred (blocked on human) |
@@ -84,7 +84,7 @@ Added API → replay observation → discovery → candidate integration test; d
 
 ## P1/P2 — intentionally deferred
 
-- **P1-1** `/api/research` has no dedicated limiter/budget and can trigger Tavily research; needs an `research` bucket/budget or public demo disable.
+- **P1-1** `/api/research` now uses a dedicated `research` bucket (`DAILY_RESEARCH_LIMIT`), active-task cap (`MAX_ACTIVE_RESEARCH_TASKS`), wall-clock timeout, and conservative per-query credit reservation. `RESEARCH_ENABLED=false` disables it. X-Forwarded-For still trusted for per-IP limits; the global per-minute/daily caps cap spoofing damage.
 - **P1-2** `/api/research`, `/freshness/reports`, `/freshness/anchors` lack per-user ownership; public demo exposes all reports/tasks. Needs session/owner model before multi-user use.
 - **P1-3** live fetch is HTTPS-only, allowlisted, pinned-IP, no redirects, stream-capped, no proxy env; adversarial DNS/redirect tests are still thin.
 - **P1-4** holdout key is public; 60/60 is rule-following, not independent ground truth. Need a private set + second labeler.
@@ -95,7 +95,7 @@ Added API → replay observation → discovery → candidate integration test; d
 ```text
 ruff  : pass
 mypy  : pass (49 files)
-pytest: 150 passed
+pytest: 153 passed
 gate  : 60/60 rule-consistent labels, auto precision 1.000
 Bifrost app E2E: MockTransport + local real gateway
 Docker: pending CI
