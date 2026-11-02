@@ -16,8 +16,7 @@ from urllib.parse import urlsplit
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from ..benchmark.adapters import HttpAdapter
@@ -54,6 +53,7 @@ from ..sources.anchor import live_anchor_result, replay_anchor_result
 from ..sources.seed import seed_snapshots
 from ..store import Store
 from .limits import UsageLimiter
+from .pages import register_pages
 
 
 class CreateResearchRequest(BaseModel):
@@ -116,7 +116,6 @@ def create_app(
 ) -> FastAPI:
     cfg = settings or get_settings()
     static_dir = cfg.web_dir / "static"
-    index_file = static_dir / "index.html"
     store = store or Store(cfg.db_path)
     seed_path = Path(cfg.snapshots_seed)
     if not seed_path.is_absolute():
@@ -950,78 +949,7 @@ def create_app(
             "pareto": pareto_frontier(results),
         }
 
-    # ------------------------------------------------------------------ pages
-    detector_page = static_dir / "detector.html" if static_dir.is_dir() else None
-    bench_page = static_dir / "bench.html" if static_dir.is_dir() else None
-    landing_page = static_dir / "landing.html" if static_dir.is_dir() else None
-    inspector_page = static_dir / "inspector.html" if static_dir.is_dir() else None
-    compare_page = static_dir / "compare.html" if static_dir.is_dir() else None
-    admin_page = static_dir / "admin-anchors.html" if static_dir.is_dir() else None
-    label_page = static_dir / "label.html" if static_dir.is_dir() else None
-    label_recover_page = static_dir / "label-recover.html" if static_dir.is_dir() else None
-
-    @app.get("/detector", include_in_schema=False)
-    @app.get("/freshness", include_in_schema=False)
-    async def detector_page_route() -> FileResponse:
-        if detector_page is None or not detector_page.is_file():
-            raise HTTPException(status_code=404, detail="detector page not found")
-        return FileResponse(detector_page)
-
-    @app.get("/bench", include_in_schema=False)
-    @app.get("/benchmark", include_in_schema=False)
-    async def bench_page_route() -> FileResponse:
-        if bench_page is None or not bench_page.is_file():
-            raise HTTPException(status_code=404, detail="bench page not found")
-        return FileResponse(bench_page)
-
-    @app.get("/inspector", include_in_schema=False)
-    @app.get("/inspector/{report_id}", include_in_schema=False)
-    async def inspector_page_route(report_id: str | None = None) -> FileResponse:
-        if inspector_page is None or not inspector_page.is_file():
-            raise HTTPException(status_code=404, detail="inspector page not found")
-        return FileResponse(inspector_page)
-
-    @app.get("/label/recover", include_in_schema=False)
-    async def label_recover_route() -> FileResponse:
-        if label_recover_page is None or not label_recover_page.is_file():
-            raise HTTPException(status_code=404, detail="recover page not found")
-        return FileResponse(label_recover_page)
-
-    @app.get("/label", include_in_schema=False)
-    async def label_page_route() -> FileResponse:
-        if label_page is None or not label_page.is_file():
-            raise HTTPException(status_code=404, detail="label page not found")
-        return FileResponse(label_page)
-
-    @app.get("/admin", include_in_schema=False)
-    async def admin_page_route() -> FileResponse:
-        if admin_page is None or not admin_page.is_file():
-            raise HTTPException(status_code=404, detail="admin page not found")
-        return FileResponse(admin_page)
-
-    @app.get("/compare", include_in_schema=False)
-    async def compare_page_route() -> FileResponse:
-        if compare_page is None or not compare_page.is_file():
-            raise HTTPException(status_code=404, detail="compare page not found")
-        return FileResponse(compare_page)
-
-    # ------------------------------------------------------------------ static UI
-    if static_dir.is_dir():
-        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-
-    @app.get("/", include_in_schema=False)
-    async def index_page() -> FileResponse:
-        if landing_page is not None and landing_page.is_file():
-            return FileResponse(landing_page)
-        if not index_file.is_file():
-            raise HTTPException(status_code=404, detail="web UI not built")
-        return FileResponse(index_file)
-
-    @app.get("/research", include_in_schema=False)
-    async def research_page() -> FileResponse:
-        if not index_file.is_file():
-            raise HTTPException(status_code=404, detail="web UI not built")
-        return FileResponse(index_file)
+    register_pages(app, static_dir)
 
     return app
 

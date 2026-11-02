@@ -29,7 +29,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   core API SQLite calls offloaded with asyncio.to_thread;
   pytest-cov added; claim_key collision behavior documented in tests;
   benchmark sessions are owner-scoped (migration 5); admin candidate and
-  benchmark read paths offloaded to worker threads.
+  benchmark read paths offloaded to worker threads; static page routes extracted
+  to `api/pages.py`.
 
 ### Fixed
 
