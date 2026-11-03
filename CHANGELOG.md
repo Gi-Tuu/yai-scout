@@ -38,7 +38,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   gate; snapshot fetch SSRF/size hardening; FK constraints in fresh schema;
   claim_key v2 functions/shadow fields, migration 7 + dual-read;
   full-page fetch MVP behind `FULL_PAGE_FETCH_ENABLED`; FK migrator carries
-  claim_key v2 columns; v2 infers version context consistently.
+  claim_key v2 columns; v2 infers version context consistently; WAL-safe
+  migration copy and pinned snapshot fetch.
 
 ### Fixed
 

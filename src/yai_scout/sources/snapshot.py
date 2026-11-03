@@ -126,15 +126,19 @@ def _resolve_public_ip(
     return str(infos[0][4][0]) if infos else None
 
 
-def _validate_url(
+def _public_ip_for(
     url: str, resolver: Callable[[str], str | None] | None = None
-) -> bool:
+) -> tuple[str, str] | None:
     parsed = urlsplit(url)
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
-        return False
+        return None
     if parsed.username or parsed.password:
-        return False
-    return _resolve_public_ip(parsed.hostname.lower(), resolver) is not None
+        return None
+    host = parsed.hostname.lower()
+    ip = _resolve_public_ip(host, resolver)
+    if not ip:
+        return None
+    return host, ip
 
 
 async def _read_capped(response: httpx.Response) -> bytes:
@@ -165,9 +169,22 @@ async def fetch_text(
     current = url
     try:
         for _ in range(MAX_REDIRECTS + 1):
-            if not _validate_url(current, resolver):
+            resolved = _public_ip_for(current, resolver)
+            if resolved is None:
                 return None
-            resp = await client.get(current)
+            host, ip = resolved
+            ip_host = f"[{ip}]" if ":" in ip else ip
+            parsed = urlsplit(current)
+            pinned_url = f"https://{ip_host}{parsed.path or '/'}"
+            if parsed.query:
+                pinned_url += f"?{parsed.query}"
+            request = client.build_request(
+                "GET",
+                pinned_url,
+                headers={"Host": host},
+                extensions={"sni_hostname": host},
+            )
+            resp = await client.send(request)
             try:
                 if 300 <= resp.status_code < 400:
                     location = resp.headers.get("location")

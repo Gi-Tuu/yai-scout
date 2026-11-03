@@ -96,6 +96,14 @@ Docker      : built
   content type.
 - route modules split; revalidation offloaded; coverage gate added.
 
+## Batch 0 audit fixes
+
+- `migrate_fk.py` now uses SQLite backup API, so WAL data is included;
+  preflight rejects sources missing required columns.
+- snapshot `fetch_text` now pins the validated public IP with Host/SNI,
+  closing the DNS-rebinding window.
+- regression tests: WAL copy, pinned Host/SNI.
+
 ## Still open
 
 - FK constraints are now in the fresh `SCHEMA` and the migrated local DB;

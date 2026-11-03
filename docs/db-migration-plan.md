@@ -178,7 +178,7 @@ python scripts/migrate_fk.py `
 
 - refuses to overwrite target;
 - preflight rejects orphans and duplicate bench results;
-- copies to target, rebuilds tables with FKs;
+- copies with SQLite backup API (WAL-safe), rebuilds tables with FKs;
 - validates row counts, `foreign_key_check`, `integrity_check`;
 - deletes target on failure;
 - never modifies source.

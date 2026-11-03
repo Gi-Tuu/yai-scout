@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import contextlib
 import json
-import shutil
 import sqlite3
 from collections.abc import Iterable
 from pathlib import Path
@@ -260,14 +259,47 @@ def _duplicate_bench_results(conn: sqlite3.Connection) -> list[dict[str, object]
     ]
 
 
+def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    return {str(row[1]) for row in conn.execute(f"PRAGMA table_info({table})")}
+
+
+def _copy_with_backup(source: Path, target: Path) -> None:
+    """Copy with SQLite backup API so WAL data is included."""
+    src = sqlite3.connect(source)
+    dst = sqlite3.connect(target)
+    try:
+        src.backup(dst)
+    finally:
+        dst.close()
+        src.close()
+
+
 def migrate_copy(source: Path, target: Path) -> dict[str, object]:
     if not source.is_file():
         raise MigrationError(f"source DB not found: {source}")
     if target.exists():
         raise MigrationError(f"refusing to overwrite target: {target}")
     target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, target)
 
+    # Preflight source schema before creating the target.
+    source_conn = sqlite3.connect(source)
+    try:
+        for table, columns in COPY_COLUMNS.items():
+            present = _table_columns(source_conn, table)
+            missing = [
+                column.strip()
+                for column in columns.split(",")
+                if column.strip() not in present
+            ]
+            if missing:
+                raise MigrationError(
+                    f"source table {table} missing columns: {missing}; "
+                    "run app migrations first"
+                )
+    finally:
+        source_conn.close()
+
+    _copy_with_backup(source, target)
     conn = sqlite3.connect(target)
     conn.row_factory = sqlite3.Row
     try:
