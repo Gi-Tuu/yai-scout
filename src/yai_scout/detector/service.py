@@ -84,7 +84,7 @@ class StaleAnswerDetector:
             anchors_by_v1.setdefault(anchor.claim_key, []).append(anchor)
             v2 = anchor.claim_key_v2
             if not v2 and anchor.claim_text:
-                v2 = claim_key_v2(anchor.claim_text)
+                v2 = claim_key_v2(anchor.claim_text, anchor.claim_type)
             if v2:
                 anchors_by_v2.setdefault(v2, []).append(anchor)
         semaphore = asyncio.Semaphore(self.concurrency)
@@ -93,7 +93,7 @@ class StaleAnswerDetector:
             claim = claims[claim_index]
             async with semaphore:
                 try:
-                    v1_key, v2_key = claim_keys(claim.text, claim.type.value)
+                    v1_key, v2_key = claim_keys(claim.text, claim.type)
                     candidates = list(anchors_by_v2.get(v2_key, []))
                     if not candidates:
                         candidates = [

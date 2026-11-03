@@ -212,6 +212,9 @@ def create_candidate_from_observations(
         id=f"cand_{uuid.uuid4().hex[:12]}",
         anchor_id=anchor.id,
         claim_key=anchor.claim_key,
+        claim_key_v2=anchor.claim_key_v2,
+        claim_key_version=anchor.claim_key_version,
+        claim_type=anchor.claim_type,
         old_value=anchor.last_value,
         new_value=best.value,
         normalized_old=gate.normalized_old,
@@ -273,8 +276,10 @@ def apply_candidate(
     new_anchor = Anchor(
         id=f"anc_{uuid.uuid4().hex[:12]}",
         claim_key=anchor.claim_key,
-        claim_key_v2=anchor.claim_key_v2 or claim_key_v2(anchor.claim_text),
+        claim_key_v2=anchor.claim_key_v2
+        or claim_key_v2(anchor.claim_text, anchor.claim_type),
         claim_key_version=2 if (anchor.claim_key_v2 or anchor.claim_text) else 1,
+        claim_type=anchor.claim_type,
         claim_text=anchor.claim_text,
         url=best.url or anchor.url,
         source_tier=best.source_tier or anchor.source_tier,

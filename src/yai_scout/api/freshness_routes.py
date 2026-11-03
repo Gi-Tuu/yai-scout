@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
+from ..claim_classification import resolve_claim_type
 from ..claim_keys import claim_key, claim_key_v2
 from ..config import Settings
 from ..detector.compare import compare_reports
@@ -234,11 +235,13 @@ def register_freshness_routes(
             store.list_snapshots_for_url, payload.url, 1
         )
         latest = snapshots[0] if snapshots else None
+        resolved_type = resolve_claim_type(payload.claim_text)
         anchor = Anchor(
             id=f"anc_{uuid.uuid4().hex[:12]}",
             claim_key=claim_key(payload.claim_text),
-            claim_key_v2=claim_key_v2(payload.claim_text),
+            claim_key_v2=claim_key_v2(payload.claim_text, resolved_type),
             claim_key_version=2,
+            claim_type=resolved_type,
             claim_text=payload.claim_text,
             url=payload.url,
             source_tier=payload.source_tier,

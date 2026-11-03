@@ -8,27 +8,39 @@ def test_v1_is_unchanged_for_compatibility():
 
 
 def test_v2_keeps_periods_and_dates_distinct():
-    assert claim_key_v2("第1季度营收 500") != claim_key_v2("第2季度营收 600")
-    assert claim_key_v2("2026 年截止") != claim_key_v2("2027 年截止")
-    assert claim_key_v2("2026-01-01 发布") != claim_key_v2("2026-02-01 发布")
+    assert claim_key_v2("第1季度营收 500", "statistic") != claim_key_v2(
+        "第2季度营收 600", "statistic"
+    )
+    assert claim_key_v2("2026 年截止", "date") != claim_key_v2(
+        "2027 年截止", "date"
+    )
+    assert claim_key_v2("2026-01-01 发布", "date") != claim_key_v2(
+        "2026-02-01 发布", "date"
+    )
 
 
 def test_v2_normalizes_values_but_keeps_units():
-    assert claim_key_v2("Tavily 500 credits") == claim_key_v2("Tavily 1,000 credits")
-    assert claim_key_v2("Tavily 500 credits") != claim_key_v2("Tavily 500 USD")
+    assert claim_key_v2("Tavily 500 credits", "pricing") == claim_key_v2(
+        "Tavily 1,000 credits", "pricing"
+    )
+    assert claim_key_v2("Tavily 500 credits", "pricing") != claim_key_v2(
+        "Tavily 500 USD", "pricing"
+    )
 
 
 def test_v2_version_token_depends_on_claim_type():
     assert claim_key_v2("当前版本 0.24.0", "version") == claim_key_v2(
         "当前版本 0.25.0", "version"
     )
-    assert claim_key_v2("Python 3.12 supported") != claim_key_v2(
-        "Python 3.13 supported"
+    assert claim_key_v2("Python 3.12 supported", "version") != claim_key_v2(
+        "Python 3.13 supported", "version"
     )
-    assert claim_key_v2("Python 3.12 发布") == claim_key_v2("Python 3.13 发布")
+    assert claim_key_v2("Python 3.12 发布", "version") != claim_key_v2(
+        "Python 3.13 发布", "version"
+    )
 
 
 def test_claim_keys_returns_both():
-    v1, v2 = claim_keys("Tavily 500 credits")
+    v1, v2 = claim_keys("Tavily 500 credits", "pricing")
     assert v1 == claim_key("Tavily 500 credits")
-    assert v2 == claim_key_v2("Tavily 500 credits")
+    assert v2 == claim_key_v2("Tavily 500 credits", "pricing")

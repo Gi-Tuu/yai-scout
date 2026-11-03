@@ -146,6 +146,7 @@ class EvidenceRef(BaseModel):
     published_at: str | None = None
     updated_at: str | None = None
     retrieved_at: str | None = None
+    published_at_source: str = "unknown"
     tier: int = 3
     snippet: str = ""
     evidence_kind: EvidenceKind = EvidenceKind.SEARCH_SNIPPET
@@ -177,6 +178,7 @@ class Anchor(BaseModel):
     claim_key: str
     claim_key_v2: str = ""
     claim_key_version: int = 1
+    claim_type: ClaimType = ClaimType.OTHER
     claim_text: str = ""
     url: str
     source_tier: int = Field(default=3, ge=1, le=4)
@@ -220,6 +222,9 @@ class AnchorCandidate(BaseModel):
     id: str
     anchor_id: str
     claim_key: str
+    claim_key_v2: str = ""
+    claim_key_version: int = 1
+    claim_type: ClaimType = ClaimType.OTHER
     old_value: str = ""
     new_value: str = ""
     normalized_old: str = ""

@@ -9,68 +9,13 @@ from __future__ import annotations
 import re
 import uuid
 
+from ..claim_classification import classify
 from ..domain.models import Claim, ClaimType
 
 SENTENCE_SPLIT_RE = re.compile(r"(?<!\d)[.!?](?!\d)|[。！？]|\n+")
 NUMBER_RE = re.compile(r"\d+(?:\.\d+)+|\d[\d,]*")
 MAX_CLAIM_CHARS = 400
 MIN_CLAIM_CHARS = 12
-
-# 顺序即优先级：价格 > 版本 > 法规 > 人事 > 统计 > 日期
-SIGNALS: list[tuple[ClaimType, re.Pattern[str], str]] = [
-    (
-        ClaimType.PRICING,
-        re.compile(
-            r"[$€£¥]\s?\d|\b(?:USD|EUR|CNY|RMB|dollars?|euros?)\b"
-            r"|\b(?:pricing|price|cost|per month|/mo|subscription|billing|credits?)\b"
-            r"|免费|价格|费用|收费|每月|每年|订阅|美元|人民币",
-            re.I,
-        ),
-        "price",
-    ),
-    (
-        ClaimType.VERSION,
-        re.compile(r"\bv?\d+\.\d+(?:\.\d+)?\b|\bversion\b|\brelease\b|版本|发布|端口|port", re.I),
-        "version",
-    ),
-    (
-        ClaimType.LAW,
-        re.compile(
-            r"\b(?:law|act|regulation|directive|bill|policy|effective|compliance)\b"
-            r"|\b(?:GDPR|AI Act|EU AI Act)\b|法律|法规|法案|生效|监管|合规|许可证|license",
-            re.I,
-        ),
-        "law",
-    ),
-    (
-        ClaimType.LEADERSHIP,
-        re.compile(
-            r"\b(?:CEO|CTO|CFO|COO|founder|president|chairman|head of"
-            r"|appointed|resigned|steps down)\b|创始人|总裁|辞任|任命",
-            re.I,
-        ),
-        "leadership",
-    ),
-    (
-        ClaimType.STATISTIC,
-        re.compile(
-            r"\b\d+(?:\.\d+)?\s?(?:%|percent|million|billion|thousand"
-            r"|users|customers|registrations|downloads)\b|用户|增长|占比",
-            re.I,
-        ),
-        "statistic",
-    ),
-    (
-        ClaimType.DATE,
-        re.compile(
-            r"\b(?:19|20)\d{2}\b|\b\d{4}年"
-            r"|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b"
-            r"|\b\d{1,2}/\d{1,2}/\d{2,4}\b",
-            re.I,
-        ),
-        "date",
-    ),
-]
 
 
 def normalize_number(raw: str) -> str:
@@ -85,13 +30,6 @@ def extract_numbers(text: str) -> list[str]:
         if value and value not in out:
             out.append(value)
     return out
-
-
-def classify(text: str) -> tuple[ClaimType, list[str]]:
-    for claim_type, pattern, label in SIGNALS:
-        if pattern.search(text):
-            return claim_type, [label]
-    return ClaimType.OTHER, []
 
 
 def split_sentences(text: str) -> list[str]:

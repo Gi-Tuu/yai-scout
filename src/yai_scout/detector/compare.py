@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from ..claim_keys import CLAIM_KEY_VERSION, claim_key, claim_key_v2, claim_keys
-from ..domain.models import DetectorReport, FreshnessVerdict
+from ..domain.models import Claim, DetectorReport, FreshnessVerdict
 
 __all__ = ["CLAIM_KEY_VERSION", "claim_key", "claim_key_v2", "claim_keys", "compare_reports"]
 
@@ -29,6 +29,8 @@ class EvidenceChange(BaseModel):
 
 class ClaimDiff(BaseModel):
     claim_key: str
+    left_claim_id: str = ""
+    right_claim_id: str = ""
     text_left: str = ""
     text_right: str = ""
     numbers_left: list[str] = Field(default_factory=list)
@@ -63,88 +65,104 @@ def _evidence_urls(verdict: FreshnessVerdict | None) -> set[str]:
 def compare_reports(left: DetectorReport, right: DetectorReport) -> DriftReport:
     left_verdicts = {v.claim_id: v for v in left.verdicts}
     right_verdicts = {v.claim_id: v for v in right.verdicts}
-    left_map = {claim_key(c.text): c for c in left.claims}
-    right_map = {claim_key(c.text): c for c in right.claims}
-    keys = sorted(set(left_map) | set(right_map))
+
+    def group(claims: list[Claim]) -> dict[str, list[Claim]]:
+        groups: dict[str, list[Claim]] = {}
+        for claim in claims:
+            key = claim_key_v2(claim.text, claim.type)
+            groups.setdefault(key, []).append(claim)
+        return groups
+
+    left_groups = group(list(left.claims))
+    right_groups = group(list(right.claims))
+    keys = sorted(set(left_groups) | set(right_groups))
 
     diffs: list[ClaimDiff] = []
     summary = {"stable": 0, "changed": 0, "new": 0, "removed": 0}
+    duplicate_keys: list[str] = []
     for key in keys:
-        lc = left_map.get(key)
-        rc = right_map.get(key)
-        change: Literal["stable", "changed", "new", "removed"]
-        if lc is None and rc is not None:
-            change = "new"
-        elif lc is not None and rc is None:
-            change = "removed"
-        elif lc is not None and rc is not None:
-            change = "changed" if lc.numbers != rc.numbers else "stable"
-        else:
-            continue
-        lv = left_verdicts.get(lc.id) if lc else None
-        rv = right_verdicts.get(rc.id) if rc else None
-        left_urls = _evidence_urls(lv)
-        right_urls = _evidence_urls(rv)
-        left_evidence = {item.url: item for item in (lv.evidence if lv else [])}
-        right_evidence = {item.url: item for item in (rv.evidence if rv else [])}
-        changes: list[EvidenceChange] = []
-        for url in sorted(left_urls & right_urls):
-            old = left_evidence[url]
-            new = right_evidence[url]
-            if (old.content_hash or new.content_hash) and old.content_hash != new.content_hash:
-                changes.append(
-                    EvidenceChange(
-                        url=url,
-                        change="content_changed",
-                        old_hash=old.content_hash,
-                        new_hash=new.content_hash,
+        left_claims = left_groups.get(key, [])
+        right_claims = right_groups.get(key, [])
+        if len(left_claims) > 1 or len(right_claims) > 1:
+            duplicate_keys.append(key)
+        for index in range(max(len(left_claims), len(right_claims))):
+            lc = left_claims[index] if index < len(left_claims) else None
+            rc = right_claims[index] if index < len(right_claims) else None
+            change: Literal["stable", "changed", "new", "removed"]
+            if lc is None and rc is not None:
+                change = "new"
+            elif lc is not None and rc is None:
+                change = "removed"
+            elif lc is not None and rc is not None:
+                change = "changed" if lc.numbers != rc.numbers else "stable"
+            else:
+                continue
+            lv = left_verdicts.get(lc.id) if lc else None
+            rv = right_verdicts.get(rc.id) if rc else None
+            left_urls = _evidence_urls(lv)
+            right_urls = _evidence_urls(rv)
+            left_evidence = {item.url: item for item in (lv.evidence if lv else [])}
+            right_evidence = {item.url: item for item in (rv.evidence if rv else [])}
+            changes: list[EvidenceChange] = []
+            for url in sorted(left_urls & right_urls):
+                old = left_evidence[url]
+                new = right_evidence[url]
+                if (old.content_hash or new.content_hash) and old.content_hash != new.content_hash:
+                    changes.append(
+                        EvidenceChange(
+                            url=url,
+                            change="content_changed",
+                            old_hash=old.content_hash,
+                            new_hash=new.content_hash,
+                        )
                     )
-                )
-            elif old.evidence_kind is not new.evidence_kind:
-                changes.append(
-                    EvidenceChange(
-                        url=url,
-                        change="kind_changed",
-                        old_kind=old.evidence_kind.value,
-                        new_kind=new.evidence_kind.value,
+                elif old.evidence_kind is not new.evidence_kind:
+                    changes.append(
+                        EvidenceChange(
+                            url=url,
+                            change="kind_changed",
+                            old_kind=old.evidence_kind.value,
+                            new_kind=new.evidence_kind.value,
+                        )
                     )
-                )
-            elif old.published_at != new.published_at:
-                changes.append(
-                    EvidenceChange(
-                        url=url,
-                        change="date_changed",
-                        old_published_at=old.published_at,
-                        new_published_at=new.published_at,
+                elif old.published_at != new.published_at:
+                    changes.append(
+                        EvidenceChange(
+                            url=url,
+                            change="date_changed",
+                            old_published_at=old.published_at,
+                            new_published_at=new.published_at,
+                        )
                     )
-                )
-        left_score = lv.score if lv and lv.score is not None else None
-        right_score = rv.score if rv and rv.score is not None else None
-        delta = (
-            round(float(right_score) - float(left_score), 1)
-            if left_score is not None and right_score is not None
-            else None
-        )
-        diffs.append(
-            ClaimDiff(
-                claim_key=key,
-                text_left=lc.text if lc else "",
-                text_right=rc.text if rc else "",
-                numbers_left=list(lc.numbers) if lc else [],
-                numbers_right=list(rc.numbers) if rc else [],
-                change=change,
-                status_left=lv.status.value if lv else None,
-                status_right=rv.status.value if rv else None,
-                freshness_delta=delta,
-                evidence_added=sorted(right_urls - left_urls),
-                evidence_removed=sorted(left_urls - right_urls),
-                evidence_changes=changes,
-                content_hash_changed=any(
-                    item.change == "content_changed" for item in changes
-                ),
+            left_score = lv.score if lv and lv.score is not None else None
+            right_score = rv.score if rv and rv.score is not None else None
+            delta = (
+                round(float(right_score) - float(left_score), 1)
+                if left_score is not None and right_score is not None
+                else None
             )
-        )
-        summary[change] += 1
+            diffs.append(
+                ClaimDiff(
+                    claim_key=key,
+                    left_claim_id=lc.id if lc else "",
+                    right_claim_id=rc.id if rc else "",
+                    text_left=lc.text if lc else "",
+                    text_right=rc.text if rc else "",
+                    numbers_left=list(lc.numbers) if lc else [],
+                    numbers_right=list(rc.numbers) if rc else [],
+                    change=change,
+                    status_left=lv.status.value if lv else None,
+                    status_right=rv.status.value if rv else None,
+                    freshness_delta=delta,
+                    evidence_added=sorted(right_urls - left_urls),
+                    evidence_removed=sorted(left_urls - right_urls),
+                    evidence_changes=changes,
+                    content_hash_changed=any(
+                        item.change == "content_changed" for item in changes
+                    ),
+                )
+            )
+            summary[change] += 1
 
     if left.mode == "replay" and right.mode == "replay":
         mode: Literal["live", "replay", "simulated"] = "replay"
@@ -155,6 +173,11 @@ def compare_reports(left: DetectorReport, right: DetectorReport) -> DriftReport:
     else:
         mode = "live"
         warning = ""
+    if duplicate_keys:
+        warning = (
+            f"{warning} Duplicate claim identities were paired by occurrence order: "
+            + ", ".join(duplicate_keys[:5])
+        ).strip()
     return DriftReport(
         left_id=left.id,
         right_id=right.id,

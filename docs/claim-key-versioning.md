@@ -1,7 +1,7 @@
 # Claim Key Versioning Design
 
-> Status: **v2 functions, migration 7, backfill and dual-read are implemented.**
-> v1 remains the legacy fallback for anchors without v2.
+> Status: **typed v2 identity, migration 8, backfill and dual-read are implemented.**
+> `claim_type` is persisted in the payload; v1 remains the legacy fallback.
 
 ## 1. Problem
 
@@ -112,8 +112,8 @@ Tavily 1000 credits   → tavily # credits   (same)
 CLAIM_KEY_VERSION = 2
 
 def claim_key_v1(text: str) -> str: ...          # current implementation
-def claim_key_v2(text: str, claim_type: ClaimType | None = None) -> str: ...
-def claim_keys(text: str, claim_type: ClaimType | None = None) -> tuple[str, str]:
+def claim_key_v2(text: str, claim_type: ClaimType | str) -> str: ...
+def claim_keys(text: str, claim_type: ClaimType | str) -> tuple[str, str]:
     return claim_key_v1(text), claim_key_v2(text, claim_type)
 ```
 
@@ -128,18 +128,20 @@ class Anchor(BaseModel):
     claim_key_version: int = 1     # 1 or 2
 ```
 
-### Database (migration 7, post-submission)
+### Database (migrations 7-8)
 
 ```sql
 ALTER TABLE anchor ADD COLUMN claim_key_v2 TEXT NOT NULL DEFAULT '';
 ALTER TABLE anchor ADD COLUMN claim_key_version INTEGER NOT NULL DEFAULT 1;
 CREATE INDEX idx_anchor_claim_v2 ON anchor(claim_key_v2);
+-- migration 8: classify claim_text, persist claim_type in payload, recompute v2
 ```
 
 Backfill:
 
-- if `claim_text` is present, compute v2 and set `claim_key_version=2`;
-- if `claim_text` is empty, leave v2 empty and version 1 (legacy-only).
+- use `resolve_claim_type()` from `claim_classification.py`;
+- if `claim_text` is present, persist `claim_type`, compute v2, and set version 2;
+- if `claim_text` is empty, leave the legacy record untouched.
 
 No destructive rewrite; v1 stays.
 
@@ -230,7 +232,7 @@ Property/fuzz tests are implemented in `tests/test_claim_key_properties.py`
 
 ## 9. Recommendation
 
-Implement v2 only after the submission, in this order:
+Implement v2 in this order:
 
 1. pure functions + tests (no runtime switch);
 2. shadow write;
@@ -238,5 +240,4 @@ Implement v2 only after the submission, in this order:
 4. migration 7 + backfill;
 5. switch and remove v1 fallback later.
 
-Do not change the live key while the submission demo depends on current
-anchors.
+Do not change the live key without a migration and dual-read rollout.

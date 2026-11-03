@@ -12,6 +12,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from .claim_classification import resolve_claim_type
 from .claim_keys import claim_key_v2
 from .domain.models import (
     Anchor,
@@ -207,6 +208,7 @@ class Store:
             (5, self._ensure_bench_owner_column),
             (6, self._sync_bench_config_json),
             (7, self._ensure_claim_key_columns),
+            (8, self._refresh_claim_identity),
         )
         for version, migrate in migrations:
             if version in applied:
@@ -281,14 +283,23 @@ class Store:
                 payload = Anchor.model_validate_json(row["payload_json"])
             except ValueError:
                 continue
-            v2 = payload.claim_key_v2
-            if not v2 and payload.claim_text:
-                v2 = claim_key_v2(payload.claim_text)
-            version = 2 if v2 else 1
-            if row["claim_key_v2"] == v2 and int(row["claim_key_version"]) == version:
+            if not payload.claim_text:
+                continue
+            resolved = resolve_claim_type(payload.claim_text, payload.claim_type)
+            v2 = claim_key_v2(payload.claim_text, resolved)
+            version = 2
+            if (
+                row["claim_key_v2"] == v2
+                and int(row["claim_key_version"]) == version
+                and payload.claim_type is resolved
+            ):
                 continue
             payload = payload.model_copy(
-                update={"claim_key_v2": v2, "claim_key_version": version}
+                update={
+                    "claim_key_v2": v2,
+                    "claim_key_version": version,
+                    "claim_type": resolved,
+                }
             )
             self._conn.execute(
                 "UPDATE anchor SET claim_key_v2 = ?, claim_key_version = ?, payload_json = ? "
@@ -298,6 +309,41 @@ class Store:
         self._conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_anchor_claim_v2 ON anchor(claim_key_v2)"
         )
+
+    def _refresh_claim_identity(self) -> None:
+        """Recompute v2 identity with the canonical classifier.
+
+        Migration 7 could not know the shared claim type; migration 8 fixes
+        anchors created before the type was persisted in the payload.
+        """
+        rows = self._conn.execute(
+            "SELECT id, payload_json FROM anchor"
+        ).fetchall()
+        for row in rows:
+            try:
+                payload = Anchor.model_validate_json(row["payload_json"])
+            except ValueError:
+                continue
+            if not payload.claim_text:
+                continue
+            resolved = resolve_claim_type(payload.claim_text, payload.claim_type)
+            payload = payload.model_copy(
+                update={
+                    "claim_key_v2": claim_key_v2(payload.claim_text, resolved),
+                    "claim_key_version": 2,
+                    "claim_type": resolved,
+                }
+            )
+            self._conn.execute(
+                "UPDATE anchor SET claim_key_v2 = ?, claim_key_version = ?, "
+                "payload_json = ? WHERE id = ?",
+                (
+                    payload.claim_key_v2,
+                    payload.claim_key_version,
+                    payload.model_dump_json(),
+                    row["id"],
+                ),
+            )
 
     def _ensure_bench_owner_column(self) -> None:
         columns = {
@@ -1248,7 +1294,10 @@ class Store:
                 (
                     new_anchor.id,
                     new_anchor.claim_key,
+                    new_anchor.claim_key_v2,
+                    new_anchor.claim_key_version,
                     new_anchor.url,
+                    new_anchor.status,
                     new_anchor.model_dump_json(),
                     new_anchor.last_verified_at,
                 ),
