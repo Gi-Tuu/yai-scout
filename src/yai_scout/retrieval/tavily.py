@@ -35,6 +35,8 @@ class SearchResult:
     content: str
     score: float = 0.0
     published_date: str | None = None
+    updated_date: str | None = None
+    published_date_source: str = ""
     retrieved_at: str = ""
     content_hash: str = ""
     evidence_kind: EvidenceKind = EvidenceKind.SEARCH_SNIPPET
@@ -56,13 +58,17 @@ def parse_search_payload(
         if not url:
             continue
         content = str(item.get("content") or "").strip()
+        published = item.get("published_date") or None
+        updated = item.get("updated_date") or None
         results.append(
             SearchResult(
                 title=str(item.get("title") or "").strip(),
                 url=url,
                 content=content,
                 score=float(item.get("score") or 0.0),
-                published_date=item.get("published_date"),
+                published_date=published,
+                updated_date=updated,
+                published_date_source="tavily_search" if published else "",
                 retrieved_at=utcnow_iso(),
                 content_hash=hashlib.sha256(content.encode("utf-8")).hexdigest(),
             )

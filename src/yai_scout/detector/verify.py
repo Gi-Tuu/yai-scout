@@ -21,6 +21,7 @@ from ..domain.models import (
 from ..llm import LLMClient
 from ..retrieval.quality import classify_source
 from ..retrieval.tavily import SearchResult
+from ..sources.page import merge_fetched_page
 from .anchor_policy import needs_revalidation
 from .claims import extract_numbers
 from .freshness import as_of_datetime, parse_published, score_claim
@@ -160,6 +161,8 @@ class ClaimVerifier:
                 if item.evidence_kind is EvidenceKind.SEARCH_SNIPPET:
                     try:
                         fetched = await self.page_fetcher(item)
+                        if fetched is not None:
+                            fetched = merge_fetched_page(item, fetched)
                     except Exception:  # noqa: BLE001 - page fetch is optional
                         fetched = None
                     upgraded.append(fetched or item)
@@ -267,8 +270,9 @@ class ClaimVerifier:
             title=result.title,
             domain=self._domain(result.url),
             published_at=result.published_date,
-            updated_at=None,
+            updated_at=result.updated_date,
             retrieved_at=result.retrieved_at or result.published_date,
+            published_at_source=result.published_date_source or "unknown",
             tier=tier,
             snippet=result.content[:400],
             evidence_kind=result.evidence_kind,

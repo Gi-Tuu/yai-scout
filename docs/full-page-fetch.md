@@ -27,3 +27,9 @@ latency, and SSRF surface.
 - `Settings.full_page_hosts()` is the single parser.
 
 Config tests: `tests/test_full_page_config.py`.
+
+## Time provenance
+
+Full-page merge preserves the original Tavily `published_date` and
+`published_date_source`; the fetch timestamp is stored only in `retrieved_at`.
+If neither source nor page provides a publication date, it stays unknown.

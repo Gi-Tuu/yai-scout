@@ -100,6 +100,7 @@ async def replay_anchor_result(
         content=text[:1200],
         score=1.0,
         published_date=snapshot.published_at,
+        published_date_source="snapshot",
         retrieved_at=snapshot.fetched_at,
         content_hash=snapshot.content_hash,
         evidence_kind=EvidenceKind.ARCHIVED_SOURCE,
@@ -177,6 +178,7 @@ async def live_anchor_result(
             content=text[:1200],
             score=1.0,
             published_date=None,  # retrieval time is not publication time
+            published_date_source="unknown",
             retrieved_at=datetime.now(UTC).isoformat(timespec="seconds"),
             content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
             evidence_kind=EvidenceKind.FETCHED_PAGE,
