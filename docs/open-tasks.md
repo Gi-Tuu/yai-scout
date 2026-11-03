@@ -34,7 +34,8 @@
 | 14 | Full async DB layer | large refactor; not before deadline |
 | 15 | More adversarial accuracy cases | only meaningful with independent labels |
 | 16 | Post-submission cleanup / blog | not required |
-| 17 | FK/JSON migration design | docs/db-migration-plan.md; post-submission table rebuild, no runtime change yet. |
+| 17 | Claim-key v2 design | `docs/claim-key-versioning.md`; additive v2 key, dual-read/backfill, no live change yet. |
+| 18 | FK/JSON migration design | docs/db-migration-plan.md; post-submission table rebuild, no runtime change yet. |
 | 18 | Scholarly/citation record status (future work) | only for explicit cited papers/DOIs: retraction, correction, version/edition via Crossref/OpenAlex/PubMed/Retraction Watch. Keep Tavily as the claim-evidence layer; surface it only as an evidence-status sub-check, **not** a standalone citation product or second submission. |
 
 ## Recently completed (do not re-open)

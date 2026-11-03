@@ -184,3 +184,7 @@ python scripts/migrate_fk.py `
 - never modifies source.
 
 Local dry run: 13 tables, 0 orphans, 0 duplicates, FK/integrity ok.
+
+## 9. Related design
+
+See `docs/claim-key-versioning.md` for the additive v2 key + migration 7 proposal.
