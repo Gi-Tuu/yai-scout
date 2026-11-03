@@ -45,3 +45,7 @@ Thumbs.db
 accuracy_labels_private_*.json
 adjudication_disagreements.json
 
+
+# local DB backups / migration copies
+backups/
+
