@@ -30,7 +30,7 @@ Observation → Candidate → Accuracy Gate → active Anchor + memory update
 | Candidate | 与 anchor 不同的候选值（未生效） |
 | Accuracy Gate | 判断候选值是否足够可信、可自动写回的规则集 |
 | Auto Update | Gate 全通过且 feature flag 开启时，追加新 Anchor 并更新记忆 |
-| Review | 需要人工/评审确认 |
+| Review | 需要人工复核 |
 | Reject | 不采用该候选（无权威证据/更旧/单位不明/仅低权威） |
 | No Change | 归一化后与当前值相同，不产生更新 |
 
@@ -120,7 +120,7 @@ confidence = 0.4*authority + 0.4*agreement + 0.2*recency
 ```
 
 - `auto_update` 仍必须满足 R4，不能仅凭 confidence；
-- `review` 时展示 confidence 给评审。
+- `review` 时展示 confidence 给复核人员。
 
 ## 8. 写回与回滚
 
@@ -181,7 +181,7 @@ Review：
 - 60 条独立人工标注 + 对抗样本；
 - rollback 管理端点（当前可通过新 Anchor 再 supersede 实现，未做 UI）；
 - false update rate 在线监控；
-- 评审 UI（当前 admin API 足够演示）。
+- 复核 UI（当前 admin API 足够演示）。
 
 ## 12. v0 评估结果（2026-11-01）
 

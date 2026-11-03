@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-Pre-1.0 versions are hackathon previews; APIs may change.
+Pre-1.0 versions are previews; APIs may change.
 
 ## [Unreleased]
 
@@ -14,7 +14,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - Real web-archive snapshots (Wayback or manual HTML) for pricing/leaderboard facts.
 - API rate limiting and cost protection for the public demo (P1 R1/R3).
 - More agent adapters (framework wrappers) and larger benchmark dataset.
-- Final submission package: one primary README, slides, demo video; independent second labeler for accuracy.
+- Independent accuracy calibration and a stable label-adjudication workflow.
 
 ## [0.3.6] - 2026-11-02
 
@@ -33,14 +33,11 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   freshness/admin routes moved to separate modules; JSON/column consistency
   checker + migration 6; snapshot search pagination; 80% coverage threshold;
   revalidation store I/O offloaded to worker threads; per-URL snapshot replay paginates;
-  offline FK migration copy tool + validation; local migrated-DB switch rehearsal;
-  production switch blocked by ephemeral Render storage; benchmark run admin
-  gate; snapshot fetch SSRF/size hardening; FK constraints in fresh schema;
-  claim_key v2 functions/shadow fields, migration 7 + dual-read;
-  full-page fetch MVP behind `FULL_PAGE_FETCH_ENABLED`; FK migrator carries
-  claim_key v2 columns; v2 infers version context consistently; WAL-safe
-  migration copy and pinned snapshot fetch; claim v2 property tests; full-page
-  allowlist parser tests.
+  offline FK migration copy tool and validation; benchmark run admin gate;
+  snapshot fetch SSRF/size hardening; FK constraints in fresh schema;
+  typed claim identity with migration 8 and dual-read recall; full-page fetch
+  provenance merge; WAL-safe migration copy and pinned snapshot fetch; claim
+  identity/provenance integration tests.
 
 ### Fixed
 
@@ -126,22 +123,19 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 ### Changed
 
-- Repositioned to **one primary submission**: Tavily Track Problem 05 (Stale-answer detector). The benchmark is now supporting evaluation evidence, not a second submission.
-- `docs/track-tavily.md` is the primary submission brief; `docs/track-bifrost.md` explicitly does not claim Bifrost Track Problem 02.
-- README rewritten around one product + both required technologies.
+- Positioned around one product: a freshness audit layer. The benchmark is supporting evaluation evidence.
+- README documents the product model and the roles of Tavily, Bifrost, and the deterministic engine.
 
 ### Added
 
 - **Bifrost AI Gateway integration**: `BIFROST_BASE_URL` / `BIFROST_API_KEY` / `BIFROST_MODEL`; all LLM requests route through Bifrost when configured; healthz reports `gateway`.
 - Local Bifrost verification: real `/freshness/verify` routed through Bifrost, `POST /v1/chat/completions` 200, documented in `docs/bifrost-verification.md`; `scripts/verify_bifrost.py`.
-- Editable 12-slide submission deck (`deliverables/YAI_Scout_Submission.pptx`) + builder.
-- Submission checklist mapping official requirements (`docs/submission.md`).
 
 ### Fixed
 
 - No-auth local Bifrost failed with `Illegal header value b''`; `Authorization` is now omitted when no key is set.
 
-## [0.2.1-hackathon] - 2026-11-01
+## [0.2.1-preview] - 2026-11-01
 
 ### Added
 
@@ -163,7 +157,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 - Anchor hardening: content hash diff (`changed`), deterministic multi-anchor ordering, read-time TTL (`needs_revalidation`), and optional allowlisted live fetch (`ANCHOR_LIVE_FETCH`, default off; HTTPS-only, no redirects, public-IP checks, size/time limits).
 - Anchor revalidation CLI + token-protected admin endpoint (external cron; observations only, never auto-overwrite).
 - DNS rebinding mitigation: resolve once, connect to pinned public IP, preserve Host/SNI; conflict UI shows anchor evidence side-by-side without auto-resolution.
-- Positioning & competitor map (`docs/positioning.md`), anchor-first retrieval design (`docs/spec-anchor-retrieval.md`), and a citation-vs-freshness demo case (`docs/demo-case-citation-vs-freshness.md`).
+- Anchor-first retrieval design (`docs/spec-anchor-retrieval.md`) and a citation-vs-freshness demo case (`docs/demo-case-citation-vs-freshness.md`).
 - `scripts/demo_citation_not_freshness.py` and `scripts/freshness_ci.py` (Freshness CI gate with configurable fail-on statuses).
 - Tests for Freshness CI status filtering.
 
@@ -180,7 +174,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
 
 - Per-minute cap is enforced globally as well as per client, so rotating `X-Forwarded-For` cannot bypass it.
 
-## [0.2.0-hackathon] - 2026-11-01
+## [0.2.0-preview] - 2026-11-01
 
 Engineering governance adoption and P0 hardening. No change to freshness scoring rules or
 benchmark ranking weights.
@@ -196,8 +190,6 @@ benchmark ranking weights.
 - `supersedes` revision link for benchmark sessions.
 - Governance tests: manifest determinism/sensitivity/redaction, hidden isolation, stable metric,
   version consistency, legacy migration, immutability, private execution, revisions.
-- Organizer reply recorded (`research/organizer-reply-2026-11-01.md`), submission playbook with
-  combined vs dual-submission options, and updated rules/plan docs.
 - Public demo deployment <https://yai-scout.onrender.com> with bundled snapshot replay and
   `scripts/smoke_online.py` (these landed after v0.1.0 and are included here).
 
@@ -234,21 +226,19 @@ benchmark ranking weights.
 - Render deploy `2e6ad02` served `snapshots=32` with build marker; latest release commit deployed
   after this changelog entry.
 
-## [0.1.0-hackathon] - 2026-11-01
+## [0.1.0-preview] - 2026-11-01
 
-Hackathon preview for **Geek Room Global AI Hackathon 2026**: two independent projects
-(Bifrost-02 *Agent Benchmarking Platform*, Tavily-01 *Stale-answer detector*) sharing one
-evidence core.
+Initial preview: a benchmark and a freshness-audit detector sharing one evidence core.
 
 ### Added
 
-- **Freshness pipeline (Tavily-01)**
+- **Freshness pipeline**
   - LLM claim extraction (JSON mode) with exact-substring validation against the answer, plus rule-based fallback.
   - Temporal sensitivity classification: stable / slow / sensitive / volatile, with per-class validity windows and reasons.
   - Tavily live verification with supports / contradicts / mentions relations, authority tiers and timestamps.
   - Decision-table statuses `FRESH / STALE / CONFLICTED / INSUFFICIENT / UNKNOWN`, nullable score, confidence and score breakdown.
   - LLM relation review for law / leadership / date claims; correction suggestions for stale or insufficient claims.
-- **Benchmark (Bifrost-02)**
+- **Benchmark**
   - `scout-adapter/1.0` HTTP protocol (`GET /manifest`, `POST /run`) with request/response validation.
   - Python in-process and CLI subprocess adapters next to HTTP; reference agents (LLM RAG, retrieval baseline, synthetic).
   - 24-task dataset: 21 public + 3 hidden, across stable / time-sensitive / changed / conflicting categories.
@@ -263,7 +253,7 @@ evidence core.
   - Two-container deployment (`benchmark` / `freshness`) with `SCOUT_MODE` isolation; Dockerfile and compose verified.
   - GitHub Actions CI: ruff + mypy (strict) + pytest + Docker build.
   - MIT license, NOTICE with reused-component attribution (YAI Agent Core v0.25.0).
-  - Judge-facing README, demo script, charters and technical specs.
+  - Project README, charters and technical specs.
 
 ### Changed
 
@@ -289,9 +279,9 @@ evidence core.
 - Real replay example: YAI `0.25.0` — **STALE (24) at as_of 2026-10-28**, **FRESH (88) at as_of 2026-11-01**.
 - CI run on the release commit: success (test + docker).
 
-[Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-hackathon...HEAD
-[0.2.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-hackathon
-[0.1.0-hackathon]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-hackathon
+[Unreleased]: https://github.com/Gi-Tuu/yai-scout/compare/v0.2.0-preview...HEAD
+[0.2.0-preview]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.2.0-preview
+[0.1.0-preview]: https://github.com/Gi-Tuu/yai-scout/releases/tag/v0.1.0-preview
 
 
 

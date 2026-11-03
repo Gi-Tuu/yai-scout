@@ -1,68 +1,61 @@
-# Open Tasks — YAI Scout
+# Open Tasks
 
-> Snapshot: 2026-11-02 · release `v0.3.6` · 204 tests · live build `ef45a66dbcb4`
-> Primary submission: **Tavily Track, Problem 05 (Stale-answer detector)**
-> Deadline: **2026-11-15 23:59 IST** (Beijing 2026-11-16 02:29)
+> Snapshot: 2026-11-03 · release `v0.3.6` · 262 tests · Python 3.12 local verification
 
-## P0 — submission blockers
+## DONE
 
-| # | Task | Owner | Due | Done when |
-|---|---|---|---|---|
-| 1 | **3-minute demo video** | you (record), Lead (script) | 11/10 | shows fixed-case FRESH→STALE, live Tavily, local `gateway=bifrost` + Bifrost `POST /v1/chat/completions`, repo/architecture |
-| 2 | **Final PPT** (`deliverables/YAI_Scout_Submission.pptx`) | you/Lead | 11/11 | matches shipped `0.3.6`; no overclaim |
-| 3 | **Submission copy / 200-word description** | Lead/you | 11/12 | maps official requirements to evidence (`docs/submission.md`) |
-| 4 | **Submission form** | you | 11/14 | one primary challenge, repo/demo/video URLs, both-tech explanation |
-| 5 | **Final submit** | you | **11/15 23:59 IST** | confirmation captured |
-| 6 | Final repo/page check | you | before submit | README, demo, `/label`, `/admin` 404 without token, healthz version |
+| Task | Evidence |
+|---|---|
+| Typed claim identity (v1/v2) | `claim_keys.py`, `claim_classification.py`, `Anchor.claim_type`, migration 8 |
+| Claim identity dual-read | `detector/service.py`; tests `test_claim_identity_integration.py` |
+| Drift diff v2 grouping | `detector/compare.py`; list grouping prevents duplicate-key loss; `test_compare_identity.py` |
+| Full-page provenance | `sources/page.py` merge preserves Tavily publication metadata; `test_evidence_provenance.py` |
+| Full-page security boundary | allowlist, pinned IP, Host/SNI, size/time caps; default off |
+| Snapshot search pagination | `list_snapshots_page`, `list_snapshots_for_url_page` |
+| WAL-safe FK migrator | `scripts/migrate_fk.py` uses SQLite backup API |
+| FK enforcement | fresh `SCHEMA` FKs; `PRAGMA foreign_keys=ON` after migrations |
+| Benchmark run auth | `BENCHMARK_RUN_REQUIRES_ADMIN` default true |
+| Revalidation async I/O | `detector/revalidate.py` uses `asyncio.to_thread` |
+| Coverage gate | `fail_under = 80`; current documented coverage above threshold |
 
-## P1 — quality / evidence
+## IN PROGRESS
 
-| # | Task | Status | Notes |
-|---|---|---|---|
-| 7 | Independent human metrics + adjudication | **blocked / on hold** | tooling exists; public key compromised; 336 public-set agreement 0.267; private `jin` failed quality (12 impossible `no_change`); other 1/30. Do not claim independent accuracy. |
-| 8 | Full-page fetch for authoritative snippets | **frozen** | needs SSRF-safe fetch, allowlist, budget, size/time limits; not worth before deadline. Current evidence honestly marked `search_snippet`. |
-| 9 | Public Bifrost deployment | optional | extra service; local/video proof is enough; public Render stays direct fallback. |
-| 10 | Refresh fixed demo cache | as needed | `benchmarks/demo/responses.json` recorded 2026-11-01; re-record only if demo facts change. |
-| 11 | B4 residual: async SQLite writes | deferred | reads use `asyncio.to_thread`; writes synchronous. |
-| 12 | Join Discord / monitor updates / Tavily credits | ongoing | announcements, form changes, credits status. |
+| Task | Notes |
+|---|---|
+| Migration 8 validation in more real databases | local DB reports schema versions 1–8 and 0 consistency issues; add fixture coverage as databases appear |
+| CI dual-Python verification | CI remains the authority for 3.11 + 3.12; local runtime is 3.12 |
 
-## P2 — optional, only after P0
+## BLOCKED
 
-| # | Task | Notes |
-|---|---|---|
-| 13 | Benchmark failure injection / repeated runs / step traces | only if benchmark becomes primary; it is **not** Bifrost-02 |
-| 14 | Full async DB layer | large refactor; not before deadline |
-| 15 | More adversarial accuracy cases | only meaningful with independent labels |
-| 16 | Post-submission cleanup / blog | not required |
-| 17 | Claim-key v2 design | `docs/claim-key-versioning.md`; additive v2 key, dual-read/backfill, no live change yet. |
-| 18 | FK/JSON migration design | docs/db-migration-plan.md; post-submission table rebuild, no runtime change yet. |
-| 18 | Scholarly/citation record status (future work) | only for explicit cited papers/DOIs: retraction, correction, version/edition via Crossref/OpenAlex/PubMed/Retraction Watch. Keep Tavily as the claim-evidence layer; surface it only as an evidence-status sub-check, **not** a standalone citation product or second submission. |
+| Task | Blocker |
+|---|---|
+| Independent human accuracy metrics | no valid independent labels; do not treat rule-following labels as ground truth |
+| Durable production SQLite | current deployment filesystem is ephemeral; needs persistent storage before a real migration switch |
 
-## Recently completed (do not re-open)
+## DEFERRED
 
-- P0-1 temporal eligibility: old/future/unknown contradictions fixed.
-- P0-2 LLM aggregate assessment separated from `evidence[0]`.
-- P0-3 latest vs historical version relation.
-- P0-4 gate time guard: missing/invalid/future time → REVIEW.
-- Coverage / abstention fields.
-- Publication-date coverage / missing-date confidence.
-- Versioned Evidence Receipt endpoint.
-- Drift diff: content hash / kind / date changes.
-- Evaluator bug fixed (Gate vs human label).
-- 204 tests; CI/CodeQL green; deployed `0.3.6` build `ef45a66dbcb4`.
+| Task | Reason |
+|---|---|
+| Full async SQLite layer | write contention is not currently the bottleneck; large refactor |
+| PostgreSQL migration | no operational requirement yet; changes storage architecture |
+| FK/JSON full normalization | hybrid payload + indexed columns is intentional; high-risk rewrite |
+| Public Bifrost deployment | optional; local gateway path is verified |
+| Full-page fetch rollout | default off; needs an explicit allowlist and cost review |
+| Benchmark expansion | current 24-task suite is evaluation tooling, not a leaderboard |
 
-## Explicitly out of scope
+## Evidence commands
 
-- Re-submitting the benchmark as a second project.
-- Claiming public Render is Bifrost-routed.
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m ruff check src tests scripts examples
+.\.venv\Scripts\python.exe -m mypy
+.\.venv\Scripts\python.exe scripts\check_imports.py
+.\.venv\Scripts\python.exe scripts\db_consistency.py --db data\scout.sqlite3
+```
+
+## Out of scope
+
+- Automatic overwrite of the original answer (`AUTO_UPDATE` stays off).
 - Claiming independent human ground truth.
-- Enabling `AUTO_UPDATE`.
-- Recruiting more labelers before freeze; labels are not a submission blocker.
-
-## Recommended order
-
-1. Video
-2. PPT + submission copy
-3. Repo/page check
-4. Form + submit
-5. Optional P2 only after confirmation
+- Treating the benchmark as a universal accuracy leaderboard.
+- Expanding scrape permissions or disabling SSRF/size protections.

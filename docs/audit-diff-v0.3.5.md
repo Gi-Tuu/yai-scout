@@ -103,7 +103,7 @@ Docker: pending CI
 
 ## Numbering note
 
-Official problem ID **05** = `Stale-answer detector`; it is the first of Tavily's two challenges, i.e. **track-local Tavily-01**. Do not write "Tavily Problem 05" without the "global 05" clarification.
+
 
 ## Not done / not claimed
 

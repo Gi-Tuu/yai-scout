@@ -89,7 +89,7 @@ result_hash (对结果 JSON 的 sha256)
 
 1. YAI Agent Core 版本：`v0.24.0`（2026-10-24 左右）→ `v0.25.0`（2026-10-31）——GitHub Releases/标签页有历史，最稳。
 2. Tavily 定价：2025 年 archived docs 页 → 2026 现行页（若 Wayback 有快照）。
-3. Geek Room 截止日期：HackCulture 页（11/15）vs Tavily 社区页（11/22）——这是"来源冲突"，不是时间漂移，用于 Conflicting 类。
+3. 同一事实的不同发布日期：不同来源给出不一致日期——这是"来源冲突"，不是时间漂移，用于 Conflicting 类。
 
 **演示步骤（30–45 秒）**：
 1. 同一问题，选择 as_of=2025-06 → 显示"当时的证据 + 答案 + Freshness"；

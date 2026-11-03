@@ -1,9 +1,6 @@
 # YAI Scout
 
-**Evidence-first stale-answer detector.** Audit any LLM answer claim by claim, verify it against live sources, and show what is still true, what changed, and what cannot be verified.
-
-**Primary challenge: Tavily Track — Problem 05, Stale-answer detector (track-local Tavily-01).**  
-**Entry type: integrated (Tavily + Bifrost).** Both technologies serve different roles — Tavily for live web research; **Bifrost by Maxim AI as the model gateway** for claim extraction, assessment and rewrite. They are not required together by the rules; this project uses both because the architecture benefits. The 24-task benchmark is evaluation evidence for the freshness work, not a second submission.
+**Evidence-first stale-answer detector.** Audit an existing LLM answer claim by claim, verify it against current sources, and show what is still true, what changed, and what cannot be verified.
 
 [![CI](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Gi-Tuu/yai-scout?include_prereleases&label=release)](https://github.com/Gi-Tuu/yai-scout/releases)
@@ -13,39 +10,38 @@
 **Live demo:** <https://yai-scout.onrender.com/freshness>  
 Free tier sleeps after ~15 min idle; first request can take 30–90s. 32 real GitHub-release snapshots ship in the image, so replay works without setup.
 
-**Build window:** 1–15 November 2026 · **Submission deadline:** 15 Nov 2026, 23:59 IST.
-
 ---
 
 ## The problem
 
-LLM answers often look cited but cite **old pages**. Grounding/citation checks answer "is this supported by evidence", not "is the evidence still current, and what is the value today".
+LLM answers often look cited but cite **old pages**. Grounding and citation checks answer "is this supported by evidence", not "is the evidence still current, and what is the value today".
 
 YAI Scout is a **post-hoc audit layer**:
 
 ```text
-answer → claims → temporal sensitivity → Tavily live research
+answer → claims → temporal sensitivity → current-source research
        → FRESH / STALE / CONFLICTED / INSUFFICIENT / UNKNOWN per claim
        → current value + correction + evidence links
 ```
 
 ## What is different
 
-1. **Post-hoc**: audit answers from any model; no need to rebuild the RAG/agent.
+1. **Post-hoc**: audit answers from any model; no need to rebuild the RAG or agent.
 2. **Support ≠ freshness**: evidence can fully support a claim that is already outdated.
-3. **Current value + correction**, not just a red/green light.
-4. **As-of replay**: the same answer is FRESH at 2026-10-28 and STALE at 2026-11-01 (real GitHub release history).
-5. **Evidence governance**: anchors, multi-source candidates, an accuracy gate, approve/reject and rollback — so automated updates are auditable rather than blind overwrites.
+3. **Current value + correction**, not just a red/green status.
+4. **As-of replay**: the same answer is fresh at 2026-10-28 and stale at 2026-11-01 using real GitHub release history.
+5. **Evidence governance**: anchors, multi-source candidates, an accuracy gate, approve/reject and rollback — automated updates stay auditable instead of overwriting silently.
 
-## Integrated entry: two technologies, two clear roles
+## Technology roles
 
-| Technology | Role in the product | Where |
+| Component | Role | Where |
 |---|---|---|
-| **Tavily** | live research: find current sources, fetch content, tier/recency signals | `retrieval/tavily.py`, detector verification |
-| **Bifrost** | OpenAI-compatible model gateway: claim extraction, relation assessment, correction rewrite; provider routing/logs/budget | `llm.py`, `docs/bifrost-integration.md` |
+| **Tavily** | live research: current sources, source content, recency and tier signals | `retrieval/tavily.py`, detector verification |
+| **Controlled page fetch** | optional, allowlisted HTTPS fetch of a result page; default off | `sources/page.py`, `sources/anchor.py` |
+| **Bifrost** | OpenAI-compatible model gateway: claim extraction, relation assessment, correction rewrite; provider routing and logs | `llm.py`, `docs/bifrost-integration.md` |
 | Deterministic code | status decisions, budgets, evidence storage, scoring, audit | `detector/`, `store.py` |
 
-When `BIFROST_BASE_URL` is set, **all model requests go through Bifrost**. Without it, the app falls back to a direct OpenAI-compatible endpoint; the public demo uses the fallback, the local/video demo shows Bifrost (`healthz` → `"gateway":"bifrost"`).
+Bifrost is an optional gateway. When `BIFROST_BASE_URL` is set, model requests go through Bifrost. Without it, the app uses a direct OpenAI-compatible endpoint. The public demo uses the direct fallback; local verification and the Bifrost verification docs show the gateway path.
 
 ## Quick start
 
@@ -53,7 +49,7 @@ When `BIFROST_BASE_URL` is set, **all model requests go through Bifrost**. Witho
 uv sync --extra dev
 cp .env.example .env
 # fill TAVILY_API_KEY
-# start Bifrost (optional but required for the Bifrost demo):
+# optional Bifrost gateway:
 #   scripts/start_bifrost.ps1   # or: docker run -p 8080:8080 maximhq/bifrost
 # fill BIFROST_BASE_URL / BIFROST_MODEL
 uv run uvicorn yai_scout.api.app:app --port 8010
@@ -64,11 +60,11 @@ uv run uvicorn yai_scout.api.app:app --port 8010
 | `/freshness` | paste an LLM answer → claim-level freshness report |
 | `/inspector` | claims → sources → timestamps → score breakdown |
 | `/compare` | temporal drift between two reports (real replay) |
-| `/benchmark` | supporting evaluation: 24 tasks, multiple agents, Pareto |
-| `/label` | blind accuracy labeling (independent human labels) |
+| `/benchmark` | evaluation: 24 tasks, multiple agents, Pareto |
+| `/label` | blind accuracy labeling |
 | `/admin` | token-gated candidates / approve / reject / rollback |
 
-## 60-second fixed demo
+## Fixed replay demo
 
 ```powershell
 # deterministic offline replay from cached real API responses
@@ -93,8 +89,7 @@ YAI 0.25.0 @ 2026-11-01   FRESH   current value
 ```mermaid
 flowchart LR
   U[User / API] --> F[Claim extraction]
-  F -->|LLM via Bifrost| B[Bifrost AI Gateway]
-  B --> M[Model provider]
+  F -->|LLM via Bifrost or direct| B[Model provider]
   F --> T[Tavily live research]
   T --> E[Evidence + source tiers]
   E --> V[Deterministic verification<br/>relation / recency / authority / coverage]
@@ -103,41 +98,41 @@ flowchart LR
   A --> UI[Inspector / compare / admin]
 ```
 
-## What is real today
+## Current capabilities
 
 | Capability | Status |
 |---|---|
-| Claim extraction | LLM via Bifrost/direct + rule fallback, quote-substring validated |
-| Live verification | Tavily search, supports/contradicts/mentions relation |
-| Freshness model | temporal sensitivity classes, policy + weights, explainable breakdown |
-| Bifrost integration | configurable OpenAI-compatible gateway; `healthz` reports gateway, local demo/logs |
-| Temporal replay | real GitHub release snapshots: 2026-10-28 FRESH vs 2026-11-01 STALE |
+| Claim extraction | LLM via Bifrost/direct or rule fallback; quote-substring validated |
+| Live verification | Tavily search; supports / contradicts / mentions relation |
+| Freshness model | temporal sensitivity classes, versioned policy and weights, explainable breakdown |
+| Evidence provenance | published / updated / retrieved times kept distinct; full-page fetch preserves search metadata |
+| Claim identity | typed v1/v2 keys with additive migration and dual-read fallback |
+| Bifrost integration | configurable OpenAI-compatible gateway; `healthz` reports the active gateway |
+| Temporal replay | GitHub release snapshots: 2026-10-28 FRESH vs 2026-11-01 STALE |
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
-| Benchmark (supporting) | 24 tasks, HTTP/Python/CLI adapters, Pareto, manifest + `result_hash` |
-| Quality gates | 249 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Benchmark | 24 tasks, HTTP/Python/CLI adapters, Pareto, manifest + `result_hash` |
+| Quality gates | 262 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
-- Human labels: 60/60 matched the hidden key, so they are **rule-following**, not independent ground truth; `AUTO_UPDATE` stays **off**. See [accuracy-eval](docs/accuracy-eval.md).
-- Web-archive history is unavailable from the current network; replay uses GitHub release history and is labelled `simulated` when no snapshot exists. We never fake historical evidence.
-- The benchmark is a small demo benchmark, not an academic leaderboard; it is **not** the primary submission.
-- Bifrost is a **local/video** demo by default; the public Render link falls back to direct model access unless a public Bifrost deployment is configured.
-- LLM/Tavily keys are not in this repo; keyless/rule-based fallbacks exist.
+- Human labels are **rule-following**, not an independent ground truth; `AUTO_UPDATE` stays **off**.
+- Web-archive history is unavailable in the current environment; replay uses GitHub release history and is labelled `simulated` when no snapshot exists. Historical evidence is never fabricated.
+- The benchmark is a small evaluation suite, not an academic leaderboard.
+- Bifrost is verified locally; the public demo uses the direct fallback unless a public Bifrost deployment is configured.
+- LLM/Tavily keys are not in this repo; keyless and rule-based fallbacks exist.
 
 ## Documentation
 
-- [Tavily track / primary submission](docs/track-tavily.md) · [Bifrost integration](docs/bifrost-integration.md) · [Bifrost verification](docs/bifrost-verification.md)
-- [Benchmark evidence (not primary)](docs/track-bifrost.md)
-- [Differentiation spec](docs/differentiation-spec.md) · [Positioning](docs/positioning.md)
+- [Bifrost integration](docs/bifrost-integration.md) · [Bifrost verification](docs/bifrost-verification.md)
+- [Claim key versioning](docs/claim-key-versioning.md)
+- [Full-page fetch](docs/full-page-fetch.md)
 - [Freshness scoring](docs/spec-freshness-scoring.md) · [Temporal replay](docs/spec-temporal-replay.md)
 - [Anchor retrieval](docs/spec-anchor-retrieval.md) · [Accuracy gate](docs/spec-accuracy-gate.md) · [Accuracy eval](docs/accuracy-eval.md)
-- [Submission checklist](docs/submission.md) · [3-minute English voiceover](docs/video-script-en.md) · [Demo script](docs/demo-script.md) · [Deploy free](docs/deploy-free.md)
+- [Database operations](docs/db-operations.md) · [Migration plan](docs/db-migration-plan.md)
+- [Deployment](docs/deploy-free.md)
 - [Governance](docs/governance/engineering-governance-v1.md) · [ADR-0003](docs/adr/0003-engineering-governance.md)
-- [Engineering audit (2026-11-02)](docs/audit-2026-11-02.md) · [Changelog](CHANGELOG.md) · [API resources](docs/api-resources.md)
+- [Engineering audit](docs/audit-2026-11-02.md) · [Changelog](CHANGELOG.md)
 
 ## License
 
 MIT — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for reused components (YAI Agent Core v0.25.0, MIT).
-
-
-

@@ -33,7 +33,7 @@ BIFROST_MODEL=openai/deepseek/deepseek-v4.1-flash-1017
    ```
 4. `scripts/verify_bifrost.py` reproduces the check locally.
 
-## What to record for the submission video
+## What to record for verification
 
 - `healthz` showing `"gateway":"bifrost"`;
 - Bifrost dashboard / logs showing `POST /v1/chat/completions`;

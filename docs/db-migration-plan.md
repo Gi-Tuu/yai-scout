@@ -79,7 +79,7 @@ Decisions:
 - `ON DELETE CASCADE` for task children; no current delete API, but safe.
 - Add indexes: `owner_id`, `status`, `created_at`, join columns.
 
-## 4. Migration procedure (post-submission)
+## 4. Migration procedure
 
 ### 4.1 Preflight
 
@@ -157,13 +157,13 @@ Before dropping old tables:
 - No full normalization of `DetectorReport`/`Claim`/`EvidenceRef`.
 - No PostgreSQL migration.
 - No background live migration while traffic is served.
-- No migration before the hackathon submission.
+- No migration without a backup and validation window.
 
 ## 7. Recommended timing
 
 | Phase | When |
 |---|---|
-| Design + dry-run on copy | after submission |
+| Design + dry-run on copy | before production switch |
 | Migration 7 + backup/restore drill | before any production data matters |
 | Enable FK enforcement | after full test suite and consistency report pass |
 | Remove legacy JSON mirrors | much later, only if needed |
@@ -187,4 +187,4 @@ Local dry run: 13 tables, 0 orphans, 0 duplicates, FK/integrity ok.
 
 ## 9. Related design
 
-See `docs/claim-key-versioning.md` for the additive v2 key; migration 7 is implemented.
+See `docs/claim-key-versioning.md` for the additive v2 key; migrations 7-8 are implemented.

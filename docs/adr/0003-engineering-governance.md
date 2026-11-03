@@ -6,7 +6,7 @@
 
 ## Context
 
-YAI Scout contains two independent hackathon projects (Benchmark / Freshness) sharing one evidence
+YAI Scout contains two independently testable entry points (Benchmark / Freshness) sharing one evidence
 core. A read-only audit before this ADR found reproducibility, isolation and version-consistency
 defects:
 

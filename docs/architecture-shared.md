@@ -1,6 +1,6 @@
 # YAI Scout 共享技术架构（Shared Core）
 
-> 适用范围：Project A（Benchmark，Bifrost-02）与 Project B（Freshness，Tavily-01）
+> 适用范围：Benchmark 与 Freshness 两个入口共享的证据核心
 > **v2 升级（2026-11-01）**：Claim/Evidence/Snapshot 模型、Adapter 协议、Pareto 与 Replay 的详细规格见 [`differentiation-spec.md`](differentiation-spec.md) 及三份 `spec-*.md`；本文的模块边界与部署方式不变。
 > 原则：**共享底座、独立产品、独立交付**。共享层只实现"两个产品都真正需要"的能力；不为形式独立复制组件。
 
@@ -44,7 +44,7 @@ yai-scout/
 1. `apps/benchmark` 与 `apps/freshness` 各自有入口、README、依赖说明、Demo 脚本、验收清单。
 2. 单个 app 可在**不启动另一个 app** 的情况下运行（`SCOUT_MODE=benchmark|freshness|all`）。
 3. 共享层接口一旦冻结（11/02），两个 app 可并行开发；共享层变更需同时通过两套测试。
-4. 若平台要求两个 GitHub 链接：monorepo 保持不变，另建两个薄仓库（README 指向 monorepo 对应目录 + release 包），或直接以 monorepo 两个子目录链接提交（待主办方确认）。
+4. 两个入口保持在同一个 monorepo 中，通过目录和 README 区分；需要独立包时再拆分，不为演示增加薄仓库。
 
 ## 2. 共享模块职责
 

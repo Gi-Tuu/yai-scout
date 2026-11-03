@@ -6,7 +6,7 @@
 
 ## 0. Why this exists
 
-YAI Scout ships two independent hackathon projects on one shared core. Without explicit contracts,
+YAI Scout ships two independently testable entry points on one shared core. Without explicit contracts,
 the benchmark can silently change with detector rules, hidden data can leak through public APIs,
 and a "reproducible" run can become unreproducible after a config or weight change. Governance is
 the set of enforced rules that makes experiment results auditable and product boundaries real.
@@ -28,7 +28,7 @@ the set of enforced rules that makes experiment results auditable and product bo
 8. **Security by default.** No secrets in manifests, logs, repos or prompt payloads. Hidden/private
    evaluation data is never served by public APIs.
 9. **Test before promotion.** Lint + types + tests + Docker build pass before a change is proposed.
-10. **Independent product governance.** Benchmark (Bifrost-02) and Freshness (Tavily-01) can be
+10. **Independent product governance.** Benchmark and Freshness can be
     deployed and evaluated independently; shared code lives in explicitly named modules.
 
 ## 2. A. Architecture governance
@@ -64,9 +64,9 @@ Forbidden (checked by review until P1 automation exists):
 
 ### 2.3 Product boundaries
 
-- **Benchmark (Bifrost-02)** owns: dataset, adapter registry/protocol, runner, leaderboard/Pareto,
+- **Benchmark** owns: dataset, adapter registry/protocol, runner, leaderboard/Pareto,
   manifest, run immutability. Entry points: `/benchmark`, `/api/benchmark/*`.
-- **Freshness (Tavily-01)** owns: claim extraction, temporal classification, verification, scoring,
+- **Freshness** owns: claim extraction, temporal classification, verification, scoring,
   reports, inspector, compare. Entry points: `/freshness`, `/api/detector`, `/freshness/*`.
 - Shared core: `domain`, `store`, `retrieval/tavily`, `sources`, `llm`, `detector.service` used by
   Benchmark only as an evaluator.

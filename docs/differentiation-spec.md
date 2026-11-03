@@ -295,7 +295,7 @@ Evidence Inspector、Freshness Dataset 24 题、Pareto Frontier、历史快照�
 
 ---
 
-## 13. 比赛 Demo 设计
+## 13. Demo 设计
 
 ### T1（2 分钟）
 

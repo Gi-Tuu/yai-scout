@@ -12,10 +12,10 @@ short_description: Evidence-first research agent + freshness-aware agent benchma
 
 # YAI Scout
 
-Two hackathon projects sharing one evidence core:
+Two entry points sharing one evidence core:
 
-- `/benchmark` — cross-architecture agent leaderboard (Bifrost-02)
-- `/freshness` — claim-level stale-answer detector (Tavily-01)
+- `/benchmark` — cross-architecture agent evaluation
+- `/freshness` — claim-level stale-answer detector
 - `/inspector` — evidence inspector
 - `/compare` — temporal drift
 

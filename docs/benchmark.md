@@ -4,10 +4,10 @@
 > 详细规格见 [`differentiation-spec.md`](differentiation-spec.md)、[`spec-freshness-scoring.md`](spec-freshness-scoring.md)、[`spec-benchmark-adapter.md`](spec-benchmark-adapter.md)。
 > 下文保留为 demo v0 的说明，数字与状态以 v2 规格为准。
 
-> 对应赛题：Bifrost-02（Agent Benchmarking Platform）+ Tavily-01（Stale-answer Detector）
+> Cross-architecture evaluation of evidence and freshness.
 > 当前状态：可运行的最小闭环（demo v0），规则版检测器 + 合成/检索基线；LLM 抽取与更多适配器在路线图里。
 
-## 1. 数据集（Bifrost-02）
+## 1. Dataset
 
 `benchmarks/tasks.json`：13 道 AI 开发者生态事实题，全部有官方/一手来源，适合做「新鲜度敏感」评测。
 
@@ -20,7 +20,7 @@
 | `gold_sources` | 金标来源 URL |
 | `notes` | 备注 |
 
-覆盖：Tavily 免费额度/计价/学生计划、DeepSeek/Claude 价格、Bifrost 许可证/端口、YAI 版本、赛事截止日期、Omnidimension 免费额度。
+覆盖：API 定价/额度、模型与框架版本、许可证与端口事实，以及带时间敏感性的公开事实。
 
 ## 2. Agent Adapter 协议
 
@@ -56,7 +56,7 @@
 
 指标：`numeric_accuracy`、`citation_rate`、`stale_rate`、`freshness_score`、`avg_latency_s`、`avg_tokens`、`errors`。
 
-## 5. Stale-answer Detector（Tavily-01）
+## 5. Stale-answer Detector
 
 链路：`答案 → 句子切分 → claim 抽取（LLM 主 + 规则兜底）→ 逐条 Tavily 检索 → 关系判定（规则 + LLM 复核）→ Freshness Score + 判定 → 修正建议`。
 

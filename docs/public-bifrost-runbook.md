@@ -9,7 +9,7 @@
 - Never expose an unauthenticated `/v1/chat/completions`.
 - Protect the dashboard before setting the public URL anywhere.
 - Keep Scout's direct fallback intact; Bifrost must be optional.
-- Do not change submission materials to claim `gateway=bifrost` until `/api/healthz` proves it.
+- Do not claim `gateway=bifrost` until `/api/healthz` proves it.
 - Shut down the Bifrost service and revoke its keys after the competition.
 
 ## 1. Prerequisites
@@ -154,7 +154,7 @@ Immediate rollback is always:
 1. Remove `BIFROST_BASE_URL` from Scout (or set it empty).
 2. Redeploy Scout.
 3. Verify `gateway=direct`.
-4. Leave Bifrost idle; do not delete evidence until submission is over.
+4. Leave Bifrost idle; do not delete evidence until verification is complete.
 
 ## 9. Shutdown after competition
 
@@ -164,8 +164,8 @@ Immediate rollback is always:
 4. Revoke/rotate the provider key if it was dedicated.
 5. Remove `BIFROST_*` env vars from Scout.
 6. Redeploy Scout; verify `gateway=direct`.
-7. Keep screenshots/log excerpts for the submission archive; do not keep secrets.
-8. Update `docs/bifrost-integration.md` and submission wording to "local demo / archived".
+7. Keep screenshots/log excerpts for verification; do not keep secrets.
+8. Update `docs/bifrost-integration.md` wording to "local demo / archived".
 
 ## 10. Go/No-Go
 

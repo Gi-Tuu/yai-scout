@@ -40,7 +40,7 @@
 
 ```powershell
 # 1) 仅看 HTTP 状态，不回显 key
-python scripts/tavily_smoke.py --query "Geek Room Global AI Hackathon problem statements"
+python scripts/tavily_smoke.py --query "Tavily API pricing and credits"
 
 # 2) 或直接 curl（PowerShell）
 curl.exe -sS -X POST https://api.tavily.com/search `
@@ -55,14 +55,13 @@ curl.exe -sS -X POST https://api.tavily.com/search `
 
 - 免费 1,000 credits/月；basic search=1、advanced=2、extract 每 5 URL=1（basic）/2（advanced）。
 - 每次调用把 `usage.credits` 写入 `cost_ledger`；单 run 上限 32 credits（可配置）。
-- 赛事专属 credits（页面称 $65×100）领取方式仍未公开 → Discord 询问。
 - Keyless 模式仅作应急与冒烟测试，不作为产品运行方式（限速且不可控）。
 - **当前已配置真实 key**（`.env`，`/api/healthz` 显示 `mode=key`）。
 
 ## 6.1 Tavily 学生计划（官方入口与步骤）
 
 官方说明页：https://help.tavily.com/articles/6606514713-student-account
-（页面原文：Students can receive **4 months of free access to the Project Plan, which includes 4,000 API credits per month**；明确写明可用于 research、coursework、**hackathons**。）
+（页面原文：Students can receive **4 months of free access to the Project Plan, which includes 4,000 API credits per month** for research and coursework。）
 
 **申请步骤（官方原文）**：
 1. 用**学校官方邮箱**发邮件到 **support@tavily.com**，或把**学生证照片**发给 support 团队；
@@ -72,7 +71,6 @@ curl.exe -sS -X POST https://api.tavily.com/search `
 
 **注意**：
 - 必须用学生身份验证；兑换后是 Project 档（不是免费 Researcher 档）。
-- 该额度与赛事奖励 credits **是两回事**，不要混用叙事。
 - 若学校邮箱不可用，官方也接受学生证照片（发 support@tavily.com）。
 
 ## 7. 安全边界

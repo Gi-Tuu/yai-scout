@@ -1,6 +1,6 @@
 # Bifrost Integration
 
-> Role in the submission: **all model requests can be routed through Bifrost's OpenAI-compatible gateway** — claim extraction, relation assessment, and correction rewriting. Tavily remains the live web-research layer.
+> Role: **all model requests can be routed through Bifrost's OpenAI-compatible gateway** — claim extraction, relation assessment, and correction rewriting. Tavily remains the live web-research layer.
 
 ## 1. Why Bifrost
 
@@ -53,7 +53,7 @@ curl -s http://127.0.0.1:8010/freshness/verify \
   -d '{"answer":"Tavily 免费计划每月提供 500 credits。","as_of":"2026-11-01"}'
 ```
 
-Evidence to capture for the submission:
+Evidence to capture:
 
 1. `healthz` showing `"gateway":"bifrost"`;
 2. Bifrost request log for `/v1/chat/completions`;

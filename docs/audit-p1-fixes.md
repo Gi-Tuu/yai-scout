@@ -104,6 +104,7 @@ Docker      : built
   closing the DNS-rebinding window.
 - regression tests: WAL copy, pinned Host/SNI.
 - claim_key v2 property/fuzz tests and full-page allowlist parser tests.
+- typed claim identity migration 8, compare grouping, full-page provenance tests.
 
 ## Still open
 
