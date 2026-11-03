@@ -6,23 +6,14 @@
 
 from __future__ import annotations
 
-import re
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from ..claim_keys import CLAIM_KEY_VERSION, claim_key, claim_key_v2, claim_keys
 from ..domain.models import DetectorReport, FreshnessVerdict
 
-NUMBER_RE = re.compile(r"\d[\d,\.]*")
-CLAIM_KEY_VERSION = 2
-V2_TOKEN_RE = re.compile(
-    r"(?P<date>\b\d{4}-\d{2}-\d{2}\b)"
-    r"|(?P<cn_date>\d{4}\s*年(?:\s*\d{1,2}\s*月)?(?:\s*\d{1,2}\s*日)?)"
-    r"|(?P<quarter>Q[1-4]|第[1-4一二三四]\s*季度|[1-4一二三四]\s*季度)"
-    r"|(?P<version>v?\d+\.\d+(?:\.\d+)*)"
-    r"|(?P<number>\d[\d,]*(?:\.\d+)?%?)",
-    re.I,
-)
+__all__ = ["CLAIM_KEY_VERSION", "claim_key", "claim_key_v2", "claim_keys", "compare_reports"]
 
 
 class EvidenceChange(BaseModel):
@@ -61,46 +52,6 @@ class DriftReport(BaseModel):
     diffs: list[ClaimDiff] = Field(default_factory=list)
     summary: dict[str, int] = Field(default_factory=dict)
     warning: str = ""
-
-
-def claim_key(text: str) -> str:
-    """把数字替换成占位符，让"同一事实不同值"落到同一个 key。
-
-    Known limitation: period/quarter numbers are also removed, so two
-    distinct facts can collide (e.g. "Q1 revenue 500" and "Q2 revenue 600").
-    This key is kept for backward compatibility with existing anchors.
-    """
-    normalized = " ".join(text.lower().split())
-    normalized = NUMBER_RE.sub("#", normalized)
-    return normalized.strip("。 .")
-
-
-def claim_key_v2(text: str, claim_type: str | None = None) -> str:
-    """Strict identity key: periods/dates stay, values become '#'.
-
-    Additive; v1 remains the historical key.
-    """
-    lower = " ".join(text.lower().split())
-    parts: list[str] = []
-    cursor = 0
-    version_is_value = (claim_type or "").lower() == "version"
-    for match in V2_TOKEN_RE.finditer(lower):
-        parts.append(lower[cursor : match.start()])
-        token = match.group(0)
-        if match.lastgroup in {"date", "cn_date", "quarter"}:
-            parts.append(token)
-        elif match.lastgroup == "version":
-            parts.append("#" if version_is_value else token)
-        else:
-            parts.append("#")
-        cursor = match.end()
-    parts.append(lower[cursor:])
-    return "".join(parts).strip("。 .")
-
-
-def claim_keys(text: str, claim_type: str | None = None) -> tuple[str, str]:
-    """Return (v1, v2) for dual-read migration."""
-    return claim_key(text), claim_key_v2(text, claim_type)
 
 
 def _evidence_urls(verdict: FreshnessVerdict | None) -> set[str]:

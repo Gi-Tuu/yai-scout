@@ -79,6 +79,8 @@ class Settings(BaseSettings):
     bifrost_base_url: str = ""
     bifrost_api_key: str = ""
     bifrost_model: str = ""
+    full_page_fetch_enabled: bool = False
+    full_page_allowlist: str = ""
 
     def llm_connection(self) -> dict[str, str | bool]:
         """Single source of truth for the effective LLM endpoint."""

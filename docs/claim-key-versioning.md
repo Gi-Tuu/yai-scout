@@ -1,7 +1,7 @@
 # Claim Key Versioning Design
 
-> Status: **v2 functions + shadow write implemented; matching still v1.**
-> Migration 7, backfill and dual-read remain post-submission work.
+> Status: **v2 functions, migration 7, backfill and dual-read are implemented.**
+> v1 remains the legacy fallback for anchors without v2.
 
 ## 1. Problem
 

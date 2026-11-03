@@ -13,6 +13,7 @@ from ..domain.models import (
     Claim,
     ClaimAssessment,
     ClaimType,
+    EvidenceKind,
     EvidenceRef,
     FreshnessStatus,
     FreshnessVerdict,
@@ -25,6 +26,7 @@ from .claims import extract_numbers
 from .freshness import as_of_datetime, parse_published, score_claim
 
 AnchorFetcher = Callable[[Anchor, str], Awaitable[SearchResult | None]]
+PageFetcher = Callable[[SearchResult], Awaitable[SearchResult | None]]
 
 VERIFY_QUERY_LIMIT = 380
 VERIFY_TIMEOUT_S = 20.0
@@ -78,6 +80,7 @@ class ClaimVerifier:
         use_llm_relations: bool = True,
         mode: Literal["live", "replay"] = "live",
         anchor_fetcher: AnchorFetcher | None = None,
+        page_fetcher: PageFetcher | None = None,
     ) -> None:
         self.searcher = searcher
         self.as_of = as_of_datetime(as_of)
@@ -87,6 +90,7 @@ class ClaimVerifier:
         self.use_llm_relations = use_llm_relations
         self.mode = mode
         self.anchor_fetcher = anchor_fetcher
+        self.page_fetcher = page_fetcher
 
     async def verify(
         self, claim: Claim, anchors: list[Anchor] | None = None
@@ -150,6 +154,18 @@ class ClaimVerifier:
 
         if anchor_results:
             results = [*anchor_results, *results]
+        if self.page_fetcher is not None:
+            upgraded: list[SearchResult] = []
+            for item in results[: self.max_results]:
+                if item.evidence_kind is EvidenceKind.SEARCH_SNIPPET:
+                    try:
+                        fetched = await self.page_fetcher(item)
+                    except Exception:  # noqa: BLE001 - page fetch is optional
+                        fetched = None
+                    upgraded.append(fetched or item)
+                else:
+                    upgraded.append(item)
+            results = upgraded
         seen_urls: set[str] = set()
         unique_results: list[SearchResult] = []
         for item in results:

@@ -12,6 +12,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from .claim_keys import claim_key_v2
 from .domain.models import (
     Anchor,
     AnchorCandidate,
@@ -119,6 +120,8 @@ CREATE TABLE IF NOT EXISTS bench_result (
 CREATE TABLE IF NOT EXISTS anchor (
     id TEXT PRIMARY KEY,
     claim_key TEXT NOT NULL,
+    claim_key_v2 TEXT NOT NULL DEFAULT '',
+    claim_key_version INTEGER NOT NULL DEFAULT 1,
     url TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'active',
     payload_json TEXT NOT NULL,
@@ -203,6 +206,7 @@ class Store:
             (4, self._ensure_anchor_columns),
             (5, self._ensure_bench_owner_column),
             (6, self._sync_bench_config_json),
+            (7, self._ensure_claim_key_columns),
         )
         for version, migrate in migrations:
             if version in applied:
@@ -257,6 +261,40 @@ class Store:
             self._conn.execute(
                 "ALTER TABLE research_task ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''"
             )
+
+    def _ensure_claim_key_columns(self) -> None:
+        columns = {
+            row["name"] for row in self._conn.execute("PRAGMA table_info(anchor)")
+        }
+        if "claim_key_v2" not in columns:
+            self._conn.execute(
+                "ALTER TABLE anchor ADD COLUMN claim_key_v2 TEXT NOT NULL DEFAULT ''"
+            )
+        if "claim_key_version" not in columns:
+            self._conn.execute(
+                "ALTER TABLE anchor ADD COLUMN claim_key_version INTEGER NOT NULL DEFAULT 1"
+            )
+        for row in self._conn.execute(
+            "SELECT id, claim_key_v2, claim_key_version, payload_json FROM anchor"
+        ):
+            payload = Anchor.model_validate_json(row["payload_json"])
+            v2 = payload.claim_key_v2
+            if not v2 and payload.claim_text:
+                v2 = claim_key_v2(payload.claim_text)
+            version = 2 if v2 else 1
+            if row["claim_key_v2"] == v2 and int(row["claim_key_version"]) == version:
+                continue
+            payload = payload.model_copy(
+                update={"claim_key_v2": v2, "claim_key_version": version}
+            )
+            self._conn.execute(
+                "UPDATE anchor SET claim_key_v2 = ?, claim_key_version = ?, payload_json = ? "
+                "WHERE id = ?",
+                (v2, version, payload.model_dump_json(), row["id"]),
+            )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_anchor_claim_v2 ON anchor(claim_key_v2)"
+        )
 
     def _ensure_bench_owner_column(self) -> None:
         columns = {
@@ -857,11 +895,14 @@ class Store:
         with self._lock:
             self._conn.execute(
                 """INSERT INTO anchor
-                   (id, claim_key, url, status, payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
+                   (id, claim_key, claim_key_v2, claim_key_version, url, status,
+                    payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     anchor.id,
                     anchor.claim_key,
+                    anchor.claim_key_v2,
+                    anchor.claim_key_version,
                     anchor.url,
                     anchor.status,
                     anchor.model_dump_json(),
@@ -1002,11 +1043,14 @@ class Store:
             try:
                 self._conn.execute(
                     """INSERT INTO anchor
-                       (id, claim_key, url, status, payload_json, created_at)
-                       VALUES (?, ?, ?, ?, ?, ?)""",
+                       (id, claim_key, claim_key_v2, claim_key_version, url,
+                        status, payload_json, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         new_anchor.id,
                         new_anchor.claim_key,
+                        new_anchor.claim_key_v2,
+                        new_anchor.claim_key_version,
                         new_anchor.url,
                         new_anchor.status,
                         new_anchor.model_dump_json(),
@@ -1145,8 +1189,15 @@ class Store:
     def update_anchor(self, anchor: Anchor) -> Anchor:
         with self._lock:
             self._conn.execute(
-                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
-                (anchor.model_dump_json(), anchor.status, anchor.id),
+                "UPDATE anchor SET payload_json = ?, status = ?, claim_key_v2 = ?, "
+            "claim_key_version = ? WHERE id = ?",
+                (
+                    anchor.model_dump_json(),
+                    anchor.status,
+                    anchor.claim_key_v2,
+                    anchor.claim_key_version,
+                    anchor.id,
+                ),
             )
             self._conn.commit()
         return anchor
@@ -1188,8 +1239,9 @@ class Store:
             )
             self._conn.execute(
                 """INSERT INTO anchor
-                   (id, claim_key, url, status, payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
+                   (id, claim_key, claim_key_v2, claim_key_version, url, status,
+                    payload_json, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     new_anchor.id,
                     new_anchor.claim_key,

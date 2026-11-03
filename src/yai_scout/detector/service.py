@@ -5,11 +5,11 @@ from __future__ import annotations
 import asyncio
 import uuid
 
+from ..claim_keys import claim_key_v2, claim_keys
 from ..domain.models import Anchor, DetectorReport, FreshnessStatus, FreshnessVerdict
 from ..llm import LLMClient
 from .anchor_policy import select_anchors
 from .claims import extract_claims
-from .compare import claim_key
 from .extract_llm import extract_claims_llm
 from .freshness import (
     WEIGHTS_VERSION,
@@ -19,7 +19,7 @@ from .freshness import (
 )
 from .suggest import generate_suggestions
 from .temporal import apply_temporal_classification
-from .verify import AnchorFetcher, ClaimVerifier, Searcher
+from .verify import AnchorFetcher, ClaimVerifier, PageFetcher, Searcher
 from .versions import POLICY_VERSION
 
 
@@ -34,6 +34,7 @@ class StaleAnswerDetector:
         llm: LLMClient | None = None,
         mode: str = "live",
         anchor_fetcher: AnchorFetcher | None = None,
+        page_fetcher: PageFetcher | None = None,
     ) -> None:
         self.searcher = searcher
         self.as_of = as_of
@@ -42,6 +43,7 @@ class StaleAnswerDetector:
         self.llm = llm
         self.mode = "replay" if mode == "replay" else "live"
         self.anchor_fetcher = anchor_fetcher
+        self.page_fetcher = page_fetcher
 
     async def detect(
         self,
@@ -72,20 +74,43 @@ class StaleAnswerDetector:
             llm=self.llm,
             mode="replay" if self.mode == "replay" else "live",
             anchor_fetcher=self.anchor_fetcher,
+            page_fetcher=self.page_fetcher,
         )
-        anchors_by_key: dict[str, list[Anchor]] = {}
+        anchors_by_v1: dict[str, list[Anchor]] = {}
+        anchors_by_v2: dict[str, list[Anchor]] = {}
         for anchor in anchors or []:
             if anchor.status != "active":
                 continue
-            anchors_by_key.setdefault(anchor.claim_key, []).append(anchor)
+            anchors_by_v1.setdefault(anchor.claim_key, []).append(anchor)
+            v2 = anchor.claim_key_v2
+            if not v2 and anchor.claim_text:
+                v2 = claim_key_v2(anchor.claim_text)
+            if v2:
+                anchors_by_v2.setdefault(v2, []).append(anchor)
         semaphore = asyncio.Semaphore(self.concurrency)
 
         async def one(claim_index: int) -> tuple[FreshnessVerdict, float, float]:
             claim = claims[claim_index]
             async with semaphore:
                 try:
-                    candidates = anchors_by_key.get(claim_key(claim.text), [])
-                    selected = select_anchors(candidates) if candidates else []
+                    v1_key, v2_key = claim_keys(claim.text, claim.type.value)
+                    candidates = list(anchors_by_v2.get(v2_key, []))
+                    if not candidates:
+                        candidates = [
+                            anchor
+                            for anchor in anchors_by_v1.get(v1_key, [])
+                            if anchor.claim_key_version == 1
+                        ]
+                    seen: set[str] = set()
+                    unique_candidates: list[Anchor] = []
+                    for anchor in candidates:
+                        if anchor.id in seen:
+                            continue
+                        seen.add(anchor.id)
+                        unique_candidates.append(anchor)
+                    selected = (
+                        select_anchors(unique_candidates) if unique_candidates else []
+                    )
                     verdict, credits, relation_cost = await verifier.verify(
                         claim, selected
                     )

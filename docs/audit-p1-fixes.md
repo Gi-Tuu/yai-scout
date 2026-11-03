@@ -82,7 +82,7 @@ Tests:
 ```text
 pytest      : 236 passed
 ruff        : pass
-mypy        : pass (55 files)
+mypy        : pass (57 files)
 architecture: ok
 Docker      : built
 ```
@@ -101,6 +101,7 @@ Docker      : built
 - FK constraints are now in the fresh `SCHEMA` and the migrated local DB;
   Render remains ephemeral, so production data still resets on deploy.
 - JSON payload/mirror columns are intentionally hybrid, not fully deduplicated.
-- `claim_key` v2 functions + shadow fields exist, but matching still uses v1;
-  migration 7/backfill/dual-read are not enabled.
-- full-page fetch and independent human labels are not implemented.
+- `claim_key` v2 functions, migration 7, backfill and dual-read matching are
+  enabled; v1 remains as legacy fallback.
+- full-page fetch MVP exists (`FULL_PAGE_FETCH_ENABLED`, exact allowlist);
+  independent human labels are still absent.

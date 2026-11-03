@@ -27,6 +27,7 @@ from ..domain.models import (
 from ..llm import LLMClient
 from ..pipeline.director import ResearchDirector
 from ..retrieval.tavily import TavilyClient
+from ..sources.page import fetch_page
 from ..sources.seed import seed_snapshots
 from ..store import Store
 from .admin_routes import register_admin_routes
@@ -69,12 +70,27 @@ def create_app(
         gateway=str(llm_cfg["gateway"]),
         transport=llm_transport,
     )
+    page_allowlist = {
+        item.strip().lower()
+        for item in cfg.full_page_allowlist.split(",")
+        if item.strip()
+    }
+
+    async def _page_fetcher(result: Any) -> Any:
+        return await fetch_page(result.url, page_allowlist)
+
+    page_fetcher = (
+        _page_fetcher
+        if cfg.full_page_fetch_enabled and page_allowlist
+        else None
+    )
     detector = StaleAnswerDetector(
         tavily,
         as_of=cfg.default_as_of,
         max_claims=6,
         concurrency=3,
         llm=llm,
+        page_fetcher=page_fetcher,
     )
     adapters = build_adapters(tavily, llm)
     agent_specs = {spec.id: spec for spec in DEFAULT_AGENT_SPECS}
@@ -241,6 +257,7 @@ def create_app(
         can_access=can_access,
         is_admin=is_admin,
         validated_as_of=validated_as_of,
+        page_fetcher=page_fetcher,
     )
 
     register_admin_routes(

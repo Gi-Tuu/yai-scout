@@ -36,7 +36,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   offline FK migration copy tool + validation; local migrated-DB switch rehearsal;
   production switch blocked by ephemeral Render storage; benchmark run admin
   gate; snapshot fetch SSRF/size hardening; FK constraints in fresh schema;
-  claim_key v2 functions/shadow fields.
+  claim_key v2 functions/shadow fields, migration 7 + dual-read;
+  full-page fetch MVP behind `FULL_PAGE_FETCH_ENABLED`.
 
 ### Fixed
 

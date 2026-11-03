@@ -11,11 +11,13 @@ from urllib.parse import urlsplit
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
+from ..claim_keys import claim_key, claim_key_v2
 from ..config import Settings
-from ..detector.compare import claim_key, claim_key_v2, compare_reports
+from ..detector.compare import compare_reports
 from ..detector.receipt import build_report_receipt
 from ..detector.service import StaleAnswerDetector
 from ..detector.snapshot_search import SnapshotSearcher
+from ..detector.verify import PageFetcher
 from ..domain.models import Anchor, TemporalSensitivity
 from ..llm import LLMClient
 from ..retrieval.tavily import TavilyClient
@@ -54,6 +56,7 @@ def register_freshness_routes(
     can_access: Callable[[str, Request], bool],
     is_admin: Callable[[Request], bool],
     validated_as_of: Callable[[str | None], str],
+    page_fetcher: PageFetcher | None = None,
 ) -> None:
     @app.post("/api/detector")
     @app.post("/freshness/verify")
@@ -83,6 +86,7 @@ def register_freshness_routes(
                 llm=llm,
                 mode="replay",
                 anchor_fetcher=_anchor_fetcher,
+                page_fetcher=page_fetcher,
             )
             report = await replay.detect(
                 payload.answer, as_of=effective_as_of, anchors=anchors
@@ -105,6 +109,7 @@ def register_freshness_routes(
                 llm=llm,
                 mode="live",
                 anchor_fetcher=_live_anchor,
+                page_fetcher=page_fetcher,
             )
             report = await live_detector.detect(
                 payload.answer,
