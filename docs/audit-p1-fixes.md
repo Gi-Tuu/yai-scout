@@ -104,4 +104,6 @@ Docker      : built
 - `claim_key` v2 functions, migration 7, backfill and dual-read matching are
   enabled; v1 remains as legacy fallback.
 - full-page fetch MVP exists (`FULL_PAGE_FETCH_ENABLED`, exact allowlist);
+  FK migrator copies claim-key v2 columns; v2 inference is consistent across
+  API/migration/matching;
   independent human labels are still absent.

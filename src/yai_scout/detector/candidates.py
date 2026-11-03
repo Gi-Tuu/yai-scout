@@ -8,6 +8,7 @@ import uuid
 from typing import Literal, cast
 from urllib.parse import urlsplit
 
+from ..claim_keys import claim_key_v2
 from ..domain.models import (
     Anchor,
     AnchorCandidate,
@@ -272,6 +273,8 @@ def apply_candidate(
     new_anchor = Anchor(
         id=f"anc_{uuid.uuid4().hex[:12]}",
         claim_key=anchor.claim_key,
+        claim_key_v2=anchor.claim_key_v2 or claim_key_v2(anchor.claim_text),
+        claim_key_version=2 if (anchor.claim_key_v2 or anchor.claim_text) else 1,
         claim_text=anchor.claim_text,
         url=best.url or anchor.url,
         source_tier=best.source_tier or anchor.source_tier,

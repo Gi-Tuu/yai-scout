@@ -37,7 +37,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   production switch blocked by ephemeral Render storage; benchmark run admin
   gate; snapshot fetch SSRF/size hardening; FK constraints in fresh schema;
   claim_key v2 functions/shadow fields, migration 7 + dual-read;
-  full-page fetch MVP behind `FULL_PAGE_FETCH_ENABLED`.
+  full-page fetch MVP behind `FULL_PAGE_FETCH_ENABLED`; FK migrator carries
+  claim_key v2 columns; v2 infers version context consistently.
 
 ### Fixed
 

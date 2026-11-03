@@ -22,7 +22,10 @@ def test_v2_version_token_depends_on_claim_type():
     assert claim_key_v2("当前版本 0.24.0", "version") == claim_key_v2(
         "当前版本 0.25.0", "version"
     )
-    assert claim_key_v2("Python 3.12 发布") != claim_key_v2("Python 3.13 发布")
+    assert claim_key_v2("Python 3.12 supported") != claim_key_v2(
+        "Python 3.13 supported"
+    )
+    assert claim_key_v2("Python 3.12 发布") == claim_key_v2("Python 3.13 发布")
 
 
 def test_claim_keys_returns_both():

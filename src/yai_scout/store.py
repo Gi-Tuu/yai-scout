@@ -277,7 +277,10 @@ class Store:
         for row in self._conn.execute(
             "SELECT id, claim_key_v2, claim_key_version, payload_json FROM anchor"
         ):
-            payload = Anchor.model_validate_json(row["payload_json"])
+            try:
+                payload = Anchor.model_validate_json(row["payload_json"])
+            except ValueError:
+                continue
             v2 = payload.claim_key_v2
             if not v2 and payload.claim_text:
                 v2 = claim_key_v2(payload.claim_text)
@@ -377,7 +380,7 @@ class Store:
                         anchor_row["payload_json"],
                     )
                     continue
-                for field in ("claim_key", "url", "status"):
+                for field in ("claim_key", "claim_key_v2", "claim_key_version", "url", "status"):
                     if str(anchor_row[field]) != str(getattr(anchor_payload, field)):
                         add(
                             "anchor",

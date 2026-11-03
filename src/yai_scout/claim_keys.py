@@ -10,6 +10,7 @@ import re
 
 CLAIM_KEY_VERSION = 2
 NUMBER_RE = re.compile(r"\d[\d,\.]*")
+VERSION_CONTEXT_RE = re.compile(r"版本|version|release|发布", re.I)
 V2_TOKEN_RE = re.compile(
     r"(?P<date>\b\d{4}-\d{2}-\d{2}\b)"
     r"|(?P<cn_date>\d{4}\s*年(?:\s*\d{1,2}\s*月)?(?:\s*\d{1,2}\s*日)?)"
@@ -32,7 +33,9 @@ def claim_key_v2(text: str, claim_type: str | None = None) -> str:
     lower = " ".join(text.lower().split())
     parts: list[str] = []
     cursor = 0
-    version_is_value = str(claim_type or "").lower() == "version"
+    version_is_value = str(claim_type or "").lower() == "version" or (
+        claim_type is None and bool(VERSION_CONTEXT_RE.search(lower))
+    )
     for match in V2_TOKEN_RE.finditer(lower):
         parts.append(lower[cursor : match.start()])
         token = match.group(0)

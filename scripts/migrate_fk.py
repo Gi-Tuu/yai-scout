@@ -117,6 +117,8 @@ TABLE_DDL = {
         CREATE TABLE anchor (
             id TEXT PRIMARY KEY,
             claim_key TEXT NOT NULL,
+            claim_key_v2 TEXT NOT NULL DEFAULT '',
+            claim_key_version INTEGER NOT NULL DEFAULT 1,
             url TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'active',
             payload_json TEXT NOT NULL,
@@ -180,7 +182,8 @@ COPY_COLUMNS = {
     "detector_report": "id, owner_id, answer, as_of, payload_json, created_at",
     "bench_session": "id, owner_id, status, config_json, manifest_json, result_hash, supersedes, created_at, finished_at, error",
     "bench_result": "id, session_id, task_id, agent_id, payload_json, score",
-    "anchor": "id, claim_key, url, status, payload_json, created_at",
+    "anchor": "id, claim_key, claim_key_v2, claim_key_version, url, status, "
+    "payload_json, created_at",
     "anchor_candidate": "id, anchor_id, status, payload_json, created_at",
     "anchor_observation": "id, anchor_id, status, content_changed, observed_hash, payload_json, created_at",
     "anchor_audit": "id, action, anchor_id, related_id, details_json, created_at",
@@ -192,6 +195,7 @@ INDEX_SQL = (
     "CREATE INDEX idx_event_task ON run_event(task_id, seq)",
     "CREATE INDEX idx_bench_result_session ON bench_result(session_id)",
     "CREATE INDEX idx_anchor_claim ON anchor(claim_key)",
+    "CREATE INDEX idx_anchor_claim_v2 ON anchor(claim_key_v2)",
     "CREATE INDEX idx_anchor_candidate_anchor ON anchor_candidate(anchor_id)",
     "CREATE INDEX idx_anchor_candidate_status ON anchor_candidate(status)",
     "CREATE INDEX idx_anchor_observation_anchor ON anchor_observation(anchor_id)",
