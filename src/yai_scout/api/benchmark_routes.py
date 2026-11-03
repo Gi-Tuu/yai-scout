@@ -32,6 +32,7 @@ def register_benchmark_routes(
     guard_cost: Callable[[Request, str], None],
     can_access: Callable[[str, Request], bool],
     session_id: Callable[[Request, Response | None], str],
+    is_admin: Callable[[Request], bool],
 ) -> None:
     @app.get("/api/benchmark/tasks")
     @app.get("/benchmark/tasks")
@@ -67,6 +68,11 @@ def register_benchmark_routes(
         payload: BenchmarkRequest, request: Request, response: Response
     ) -> dict[str, Any]:
         guard_cost(request, "benchmark")
+        if cfg.benchmark_run_requires_admin and not is_admin(request):
+            raise HTTPException(
+                status_code=403,
+                detail="benchmark run requires admin token",
+            )
         try:
             session = runner.start(
                 payload.agent_ids,

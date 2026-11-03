@@ -34,7 +34,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   checker + migration 6; snapshot search pagination; 80% coverage threshold;
   revalidation store I/O offloaded to worker threads; per-URL snapshot replay paginates;
   offline FK migration copy tool + validation; local migrated-DB switch rehearsal;
-  production switch blocked by ephemeral Render storage.
+  production switch blocked by ephemeral Render storage; benchmark run admin
+  gate; snapshot fetch SSRF/size hardening.
 
 ### Fixed
 

@@ -258,6 +258,7 @@ def create_app(
         guard_cost=guard_cost,
         can_access=can_access,
         session_id=session_id,
+        is_admin=is_admin,
     )
 
     register_pages(app, static_dir)

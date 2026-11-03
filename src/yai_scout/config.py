@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     scout_mode: str = "all"
     snapshots_seed: str = "benchmarks/snapshots.json"
     admin_token: str = ""
+    benchmark_run_requires_admin: bool = True
     accuracy_auto_update: bool = False
     anchor_live_fetch: bool = False
     anchor_allowlist: str = ""

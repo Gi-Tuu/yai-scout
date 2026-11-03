@@ -155,7 +155,7 @@ def test_public_api_cannot_read_or_run_hidden_tasks():
             return None
 
     app = create_app(
-        settings=_settings(),
+        settings=_settings(benchmark_run_requires_admin=False),
         tavily=FakeTavily(),  # type: ignore[arg-type]
         store=Store(":memory:"),
     )

@@ -7,10 +7,14 @@ from __future__ import annotations
 
 import hashlib
 import html.parser
+import ipaddress
 import re
+import socket
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urljoin, urlsplit
 
 import httpx
 
@@ -20,6 +24,9 @@ from ..store import Store
 
 WAYBACK_AVAILABLE = "https://archive.org/wayback/available"
 DEFAULT_TIMEOUT = 30.0
+MAX_FETCH_BYTES = 500_000
+MAX_REDIRECTS = 3
+TEXT_CONTENT_TYPES = ("text/html", "text/plain")
 
 
 class _TextExtractor(html.parser.HTMLParser):
@@ -76,15 +83,109 @@ async def wayback_url(
             await client.aclose()
 
 
-async def fetch_text(url: str, *, client: httpx.AsyncClient | None = None) -> str | None:
-    owns_client = client is None
-    client = client or httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True)
-    try:
-        resp = await client.get(url)
-        if resp.status_code >= 400:
+def _resolve_public_ip(
+    host: str, resolver: Callable[[str], str | None] | None = None
+) -> str | None:
+    if resolver is not None:
+        address = resolver(host)
+        if not address:
             return None
-        return html_to_text(resp.text)
-    except httpx.HTTPError:
+        try:
+            ip = ipaddress.ip_address(address)
+        except ValueError:
+            return None
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            return None
+        return address
+    try:
+        infos = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+    except OSError:
+        return None
+    for info in infos:
+        address = str(info[4][0])
+        try:
+            ip = ipaddress.ip_address(address)
+        except ValueError:
+            return None
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            return None
+    return str(infos[0][4][0]) if infos else None
+
+
+def _validate_url(
+    url: str, resolver: Callable[[str], str | None] | None = None
+) -> bool:
+    parsed = urlsplit(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return False
+    if parsed.username or parsed.password:
+        return False
+    return _resolve_public_ip(parsed.hostname.lower(), resolver) is not None
+
+
+async def _read_capped(response: httpx.Response) -> bytes:
+    chunks: list[bytes] = []
+    total = 0
+    async for chunk in response.aiter_bytes():
+        take = chunk[: MAX_FETCH_BYTES - total]
+        if take:
+            chunks.append(take)
+            total += len(take)
+        if total >= MAX_FETCH_BYTES:
+            break
+    return b"".join(chunks)
+
+
+async def fetch_text(
+    url: str,
+    *,
+    client: httpx.AsyncClient | None = None,
+    resolver: Callable[[str], str | None] | None = None,
+) -> str | None:
+    owns_client = client is None
+    client = client or httpx.AsyncClient(
+        timeout=DEFAULT_TIMEOUT,
+        follow_redirects=False,
+        trust_env=False,
+    )
+    current = url
+    try:
+        for _ in range(MAX_REDIRECTS + 1):
+            if not _validate_url(current, resolver):
+                return None
+            resp = await client.get(current)
+            try:
+                if 300 <= resp.status_code < 400:
+                    location = resp.headers.get("location")
+                    if not location:
+                        return None
+                    current = urljoin(current, location)
+                    continue
+                if resp.status_code >= 400:
+                    return None
+                content_type = resp.headers.get("content-type", "").lower()
+                if not any(item in content_type for item in TEXT_CONTENT_TYPES):
+                    return None
+                raw = await _read_capped(resp)
+                return html_to_text(raw.decode("utf-8", errors="replace"))
+            finally:
+                await resp.aclose()
+        return None
+    except (httpx.HTTPError, ValueError, OSError):
         return None
     finally:
         if owns_client:

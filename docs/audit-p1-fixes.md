@@ -80,21 +80,26 @@ Tests:
 ## Verification
 
 ```text
-pytest      : 227 passed
+pytest      : 231 passed
 ruff        : pass
-mypy        : pass (50 files)
+mypy        : pass (55 files)
 architecture: ok
 Docker      : built
 ```
 
-## Still open (P2)
+## Fixed after the first audit pass
 
-- no FK constraints / duplicated JSON columns;
-- Page, benchmark, research, freshness and admin routes are now in separate
-  modules (`api/pages.py`, `api/benchmark_routes.py`, `api/research_routes.py`,
-  `api/freshness_routes.py`, `api/admin_routes.py`); `api/app.py` is wiring/health.
-  Revalidation now offloads due-anchor selection, observations, and candidate
-  creation to worker threads.
-- `claim_key` numeric normalization can merge distinct facts;
-- no line-coverage tool installed;
-- benchmark endpoints are session-scoped but still have no separate api-key auth.
+- benchmark run now requires `ADMIN_TOKEN` by default (`BENCHMARK_RUN_REQUIRES_ADMIN`);
+  session reads remain owner-scoped.
+- snapshot `fetch_text` now validates http(s), rejects private/loopback IPs,
+  stops redirects to unsafe targets, caps the body at 500KB, and checks
+  content type.
+- route modules split; revalidation offloaded; coverage gate added.
+
+## Still open
+
+- FK constraints exist only in the migrated local copy; fresh/production
+  `SCHEMA` still has no FKs and Render has no persistent disk.
+- JSON payload/mirror columns are intentionally hybrid, not fully deduplicated.
+- `claim_key` numeric normalization can merge distinct facts.
+- full-page fetch and independent human labels are not implemented.
