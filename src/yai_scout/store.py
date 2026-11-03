@@ -1259,11 +1259,16 @@ class Store:
     def list_snapshots_for_url(
         self, url: str, limit: int = 500
     ) -> list[EvidenceSnapshot]:
+        return self.list_snapshots_for_url_page(url, offset=0, limit=limit)
+
+    def list_snapshots_for_url_page(
+        self, url: str, offset: int = 0, limit: int = 500
+    ) -> list[EvidenceSnapshot]:
         with self._lock:
             rows = self._conn.execute(
                 """SELECT * FROM snapshot WHERE url = ?
-                   ORDER BY fetched_at DESC LIMIT ?""",
-                (url, limit),
+                   ORDER BY fetched_at DESC LIMIT ? OFFSET ?""",
+                (url, max(1, limit), max(0, offset)),
             ).fetchall()
         return [_row_to_snapshot(row) for row in rows]
 

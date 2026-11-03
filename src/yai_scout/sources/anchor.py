@@ -74,12 +74,19 @@ async def replay_anchor_result(
     if target is None:
         return None
     candidates = []
-    snapshots = await asyncio.to_thread(store.list_snapshots_for_url, anchor.url)
-    for snapshot in snapshots:
-        published = _parse(snapshot.published_at)
-        if published is None or published > target:
-            continue
-        candidates.append((published, snapshot))
+    offset = 0
+    while True:
+        snapshots = await asyncio.to_thread(
+            store.list_snapshots_for_url_page, anchor.url, offset, 500
+        )
+        if not snapshots:
+            break
+        for snapshot in snapshots:
+            published = _parse(snapshot.published_at)
+            if published is None or published > target:
+                continue
+            candidates.append((published, snapshot))
+        offset += len(snapshots)
     if not candidates:
         return None
     published, snapshot = max(candidates, key=lambda pair: pair[0])
