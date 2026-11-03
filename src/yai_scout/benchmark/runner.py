@@ -111,9 +111,13 @@ class BenchmarkRunner:
         owner_id: str = "",
         repeats: int = 1,
         failure_injection: FailureInjection | None = None,
+        detect_freshness: bool | None = None,
     ) -> BenchSession:
         if not 1 <= repeats <= 5:
             raise ValueError("repeats must be between 1 and 5")
+        effective_freshness = (
+            self.detect_freshness if detect_freshness is None else detect_freshness
+        )
         chosen_agents = [agent_id for agent_id in (agent_ids or []) if agent_id in self.adapters]
         if agent_ids and not chosen_agents:
             raise ValueError(f"unknown agent ids: {agent_ids}")
@@ -152,7 +156,7 @@ class BenchmarkRunner:
             weights_version=WEIGHTS_VERSION,
             agent_timeout_s=self.timeout_s,
             max_claims=self.max_claims,
-            detect_freshness=self.detect_freshness,
+            detect_freshness=effective_freshness,
             repeats=repeats,
             failure_injection=(
                 failure_injection.model_dump(mode="json")
@@ -181,6 +185,7 @@ class BenchmarkRunner:
                 chosen_task_models,
                 repeats,
                 failure_injection,
+                effective_freshness,
             ),
             name=f"benchmark:{session.id}",
         )
@@ -195,6 +200,7 @@ class BenchmarkRunner:
         tasks: list[BenchmarkTask],
         repeats: int,
         failure_injection: FailureInjection | None,
+        detect_freshness: bool,
     ) -> None:
         started = time.monotonic()
         semaphore = asyncio.Semaphore(self.concurrency)
@@ -263,7 +269,7 @@ class BenchmarkRunner:
             freshness: float | None = None
             stale_rate: float | None = None
             metrics: dict[str, float | None] = {}
-            if self.detector is not None and self.detect_freshness and answer.text:
+            if self.detector is not None and detect_freshness and answer.text:
                 try:
                     report = await self.detector.detect(
                         answer.text, as_of=task.as_of, max_claims=self.max_claims

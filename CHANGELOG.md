@@ -39,7 +39,8 @@ Pre-1.0 versions are previews; APIs may change.
   provenance merge; WAL-safe migration copy and pinned snapshot fetch; claim
   identity/provenance integration tests; benchmark repeated runs, deterministic
   failure injection, step/tool traces, stability statistics, and public
-  synthetic benchmark runs; dataset expanded from 24 to 40 tasks.
+  synthetic benchmark runs; dataset expanded from 24 to 40 tasks; public
+  synthetic runs no longer fan out into detector/Tavily calls.
 
 ### Fixed
 

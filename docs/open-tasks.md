@@ -1,6 +1,6 @@
 # Open Tasks
 
-> Snapshot: 2026-11-03 · release `v0.3.6` · 265 tests · Python 3.12 local verification
+> Snapshot: 2026-11-03 · release `v0.3.6` · 266 tests · Python 3.12 local verification
 
 ## DONE
 
@@ -17,6 +17,7 @@
 | Benchmark run auth | `BENCHMARK_RUN_REQUIRES_ADMIN` default true |
 | Revalidation async I/O | `detector/revalidate.py` uses `asyncio.to_thread` |
 | Coverage gate | `fail_under = 80`; current documented coverage above threshold |
+| Public benchmark cost guard | public synthetic runs force `detect_freshness=false`; no Tavily/LLM fan-out |
 | Benchmark reliability | repeated runs, deterministic failure injection, step/tool traces, std/success/fault stats |
 | Benchmark dataset | 40 tasks (37 public + 3 compromised) across four freshness categories |
 

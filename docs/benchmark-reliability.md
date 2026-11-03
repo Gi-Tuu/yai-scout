@@ -73,7 +73,8 @@ Traces are capped at 100 entries per cell to bound SQLite payload size.
 
 Public benchmark runs are limited to synthetic agents (`mock_good`,
 `mock_stale`) by default. Real retrieval/LLM agents require the admin token.
-This keeps the public demo useful without exposing Tavily/LLM cost.
+Public runs also force `detect_freshness=false`, so a synthetic benchmark
+cannot fan out into Tavily/LLM calls through the detector.
 
 ## Limits
 

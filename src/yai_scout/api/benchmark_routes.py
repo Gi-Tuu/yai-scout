@@ -74,7 +74,9 @@ def register_benchmark_routes(
         payload: BenchmarkRequest, request: Request, response: Response
     ) -> dict[str, Any]:
         guard_cost(request, "benchmark")
-        if cfg.benchmark_run_requires_admin and not is_admin(request):
+        admin = is_admin(request)
+        public_run = cfg.benchmark_run_requires_admin and not admin
+        if public_run:
             requested = set(payload.agent_ids or [])
             public_agents = cfg.benchmark_public_agents()
             if not requested or not requested <= public_agents:
@@ -92,6 +94,9 @@ def register_benchmark_routes(
                 owner_id=session_id(request, response),
                 repeats=payload.repeats,
                 failure_injection=payload.failure_injection,
+                # Public synthetic runs must not fan out into Tavily/LLM calls
+                # through the freshness detector.
+                detect_freshness=False if public_run else None,
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -111,7 +111,7 @@ flowchart LR
 | Temporal replay | GitHub release snapshots: 2026-10-28 FRESH vs 2026-11-01 STALE |
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
 | Benchmark | 40 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
-| Quality gates | 265 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Quality gates | 266 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
