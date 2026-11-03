@@ -32,7 +32,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   benchmark read paths offloaded to worker threads; page/benchmark/research/
   freshness/admin routes moved to separate modules; JSON/column consistency
   checker + migration 6; snapshot search pagination; 80% coverage threshold;
-  revalidation store I/O offloaded to worker threads; per-URL snapshot replay paginates.
+  revalidation store I/O offloaded to worker threads; per-URL snapshot replay paginates;
+  offline FK migration copy tool + validation.
 
 ### Fixed
 

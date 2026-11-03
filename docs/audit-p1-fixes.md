@@ -80,7 +80,7 @@ Tests:
 ## Verification
 
 ```text
-pytest      : 225 passed
+pytest      : 227 passed
 ruff        : pass
 mypy        : pass (50 files)
 architecture: ok

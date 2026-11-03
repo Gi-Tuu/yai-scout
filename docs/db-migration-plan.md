@@ -1,7 +1,7 @@
 # SQLite FK / JSON Migration Design
 
-> Status: **proposal only** — do not run before the hackathon submission.
-> Current live DB is ephemeral; a full table rebuild is a post-submission activity.
+> Status: **offline migrator implemented; not applied to production.**
+> `scripts/migrate_fk.py` rebuilds a copy and validates it. Production swap still requires approval.
 
 ## 1. Why this needs a rebuild
 
@@ -167,3 +167,20 @@ Before dropping old tables:
 | Migration 7 + backup/restore drill | before any production data matters |
 | Enable FK enforcement | after full test suite and consistency report pass |
 | Remove legacy JSON mirrors | much later, only if needed |
+
+## 8. Offline migrator (implemented)
+
+```powershell
+python scripts/migrate_fk.py `
+  --source data/scout.sqlite3 `
+  --target backups/fk-migrated.sqlite3
+```
+
+- refuses to overwrite target;
+- preflight rejects orphans and duplicate bench results;
+- copies to target, rebuilds tables with FKs;
+- validates row counts, `foreign_key_check`, `integrity_check`;
+- deletes target on failure;
+- never modifies source.
+
+Local dry run: 13 tables, 0 orphans, 0 duplicates, FK/integrity ok.
