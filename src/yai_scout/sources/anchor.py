@@ -74,7 +74,8 @@ async def replay_anchor_result(
     if target is None:
         return None
     candidates = []
-    for snapshot in store.list_snapshots_for_url(anchor.url):
+    snapshots = await asyncio.to_thread(store.list_snapshots_for_url, anchor.url)
+    for snapshot in snapshots:
         published = _parse(snapshot.published_at)
         if published is None or published > target:
             continue

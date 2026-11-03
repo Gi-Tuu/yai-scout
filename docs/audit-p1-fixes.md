@@ -79,7 +79,7 @@ Tests:
 ## Verification
 
 ```text
-pytest      : 223 passed
+pytest      : 224 passed
 ruff        : pass
 mypy        : pass (50 files)
 architecture: ok
@@ -92,7 +92,8 @@ Docker      : built
 - Page, benchmark, research, freshness and admin routes are now in separate
   modules (`api/pages.py`, `api/benchmark_routes.py`, `api/research_routes.py`,
   `api/freshness_routes.py`, `api/admin_routes.py`); `api/app.py` is wiring/health.
-  The revalidation pipeline still uses sync SQLite internally.
+  Revalidation now offloads due-anchor selection, observations, and candidate
+  creation to worker threads.
 - `claim_key` numeric normalization can merge distinct facts;
 - no line-coverage tool installed;
 - benchmark endpoints are session-scoped but still have no separate api-key auth.

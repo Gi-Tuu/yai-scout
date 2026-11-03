@@ -7,6 +7,7 @@ the active anchor is never overwritten automatically.
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
@@ -77,12 +78,13 @@ async def revalidate_anchor(
             value=extract_value_hint(content, anchor.last_value, anchor.claim_text),
             published_at=str(getattr(result, "published_date", "") or "") or None,
         )
-    store.save_anchor_observation(observation)
+    await asyncio.to_thread(store.save_anchor_observation, observation)
     if observation.status != "unreachable":
         # An unreachable source is not a completed check. Keeping the old
         # timestamp makes it retryable instead of suppressing it for the full TTL.
-        store.update_anchor(
-            anchor.model_copy(update={"last_checked_at": current.isoformat()})
+        await asyncio.to_thread(
+            store.update_anchor,
+            anchor.model_copy(update={"last_checked_at": current.isoformat()}),
         )
     return observation
 
@@ -98,7 +100,8 @@ async def revalidate_due(
 ) -> list[AnchorObservation]:
     observations = []
     current = now or datetime.now(UTC)
-    for anchor in due_anchors(store, now=current, limit=limit):
+    due = await asyncio.to_thread(due_anchors, store, now=current, limit=limit)
+    for anchor in due:
         observation = await revalidate_anchor(store, anchor, fetcher=fetcher, now=now)
         observations.append(observation)
         if not observation.content_changed or not observation.value:
@@ -135,8 +138,12 @@ async def revalidate_due(
                         published_at=result.published_date,
                     )
                 )
-        create_candidate_from_observations(
-            store, anchor, candidates, auto_update=auto_update
+        await asyncio.to_thread(
+            create_candidate_from_observations,
+            store,
+            anchor,
+            candidates,
+            auto_update=auto_update,
         )
     return observations
 
