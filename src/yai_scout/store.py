@@ -187,6 +187,7 @@ class Store:
                 self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.executescript(SCHEMA)
             self._apply_migrations()
+            self._conn.execute("PRAGMA foreign_keys=ON")
             self._conn.commit()
 
     def _apply_migrations(self) -> None:

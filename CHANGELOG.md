@@ -33,7 +33,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   freshness/admin routes moved to separate modules; JSON/column consistency
   checker + migration 6; snapshot search pagination; 80% coverage threshold;
   revalidation store I/O offloaded to worker threads; per-URL snapshot replay paginates;
-  offline FK migration copy tool + validation.
+  offline FK migration copy tool + validation; local migrated-DB switch rehearsal;
+  production switch blocked by ephemeral Render storage.
 
 ### Fixed
 

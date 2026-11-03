@@ -1,7 +1,7 @@
 # SQLite FK / JSON Migration Design
 
-> Status: **offline migrator implemented; not applied to production.**
-> `scripts/migrate_fk.py` rebuilds a copy and validates it. Production swap still requires approval.
+> Status: **offline migrator + local switch completed; production blocked by ephemeral Render storage.**
+> See `docs/fk-switch-report.md`. `scripts/migrate_fk.py` rebuilds a copy and validates it.
 
 ## 1. Why this needs a rebuild
 
