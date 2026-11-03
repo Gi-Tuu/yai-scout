@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     snapshots_seed: str = "benchmarks/snapshots.json"
     admin_token: str = ""
     benchmark_run_requires_admin: bool = True
+    benchmark_public_agent_ids: str = "mock_good,mock_stale"
     accuracy_auto_update: bool = False
     anchor_live_fetch: bool = False
     anchor_allowlist: str = ""
@@ -81,6 +82,13 @@ class Settings(BaseSettings):
     bifrost_model: str = ""
     full_page_fetch_enabled: bool = False
     full_page_allowlist: str = ""
+
+    def benchmark_public_agents(self) -> set[str]:
+        return {
+            item.strip()
+            for item in self.benchmark_public_agent_ids.split(",")
+            if item.strip()
+        }
 
     def full_page_hosts(self) -> set[str]:
         return {

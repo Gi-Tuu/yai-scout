@@ -1,6 +1,6 @@
 # Open Tasks
 
-> Snapshot: 2026-11-03 · release `v0.3.6` · 262 tests · Python 3.12 local verification
+> Snapshot: 2026-11-03 · release `v0.3.6` · 265 tests · Python 3.12 local verification
 
 ## DONE
 
@@ -17,13 +17,13 @@
 | Benchmark run auth | `BENCHMARK_RUN_REQUIRES_ADMIN` default true |
 | Revalidation async I/O | `detector/revalidate.py` uses `asyncio.to_thread` |
 | Coverage gate | `fail_under = 80`; current documented coverage above threshold |
+| Benchmark reliability | repeated runs, deterministic failure injection, step/tool traces, std/success/fault stats |
 
 ## IN PROGRESS
 
 | Task | Notes |
 |---|---|
 | Migration 8 validation in more real databases | local DB reports schema versions 1–8 and 0 consistency issues; add fixture coverage as databases appear |
-| CI dual-Python verification | CI remains the authority for 3.11 + 3.12; local runtime is 3.12 |
 
 ## BLOCKED
 

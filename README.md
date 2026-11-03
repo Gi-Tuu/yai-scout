@@ -110,8 +110,8 @@ flowchart LR
 | Bifrost integration | configurable OpenAI-compatible gateway; `healthz` reports the active gateway |
 | Temporal replay | GitHub release snapshots: 2026-10-28 FRESH vs 2026-11-01 STALE |
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
-| Benchmark | 24 tasks, HTTP/Python/CLI adapters, Pareto, manifest + `result_hash` |
-| Quality gates | 262 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Benchmark | 24 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
+| Quality gates | 265 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
@@ -124,6 +124,7 @@ flowchart LR
 ## Documentation
 
 - [Bifrost integration](docs/bifrost-integration.md) · [Bifrost verification](docs/bifrost-verification.md)
+- [Benchmark reliability](docs/benchmark-reliability.md)
 - [Claim key versioning](docs/claim-key-versioning.md)
 - [Full-page fetch](docs/full-page-fetch.md)
 - [Freshness scoring](docs/spec-freshness-scoring.md) · [Temporal replay](docs/spec-temporal-replay.md)

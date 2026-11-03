@@ -89,3 +89,39 @@
 3. 数据集只有 13 题，金标是"静态值"；真实 benchmark 需要更多题、版本化与污染控制。
 4. 合成适配器只用于演示，不能当真实 Agent 排名。
 5. Freshness Score 是确定性规则分，不是概率；需要在评测报告里写清口径。
+
+
+## 8. Reliability runs（重复 + 故障注入 + trace）
+
+`POST /api/benchmark/run` 支持：
+
+```json
+{
+  "agent_ids": ["mock_good"],
+  "task_ids": ["b_tavily_free_credits"],
+  "repeats": 3,
+  "failure_injection": {
+    "enabled": true,
+    "rate": 0.2,
+    "modes": ["error", "empty"]
+  }
+}
+```
+
+- `repeats`：1–5；同一 task × agent 重复执行，结果按 cell 聚合；
+- `score_std`：重复运行的综合分标准差；
+- `success_rate`：有非空答案且无错误的运行比例；
+- `faults`：本次 cell 注入过的故障类型；
+- `trace`：runner 的 `run.started` / `fault.injected` / `adapter.completed` /
+  `adapter.trace` / `freshness.completed` / `score.completed`；
+- 内置 adapter 额外记录 `tool.web_search` / `llm.call` 等工具步骤；
+- failure injection 是确定性伪随机（session + task + agent + repeat），
+  用于验证 runner 的容错与统计，不代表真实故障率。
+
+Leaderboard 增加：
+
+```text
+samples / avg_score_std / success_rate / fault_count
+```
+
+这不是生产级 chaos engineering；它是 benchmark runner 的可重复故障测试层。

@@ -67,6 +67,7 @@ class MockAdapter:
             tokens=800 if self.good else 600,
             latency_s=0.05,
             cost_usd=0.0,
+            trace=[{"step": "synthetic.answer", "good": self.good}],
         )
 
 
@@ -75,6 +76,8 @@ def _compose(
     results: list[SearchResult],
     started: float,
     credits: float,
+    *,
+    trace: list[dict[str, object]] | None = None,
 ) -> AgentAnswer:
     lines = [f"问题：{task.question}"]
     for item in results[:5]:
@@ -87,6 +90,7 @@ def _compose(
         tokens=0,
         latency_s=round(time.monotonic() - started, 2),
         cost_usd=round(credits * 0.008, 4),
+        trace=list(trace or []),
     )
 
 
@@ -103,7 +107,20 @@ class RetrievalAdapter:
     async def answer(self, task: BenchmarkTask) -> AgentAnswer:
         started = time.monotonic()
         results, credits = await self.tavily.search(task.question, max_results=self.max_results)
-        return _compose(task, results, started, credits)
+        return _compose(
+            task,
+            results,
+            started,
+            credits,
+            trace=[
+                {
+                    "step": "tool.web_search",
+                    "query": task.question,
+                    "results": len(results),
+                    "credits": credits,
+                }
+            ],
+        )
 
 
 class ScoutAdapter:
@@ -126,15 +143,19 @@ class ScoutAdapter:
         credits = 0.0
         merged: list[SearchResult] = []
         seen: set[str] = set()
+        trace: list[dict[str, object]] = []
         for query in queries[:2]:
             results, used = await self.tavily.search(query, max_results=3)
             credits += used
+            trace.append(
+                {"step": "tool.web_search", "query": query, "results": len(results)}
+            )
             for item in results:
                 if item.url in seen:
                     continue
                 seen.add(item.url)
                 merged.append(item)
-        return _compose(task, merged, started, credits)
+        return _compose(task, merged, started, credits, trace=trace)
 
 
 LLM_SYSTEM = (
@@ -170,25 +191,37 @@ class LLMAgentAdapter:
             f"{item.content[:300]}"
             for i, item in enumerate(results[: self.max_results])
         )
+        trace: list[dict[str, object]] = [
+            {
+                "step": "tool.web_search",
+                "query": task.question,
+                "results": len(results),
+                "credits": credits,
+            }
+        ]
         result = await self.llm.chat_text(
             LLM_SYSTEM,
             LLM_USER.format(question=task.question, as_of=task.as_of, sources=sources),
             max_tokens=350,
         )
         if result is None:
+            trace.append({"step": "llm.call", "status": "unavailable"})
             return AgentAnswer(
                 text="",
                 citations=[item.url for item in results],
                 latency_s=round(time.monotonic() - started, 2),
                 cost_usd=round(credits * 0.008, 4),
                 error="LLM unavailable",
+                trace=trace,
             )
+        trace.append({"step": "llm.call", "status": "ok"})
         return AgentAnswer(
             text=result.text,
             citations=[item.url for item in results],
             tokens=result.prompt_tokens + result.completion_tokens,
             latency_s=round(time.monotonic() - started, 2),
             cost_usd=round(result.cost_usd + credits * 0.008, 6),
+            trace=trace,
         )
 
 

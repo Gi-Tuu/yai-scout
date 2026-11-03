@@ -37,7 +37,9 @@ Pre-1.0 versions are previews; APIs may change.
   snapshot fetch SSRF/size hardening; FK constraints in fresh schema;
   typed claim identity with migration 8 and dual-read recall; full-page fetch
   provenance merge; WAL-safe migration copy and pinned snapshot fetch; claim
-  identity/provenance integration tests.
+  identity/provenance integration tests; benchmark repeated runs, deterministic
+  failure injection, step/tool traces, stability statistics, and public
+  synthetic benchmark runs.
 
 ### Fixed
 

@@ -391,6 +391,11 @@ class TaskResult(BaseModel):
     evidence_quality: float | None = None
     score: float = 0.0
     error: str | None = None
+    repeats: int = 1
+    score_std: float = 0.0
+    success_rate: float = 1.0
+    faults: list[str] = Field(default_factory=list)
+    trace: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ExperimentManifest(BaseModel):
@@ -422,6 +427,8 @@ class ExperimentManifest(BaseModel):
     started_at: str | None = None
     finished_at: str | None = None
     status: str = "running"
+    repeats: int = 1
+    failure_injection: dict[str, Any] = Field(default_factory=dict)
 
 
 class BenchSession(BaseModel):

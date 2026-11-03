@@ -118,6 +118,11 @@ def result_hash(results: list[TaskResult]) -> str:
                 "evidence_quality": result.evidence_quality,
                 "score": result.score,
                 "error": result.error,
+                "repeats": result.repeats,
+                "score_std": result.score_std,
+                "success_rate": result.success_rate,
+                "faults": result.faults,
+                "trace": result.trace,
             }
         )
     return stable_hash(payload)
@@ -137,6 +142,8 @@ def build_manifest(
     agent_timeout_s: float,
     max_claims: int,
     detect_freshness: bool,
+    repeats: int = 1,
+    failure_injection: dict[str, Any] | None = None,
 ) -> ExperimentManifest:
     llm_cfg = cfg.llm_connection()
     provider = str(llm_cfg["base_url"] or "").rstrip("/")
@@ -167,6 +174,8 @@ def build_manifest(
         model_name=model_name,
         model_version=model_name,
         adapter_protocol_version=PROTOCOL_VERSION,
+        repeats=repeats,
+        failure_injection=failure_injection or {},
         tool_configuration={
             "search_depth": cfg.search_depth,
             "max_results_per_query": cfg.max_results_per_query,

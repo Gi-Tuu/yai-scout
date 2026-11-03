@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import random
+import statistics
 import time
 import uuid
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 from ..config import Settings
 from ..detector.service import StaleAnswerDetector
@@ -46,6 +51,16 @@ DEFAULT_AGENT_SPECS: list[AgentSpec] = [
         description="Tavily retrieval + DeepSeek answer with citations",
     ),
 ]
+
+
+class FailureInjection(BaseModel):
+    """Deterministic fault injection for benchmark reliability runs."""
+
+    enabled: bool = False
+    rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    modes: list[Literal["error", "timeout", "empty"]] = Field(
+        default=["error"]
+    )
 
 
 class BenchmarkRunner:
@@ -94,7 +109,11 @@ class BenchmarkRunner:
         allow_hidden: bool = False,
         supersedes: str | None = None,
         owner_id: str = "",
+        repeats: int = 1,
+        failure_injection: FailureInjection | None = None,
     ) -> BenchSession:
+        if not 1 <= repeats <= 5:
+            raise ValueError("repeats must be between 1 and 5")
         chosen_agents = [agent_id for agent_id in (agent_ids or []) if agent_id in self.adapters]
         if agent_ids and not chosen_agents:
             raise ValueError(f"unknown agent ids: {agent_ids}")
@@ -134,6 +153,12 @@ class BenchmarkRunner:
             agent_timeout_s=self.timeout_s,
             max_claims=self.max_claims,
             detect_freshness=self.detect_freshness,
+            repeats=repeats,
+            failure_injection=(
+                failure_injection.model_dump(mode="json")
+                if failure_injection is not None
+                else {}
+            ),
         )
         manifest.config_hash = compute_config_hash(manifest)
         session = BenchSession(
@@ -150,7 +175,13 @@ class BenchmarkRunner:
         )
         self.store.create_bench_session(session)
         job = asyncio.create_task(
-            self._run(session, chosen_agents, chosen_task_models),
+            self._run(
+                session,
+                chosen_agents,
+                chosen_task_models,
+                repeats,
+                failure_injection,
+            ),
             name=f"benchmark:{session.id}",
         )
         self._sessions[session.id] = job
@@ -158,89 +189,217 @@ class BenchmarkRunner:
         return session
 
     async def _run(
-        self, session: BenchSession, agent_ids: list[str], tasks: list[BenchmarkTask]
+        self,
+        session: BenchSession,
+        agent_ids: list[str],
+        tasks: list[BenchmarkTask],
+        repeats: int,
+        failure_injection: FailureInjection | None,
     ) -> None:
         started = time.monotonic()
         semaphore = asyncio.Semaphore(self.concurrency)
-        try:
-            async def run_one(task: BenchmarkTask, agent_id: str) -> TaskResult:
-                adapter = self.adapters[agent_id]
+
+        async def run_repeat(
+            task: BenchmarkTask, agent_id: str, repeat: int
+        ) -> tuple[TaskResult, str | None, list[dict[str, object]]]:
+            adapter = self.adapters[agent_id]
+            trace: list[dict[str, object]] = [
+                {
+                    "step": "run.started",
+                    "task_id": task.id,
+                    "agent_id": agent_id,
+                    "repeat": repeat,
+                }
+            ]
+            fault: str | None = None
+            answer: AgentAnswer | None = None
+            if (
+                failure_injection is not None
+                and failure_injection.enabled
+                and failure_injection.modes
+            ):
+                rng = random.Random(
+                    f"{task.id}:{agent_id}:{repeat}:"
+                    f"{failure_injection.model_dump_json()}"
+                )
+                if rng.random() < failure_injection.rate:
+                    fault = rng.choice(failure_injection.modes)
+                    trace.append({"step": "fault.injected", "mode": fault})
+                    answer = AgentAnswer(
+                        text="",
+                        error=(
+                            None
+                            if fault == "empty"
+                            else f"InjectedFailure: {fault}"
+                        ),
+                    )
+            if answer is None:
                 async with semaphore:
                     try:
                         answer = await asyncio.wait_for(
                             adapter.answer(task), timeout=self.timeout_s
                         )
-                    except Exception as exc:  # noqa: BLE001 - 单个 Agent 失败不应中断整场评测
-                        answer = AgentAnswer(text="", error=f"{type(exc).__name__}: {exc}")
+                        trace.append(
+                            {
+                                "step": "adapter.completed",
+                                "status": "ok",
+                                "latency_s": answer.latency_s,
+                            }
+                        )
+                    except Exception as exc:  # noqa: BLE001 - one agent failure must not stop the run
+                        answer = AgentAnswer(
+                            text="", error=f"{type(exc).__name__}: {exc}"
+                        )
+                        trace.append(
+                            {
+                                "step": "adapter.completed",
+                                "status": "error",
+                                "error": type(exc).__name__,
+                            }
+                        )
+                for event in answer.trace[:20]:
+                    trace.append({"step": "adapter.trace", "event": event})
 
-                    freshness: float | None = None
-                    stale_rate: float | None = None
-                    metrics: dict[str, float | None] = {}
-                    report = None
-                    if self.detector is not None and self.detect_freshness and answer.text:
-                        try:
-                            report = await self.detector.detect(
-                                answer.text, as_of=task.as_of, max_claims=self.max_claims
+            freshness: float | None = None
+            stale_rate: float | None = None
+            metrics: dict[str, float | None] = {}
+            if self.detector is not None and self.detect_freshness and answer.text:
+                try:
+                    report = await self.detector.detect(
+                        answer.text, as_of=task.as_of, max_claims=self.max_claims
+                    )
+                    freshness = report.overall_score
+                    temporal = [
+                        c
+                        for c in report.claims
+                        if c.temporal_sensitivity
+                        in {TemporalSensitivity.SENSITIVE, TemporalSensitivity.VOLATILE}
+                    ]
+                    if temporal:
+                        stale_rate = round(
+                            sum(
+                                1
+                                for v in report.verdicts
+                                if v.claim_id in {c.id for c in temporal}
+                                and v.status.value == "stale"
                             )
-                            freshness = report.overall_score
-                            temporal = [
-                                c
-                                for c in report.claims
-                                if c.temporal_sensitivity
-                                in {TemporalSensitivity.SENSITIVE, TemporalSensitivity.VOLATILE}
-                            ]
-                            if temporal:
-                                stale_rate = round(
-                                    sum(
-                                        1
-                                        for v in report.verdicts
-                                        if v.claim_id
-                                        in {c.id for c in temporal}
-                                        and v.status.value == "stale"
-                                    )
-                                    / len(temporal),
-                                    3,
-                                )
-                            metrics = evidence_metrics(report)
-                        except Exception:  # noqa: BLE001 - freshness 失败不影响主分
-                            freshness = None
+                            / len(temporal),
+                            3,
+                        )
+                    metrics = evidence_metrics(report)
+                    trace.append({"step": "freshness.completed", "status": "ok"})
+                except Exception:  # noqa: BLE001 - freshness failure must not stop the run
+                    freshness = None
+                    trace.append({"step": "freshness.completed", "status": "error"})
 
-                    numeric = expected_accuracy(task, answer.text)
-                    coverage = claim_coverage(task, answer.text)
-                    stable_integrity = (
-                        metrics.get("stable_fact_integrity")
-                        if task.category.value == "stable"
-                        else None
-                    )
-                    result = TaskResult(
-                        task_id=task.id,
-                        agent_id=agent_id,
-                        answer=answer,
-                        numeric_accuracy=numeric,
-                        has_citations=bool(answer.citations),
-                        citation_count=len(answer.citations),
-                        freshness_score=freshness,
-                        stale_claim_rate=stale_rate,
-                        claim_coverage=coverage,
-                        supported_claim_rate=metrics.get("supported_claim_rate"),
-                        stable_fact_integrity=stable_integrity,
-                        evidence_quality=metrics.get("evidence_quality"),
-                        score=weighted_view(
-                            accuracy=numeric,
-                            freshness=freshness,
-                            stale_rate=stale_rate,
-                            evidence_quality=metrics.get("evidence_quality"),
-                            completion=1.0 if answer.text else 0.0,
-                            cost_usd=answer.cost_usd,
-                            latency_s=answer.latency_s,
-                        ),
-                        error=answer.error,
-                    )
-                    self.store.add_bench_result(session.id, result)
-                    return result
+            numeric = expected_accuracy(task, answer.text)
+            coverage = claim_coverage(task, answer.text)
+            stable_integrity = (
+                metrics.get("stable_fact_integrity")
+                if task.category.value == "stable"
+                else None
+            )
+            result = TaskResult(
+                task_id=task.id,
+                agent_id=agent_id,
+                answer=answer,
+                numeric_accuracy=numeric,
+                has_citations=bool(answer.citations),
+                citation_count=len(answer.citations),
+                freshness_score=freshness,
+                stale_claim_rate=stale_rate,
+                claim_coverage=coverage,
+                supported_claim_rate=metrics.get("supported_claim_rate"),
+                stable_fact_integrity=stable_integrity,
+                evidence_quality=metrics.get("evidence_quality"),
+                score=weighted_view(
+                    accuracy=numeric,
+                    freshness=freshness,
+                    stale_rate=stale_rate,
+                    evidence_quality=metrics.get("evidence_quality"),
+                    completion=1.0 if answer.text else 0.0,
+                    cost_usd=answer.cost_usd,
+                    latency_s=answer.latency_s,
+                ),
+                error=answer.error,
+            )
+            trace.append({"step": "score.completed", "score": result.score})
+            return result, fault, trace[:100]
 
+        async def run_cell(task: BenchmarkTask, agent_id: str) -> None:
+            samples: list[
+                tuple[TaskResult, str | None, list[dict[str, object]]]
+            ] = []
+            for repeat in range(repeats):
+                samples.append(await run_repeat(task, agent_id, repeat))
+            base = max(samples, key=lambda item: item[0].score)
+            scores = [item[0].score for item in samples]
+            successes = sum(
+                1
+                for result, _fault, _trace in samples
+                if not result.error and result.answer.text.strip()
+            )
+            faults = sorted({fault for _result, fault, _trace in samples if fault})
+            trace: list[dict[str, object]] = []
+            for _result, _fault, sample_trace in samples:
+                trace.extend(sample_trace)
+            trace = trace[:100]
+
+            def average(values: list[float | None]) -> float | None:
+                usable = [value for value in values if value is not None]
+                return round(sum(usable) / len(usable), 4) if usable else None
+
+            aggregate = base[0].model_copy(
+                update={
+                    "score": round(sum(scores) / len(scores), 4),
+                    "numeric_accuracy": round(
+                        sum(item[0].numeric_accuracy for item in samples) / repeats, 3
+                    ),
+                    "has_citations": any(item[0].has_citations for item in samples),
+                    "citation_count": round(
+                        sum(item[0].citation_count for item in samples) / repeats
+                    ),
+                    "freshness_score": average(
+                        [item[0].freshness_score for item in samples]
+                    ),
+                    "stale_claim_rate": average(
+                        [item[0].stale_claim_rate for item in samples]
+                    ),
+                    "claim_coverage": round(
+                        sum(item[0].claim_coverage for item in samples) / repeats, 3
+                    ),
+                    "supported_claim_rate": average(
+                        [item[0].supported_claim_rate for item in samples]
+                    ),
+                    "stable_fact_integrity": average(
+                        [item[0].stable_fact_integrity for item in samples]
+                    ),
+                    "evidence_quality": average(
+                        [item[0].evidence_quality for item in samples]
+                    ),
+                    "repeats": repeats,
+                    "score_std": (
+                        round(statistics.pstdev(scores), 4) if repeats > 1 else 0.0
+                    ),
+                    "success_rate": round(successes / repeats, 3),
+                    "faults": faults,
+                    "trace": trace,
+                    "error": (
+                        None
+                        if successes == repeats
+                        else (
+                            base[0].error
+                            if repeats == 1
+                            else f"{repeats - successes}/{repeats} runs failed"
+                        )
+                    ),
+                }
+            )
+            self.store.add_bench_result(session.id, aggregate)
+
+        try:
             await asyncio.gather(
-                *(run_one(task, agent_id) for task in tasks for agent_id in agent_ids)
+                *(run_cell(task, agent_id) for task in tasks for agent_id in agent_ids)
             )
             finished_at = utcnow_iso()
             results = self.store.list_bench_results(session.id)
@@ -263,7 +422,7 @@ class BenchmarkRunner:
                     final_manifest.model_dump_json() if final_manifest else None
                 ),
             )
-        except Exception as exc:  # noqa: BLE001 - 顶层兜底
+        except Exception as exc:  # noqa: BLE001 - top-level run failure
             finished_at = utcnow_iso()
             error = f"{type(exc).__name__}: {exc}"
             results = self.store.list_bench_results(session.id)

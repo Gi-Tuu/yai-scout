@@ -270,6 +270,10 @@ def leaderboard(results: list[TaskResult]) -> list[dict[str, float | str | None]
                 ),
                 "avg_cost_usd": round(sum(i.answer.cost_usd for i in items) / count, 6),
                 "errors": sum(1 for i in items if i.error or i.answer.error),
+                "samples": sum(i.repeats for i in items),
+                "avg_score_std": round(sum(i.score_std for i in items) / count, 4),
+                "success_rate": round(sum(i.success_rate for i in items) / count, 3),
+                "fault_count": sum(len(i.faults) for i in items),
             }
         )
     rows.sort(

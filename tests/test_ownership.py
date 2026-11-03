@@ -161,7 +161,13 @@ def test_benchmark_run_requires_admin_token():
     with TestClient(app) as client:
         response = client.post(
             "/api/benchmark/run",
-            json={"agent_ids": ["mock_good"], "task_ids": ["b_tavily_free_credits"]},
+            json={"agent_ids": ["retrieval_baseline"], "task_ids": ["b_tavily_free_credits"]},
         )
         assert response.status_code == 403
+
+        public = client.post(
+            "/api/benchmark/run",
+            json={"agent_ids": ["mock_good"], "task_ids": ["b_tavily_free_credits"]},
+        )
+        assert public.status_code == 202
     store.close()

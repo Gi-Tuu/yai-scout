@@ -11,7 +11,11 @@ from pydantic import BaseModel
 
 from ..benchmark.dataset import load_dataset
 from ..benchmark.manifest import result_hash as compute_result_hash
-from ..benchmark.runner import DEFAULT_AGENT_SPECS, BenchmarkRunner
+from ..benchmark.runner import (
+    DEFAULT_AGENT_SPECS,
+    BenchmarkRunner,
+    FailureInjection,
+)
 from ..benchmark.scoring import leaderboard as build_leaderboard
 from ..benchmark.scoring import pareto_frontier
 from ..config import Settings
@@ -21,6 +25,8 @@ from ..store import Store
 class BenchmarkRequest(BaseModel):
     agent_ids: list[str] | None = None
     task_ids: list[str] | None = None
+    repeats: int = 1
+    failure_injection: FailureInjection | None = None
 
 
 def register_benchmark_routes(
@@ -69,15 +75,23 @@ def register_benchmark_routes(
     ) -> dict[str, Any]:
         guard_cost(request, "benchmark")
         if cfg.benchmark_run_requires_admin and not is_admin(request):
-            raise HTTPException(
-                status_code=403,
-                detail="benchmark run requires admin token",
-            )
+            requested = set(payload.agent_ids or [])
+            public_agents = cfg.benchmark_public_agents()
+            if not requested or not requested <= public_agents:
+                raise HTTPException(
+                    status_code=403,
+                    detail=(
+                        "public benchmark runs are limited to synthetic agents; "
+                        "admin token required for other agents"
+                    ),
+                )
         try:
             session = runner.start(
                 payload.agent_ids,
                 payload.task_ids,
                 owner_id=session_id(request, response),
+                repeats=payload.repeats,
+                failure_injection=payload.failure_injection,
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
