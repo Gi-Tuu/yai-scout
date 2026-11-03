@@ -2,8 +2,8 @@
 
 **Evidence-first stale-answer detector.** Audit any LLM answer claim by claim, verify it against live sources, and show what is still true, what changed, and what cannot be verified.
 
-**Primary submission: Tavily Track — Problem 05, Stale-answer detector (track-local Tavily-01).**  
-**Both required technologies are used:** Tavily for live web research; **Bifrost by Maxim AI as the model gateway** for claim extraction, assessment and rewrite. The 24-task benchmark is evaluation evidence for the freshness work, not a second submission.
+**Primary challenge: Tavily Track — Problem 05, Stale-answer detector (track-local Tavily-01).**  
+**Entry type: integrated (Tavily + Bifrost).** Both technologies serve different roles — Tavily for live web research; **Bifrost by Maxim AI as the model gateway** for claim extraction, assessment and rewrite. They are not required together by the rules; this project uses both because the architecture benefits. The 24-task benchmark is evaluation evidence for the freshness work, not a second submission.
 
 [![CI](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Gi-Tuu/yai-scout/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Gi-Tuu/yai-scout?include_prereleases&label=release)](https://github.com/Gi-Tuu/yai-scout/releases)
@@ -37,7 +37,7 @@ answer → claims → temporal sensitivity → Tavily live research
 4. **As-of replay**: the same answer is FRESH at 2026-10-28 and STALE at 2026-11-01 (real GitHub release history).
 5. **Evidence governance**: anchors, multi-source candidates, an accuracy gate, approve/reject and rollback — so automated updates are auditable rather than blind overwrites.
 
-## Both technologies, meaningful roles
+## Integrated entry: two technologies, two clear roles
 
 | Technology | Role in the product | Where |
 |---|---|---|
@@ -131,7 +131,7 @@ flowchart LR
 - [Differentiation spec](docs/differentiation-spec.md) · [Positioning](docs/positioning.md)
 - [Freshness scoring](docs/spec-freshness-scoring.md) · [Temporal replay](docs/spec-temporal-replay.md)
 - [Anchor retrieval](docs/spec-anchor-retrieval.md) · [Accuracy gate](docs/spec-accuracy-gate.md) · [Accuracy eval](docs/accuracy-eval.md)
-- [Submission checklist](docs/submission.md) · [Demo script](docs/demo-script.md) · [Deploy free](docs/deploy-free.md)
+- [Submission checklist](docs/submission.md) · [3-minute English voiceover](docs/video-script-en.md) · [Demo script](docs/demo-script.md) · [Deploy free](docs/deploy-free.md)
 - [Governance](docs/governance/engineering-governance-v1.md) · [ADR-0003](docs/adr/0003-engineering-governance.md)
 - [Engineering audit (2026-11-02)](docs/audit-2026-11-02.md) · [Changelog](CHANGELOG.md) · [API resources](docs/api-resources.md)
 
