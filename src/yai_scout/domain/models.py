@@ -175,6 +175,8 @@ class Anchor(BaseModel):
 
     id: str
     claim_key: str
+    claim_key_v2: str = ""
+    claim_key_version: int = 1
     claim_text: str = ""
     url: str
     source_tier: int = Field(default=3, ge=1, le=4)

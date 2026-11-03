@@ -1,6 +1,6 @@
 # SQLite FK / JSON Migration Design
 
-> Status: **offline migrator + local switch completed; production blocked by ephemeral Render storage.**
+> Status: **fresh SCHEMA now has FKs; offline migrator + local switch done; Render still ephemeral.**
 > See `docs/fk-switch-report.md`. `scripts/migrate_fk.py` rebuilds a copy and validates it.
 
 ## 1. Why this needs a rebuild

@@ -80,7 +80,7 @@ Tests:
 ## Verification
 
 ```text
-pytest      : 231 passed
+pytest      : 236 passed
 ruff        : pass
 mypy        : pass (55 files)
 architecture: ok
@@ -98,8 +98,9 @@ Docker      : built
 
 ## Still open
 
-- FK constraints exist only in the migrated local copy; fresh/production
-  `SCHEMA` still has no FKs and Render has no persistent disk.
+- FK constraints are now in the fresh `SCHEMA` and the migrated local DB;
+  Render remains ephemeral, so production data still resets on deploy.
 - JSON payload/mirror columns are intentionally hybrid, not fully deduplicated.
-- `claim_key` numeric normalization can merge distinct facts.
+- `claim_key` v2 functions + shadow fields exist, but matching still uses v1;
+  migration 7/backfill/dual-read are not enabled.
 - full-page fetch and independent human labels are not implemented.

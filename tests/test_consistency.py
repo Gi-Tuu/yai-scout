@@ -27,6 +27,7 @@ def test_column_payload_mismatch_is_reported():
     store = _store()
     store._conn.execute("UPDATE anchor SET status = 'superseded' WHERE id = 'a1'")
     store._conn.commit()
+    store._conn.execute("PRAGMA foreign_keys=ON")
     issues = store.consistency_report()
     assert any(
         item["table"] == "anchor"
@@ -44,6 +45,7 @@ def test_orphan_candidate_is_reported():
         anchor_id="missing_anchor",
         claim_key="k",
     )
+    store._conn.execute("PRAGMA foreign_keys=OFF")
     store._conn.execute(
         """INSERT INTO anchor_candidate
            (id, anchor_id, status, payload_json, created_at)

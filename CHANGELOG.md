@@ -35,7 +35,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   revalidation store I/O offloaded to worker threads; per-URL snapshot replay paginates;
   offline FK migration copy tool + validation; local migrated-DB switch rehearsal;
   production switch blocked by ephemeral Render storage; benchmark run admin
-  gate; snapshot fetch SSRF/size hardening.
+  gate; snapshot fetch SSRF/size hardening; FK constraints in fresh schema;
+  claim_key v2 functions/shadow fields.
 
 ### Fixed
 

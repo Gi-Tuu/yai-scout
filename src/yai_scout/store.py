@@ -48,13 +48,13 @@ CREATE TABLE IF NOT EXISTS research_task (
     stats_json TEXT NOT NULL DEFAULT '{}'
 );
 CREATE TABLE IF NOT EXISTS plan (
-    task_id TEXT PRIMARY KEY,
+    task_id TEXT PRIMARY KEY REFERENCES research_task(id) ON DELETE CASCADE,
     payload_json TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS source (
     id TEXT PRIMARY KEY,
-    task_id TEXT NOT NULL,
+    task_id TEXT NOT NULL REFERENCES research_task(id) ON DELETE CASCADE,
     url TEXT NOT NULL,
     canonical_url TEXT NOT NULL,
     domain TEXT NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS source (
 CREATE INDEX IF NOT EXISTS idx_source_task ON source(task_id);
 CREATE TABLE IF NOT EXISTS run_event (
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id TEXT NOT NULL,
+    task_id TEXT NOT NULL REFERENCES research_task(id) ON DELETE CASCADE,
     stage TEXT NOT NULL,
     type TEXT NOT NULL,
     payload_json TEXT NOT NULL DEFAULT '{}',
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS run_event (
 CREATE INDEX IF NOT EXISTS idx_event_task ON run_event(task_id, seq);
 CREATE TABLE IF NOT EXISTS cost_ledger (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id TEXT NOT NULL,
+    task_id TEXT NOT NULL REFERENCES research_task(id) ON DELETE CASCADE,
     provider TEXT NOT NULL,
     unit TEXT NOT NULL,
     amount REAL NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS bench_session (
 );
 CREATE TABLE IF NOT EXISTS bench_result (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    session_id TEXT NOT NULL,
+    session_id TEXT NOT NULL REFERENCES bench_session(id) ON DELETE CASCADE,
     task_id TEXT NOT NULL,
     agent_id TEXT NOT NULL,
     payload_json TEXT NOT NULL,
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS anchor (
 CREATE INDEX IF NOT EXISTS idx_anchor_claim ON anchor(claim_key);
 CREATE TABLE IF NOT EXISTS anchor_candidate (
     id TEXT PRIMARY KEY,
-    anchor_id TEXT NOT NULL,
+    anchor_id TEXT NOT NULL REFERENCES anchor(id) ON DELETE RESTRICT,
     status TEXT NOT NULL,
     payload_json TEXT NOT NULL,
     created_at TEXT NOT NULL
@@ -136,7 +136,7 @@ CREATE INDEX IF NOT EXISTS idx_anchor_candidate_anchor ON anchor_candidate(ancho
 CREATE INDEX IF NOT EXISTS idx_anchor_candidate_status ON anchor_candidate(status);
 CREATE TABLE IF NOT EXISTS anchor_observation (
     id TEXT PRIMARY KEY,
-    anchor_id TEXT NOT NULL,
+    anchor_id TEXT NOT NULL REFERENCES anchor(id) ON DELETE RESTRICT,
     status TEXT NOT NULL,
     content_changed INTEGER NOT NULL DEFAULT 0,
     observed_hash TEXT NOT NULL DEFAULT '',
@@ -187,8 +187,8 @@ class Store:
                 self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.executescript(SCHEMA)
             self._apply_migrations()
-            self._conn.execute("PRAGMA foreign_keys=ON")
             self._conn.commit()
+            self._conn.execute("PRAGMA foreign_keys=ON")
 
     def _apply_migrations(self) -> None:
         """Sequential, idempotent schema migrations with a recorded version."""

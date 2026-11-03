@@ -12,7 +12,7 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from ..config import Settings
-from ..detector.compare import claim_key, compare_reports
+from ..detector.compare import claim_key, claim_key_v2, compare_reports
 from ..detector.receipt import build_report_receipt
 from ..detector.service import StaleAnswerDetector
 from ..detector.snapshot_search import SnapshotSearcher
@@ -232,6 +232,8 @@ def register_freshness_routes(
         anchor = Anchor(
             id=f"anc_{uuid.uuid4().hex[:12]}",
             claim_key=claim_key(payload.claim_text),
+            claim_key_v2=claim_key_v2(payload.claim_text),
+            claim_key_version=2,
             claim_text=payload.claim_text,
             url=payload.url,
             source_tier=payload.source_tier,

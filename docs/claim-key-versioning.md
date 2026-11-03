@@ -1,7 +1,7 @@
 # Claim Key Versioning Design
 
-> Status: **design only** — do not change the live key before the submission.
-> Current key is v1; v2 must be additive and dual-read.
+> Status: **v2 functions + shadow write implemented; matching still v1.**
+> Migration 7, backfill and dual-read remain post-submission work.
 
 ## 1. Problem
 
