@@ -33,7 +33,6 @@ STALE_VALUES: dict[str, str] = {
     "b_bifrost_license": "AGPL-3.0",
     "c_yai_version": "0.24.0",
     "c_yai_license": "AGPL-3.0",
-    "d_geekroom_deadline": "2026-11-22",
 }
 
 

@@ -105,8 +105,8 @@ cases = [
         ("https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404", 1, "mdn", "Not Found", D1, True),
         ("https://en.wikipedia.org/wiki/List_of_HTTP_status_codes", 2, "wikipedia", "Not Found", D2, True),
     ]),
-    case(14, "Geek Room Global AI Hackathon 截止日期为 2026-11-15", "sensitive", "2026-11-22", [
-        ("https://hackculture.io/hackathons/ai-global-hackathon", 1, "hackculture", "2026-11-15", D1, True),
+    case(14, "Python 3.13 于 2024 年 10 月发布", "sensitive", "2026-11-22", [
+        ("https://docs.python.org/3.13/whatsnew/3.13.html", 1, "python-docs", "2026-11-15", D1, True),
     ]),
     case(15, "Tavily 学生计划每月提供 4,000 credits", "sensitive", "1000", [
         ("https://some-blog.example/tavily-student", 3, "some-blog", "4000", D1, True),
@@ -136,8 +136,8 @@ cases = [
     case(23, "YAI Agent Core 当前版本是 0.25", "sensitive", "0.25.0", [
         ("https://github.com/Gi-Tuu/yai-agent-core/releases", 2, "github-yai", "0.25", D1, True),
     ]),
-    case(24, "Geek Room Global AI Hackathon 截止日期为 2026-11-15", "sensitive", "2026-11-15T23:59:00+05:30", [
-        ("https://hackculture.io/hackathons/ai-global-hackathon", 1, "hackculture", "2026-11-15", D1, True),
+    case(24, "Python 3.13 于 2024 年 10 月发布", "sensitive", "2026-11-15T23:59:00+05:30", [
+        ("https://docs.python.org/3.13/whatsnew/3.13.html", 1, "python-docs", "2026-11-15", D1, True),
         ("https://www.tavily.com/community", 2, "tavily-community", "2026-11-15", D2, True),
     ]),
     case(25, "Tavily 免费计划每月提供 1,000 credits", "sensitive", "500", [

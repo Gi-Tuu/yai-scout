@@ -1,4 +1,4 @@
-"""Benchmark JSON routes (supporting evaluation, not the primary submission)."""
+"""Benchmark JSON routes (evaluation tooling)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Stale-answer Detector（Tavily Track / Tavily-01）。"""
+"""Stale-answer Detector。"""
 
 from .claims import extract_claims
 from .service import StaleAnswerDetector

@@ -1592,11 +1592,11 @@
     },
     {
       "worksheet_id": "BL-057",
-      "claim_text": "Geek Room Global AI Hackathon 截止日期为 2026-11-15 23:59 IST",
-      "claim_key": "geek room global ai hackathon 截止日期为 #",
+      "claim_text": "Python 3.13 于 2024 年 10 月发布",
+      "claim_key": "python 3.13 release 截止日期为 #",
       "temporal_sensitivity": "sensitive",
       "anchor": {
-        "url": "https://hackculture.io/hackathons/ai-global-hackathon",
+        "url": "https://docs.python.org/3.13/whatsnew/3.13.html",
         "source_tier": 1,
         "value": "2026-11-15T23:59:00+05:30",
         "published_at": "2025-01-01T00:00:00Z",
@@ -1604,9 +1604,9 @@
       },
       "observations": [
         {
-          "url": "https://hackculture.io/hackathons/ai-global-hackathon",
+          "url": "https://docs.python.org/3.13/whatsnew/3.13.html",
           "source_tier": 1,
-          "independent_group": "hackculture",
+          "independent_group": "python-docs",
           "value": "2026-11-15",
           "published_at": "2026-10-01T00:00:00Z",
           "content_hash": "new-g1"
