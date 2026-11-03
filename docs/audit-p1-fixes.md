@@ -103,6 +103,7 @@ Docker      : built
 - snapshot `fetch_text` now pins the validated public IP with Host/SNI,
   closing the DNS-rebinding window.
 - regression tests: WAL copy, pinned Host/SNI.
+- claim_key v2 property/fuzz tests and full-page allowlist parser tests.
 
 ## Still open
 

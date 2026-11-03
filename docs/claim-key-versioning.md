@@ -204,6 +204,9 @@ Only after:
 
 ## 7. Tests required
 
+Property/fuzz tests are implemented in `tests/test_claim_key_properties.py`
+(deterministic random corpus; no Hypothesis dependency).
+
 - v2 keeps same fact with changed amount;
 - v2 separates Q1/Q2;
 - v2 separates 2026/2027;

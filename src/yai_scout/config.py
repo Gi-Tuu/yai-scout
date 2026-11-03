@@ -82,6 +82,13 @@ class Settings(BaseSettings):
     full_page_fetch_enabled: bool = False
     full_page_allowlist: str = ""
 
+    def full_page_hosts(self) -> set[str]:
+        return {
+            item.strip().lower()
+            for item in self.full_page_allowlist.split(",")
+            if item.strip()
+        }
+
     def llm_connection(self) -> dict[str, str | bool]:
         """Single source of truth for the effective LLM endpoint."""
         if self.bifrost_base_url:

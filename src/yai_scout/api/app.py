@@ -70,11 +70,7 @@ def create_app(
         gateway=str(llm_cfg["gateway"]),
         transport=llm_transport,
     )
-    page_allowlist = {
-        item.strip().lower()
-        for item in cfg.full_page_allowlist.split(",")
-        if item.strip()
-    }
+    page_allowlist = cfg.full_page_hosts()
 
     async def _page_fetcher(result: Any) -> Any:
         return await fetch_page(result.url, page_allowlist)

@@ -39,7 +39,8 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   claim_key v2 functions/shadow fields, migration 7 + dual-read;
   full-page fetch MVP behind `FULL_PAGE_FETCH_ENABLED`; FK migrator carries
   claim_key v2 columns; v2 infers version context consistently; WAL-safe
-  migration copy and pinned snapshot fetch.
+  migration copy and pinned snapshot fetch; claim v2 property tests; full-page
+  allowlist parser tests.
 
 ### Fixed
 

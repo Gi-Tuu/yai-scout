@@ -17,3 +17,13 @@ When enabled:
 
 It is intentionally opt-in: fetching every search result would add cost,
 latency, and SSRF surface.
+
+## Allowlist configuration
+
+- values are bare hostnames, comma separated;
+- case-insensitive, whitespace trimmed;
+- exact host match only (no wildcards);
+- empty allowlist keeps the feature off;
+- `Settings.full_page_hosts()` is the single parser.
+
+Config tests: `tests/test_full_page_config.py`.
