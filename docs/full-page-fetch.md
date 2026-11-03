@@ -33,3 +33,13 @@ Config tests: `tests/test_full_page_config.py`.
 Full-page merge preserves the original Tavily `published_date` and
 `published_date_source`; the fetch timestamp is stored only in `retrieved_at`.
 If neither source nor page provides a publication date, it stays unknown.
+
+## Production note
+
+The code default remains off. The current public deployment explicitly enables
+it with this exact allowlist:
+
+```text
+FULL_PAGE_FETCH_ENABLED=true
+FULL_PAGE_ALLOWLIST=docs.tavily.com,api-docs.deepseek.com,docs.getbifrost.ai,github.com
+```
