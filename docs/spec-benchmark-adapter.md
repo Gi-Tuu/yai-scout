@@ -150,7 +150,7 @@ scout-adapter serve --agent my_agent:MyAgent --port 9100
 ### 2.3 版本与污染控制
 
 - 数据集版本化（semver）；每次变更写 changelog；
-- 12/24 题公开，另留 3 题隐藏（提交前不发布）；
+- 37/40 题公开，另留 3 题隐藏（历史已公开，标记 compromised）；
 - `target_time` 必须早于/等于证据可用时间；历史题必须带 snapshot_id；
 - 来源必须可访问、可存档；不接受未核实的生成数据；
 - 人工审核：每题 ≥1 人复核，记录 reviewer。
@@ -225,7 +225,7 @@ UI：散点图（Accuracy vs Cost，点大小=Freshness），frontier 连线；�
 ## 6. 验收标准
 
 - [ ] 3 个不同架构 Agent 通过 HTTP/CLI/Python 接入（其中 ≥1 外部进程）
-- [ ] 12 题（P0）/24 题（P1）数据集，四类齐全，含 hidden split
+- [ ] 40 题数据集，四类齐全，含 hidden split
 - [ ] 6 项核心指标 + token in/out + 成本明细全部展示
 - [ ] Pareto frontier 计算正确（3 Agent 单测）
 - [ ] 同 config 重跑一致

@@ -18,6 +18,7 @@
 | Revalidation async I/O | `detector/revalidate.py` uses `asyncio.to_thread` |
 | Coverage gate | `fail_under = 80`; current documented coverage above threshold |
 | Benchmark reliability | repeated runs, deterministic failure injection, step/tool traces, std/success/fault stats |
+| Benchmark dataset | 40 tasks (37 public + 3 compromised) across four freshness categories |
 
 ## IN PROGRESS
 
@@ -41,7 +42,7 @@
 | FK/JSON full normalization | hybrid payload + indexed columns is intentional; high-risk rewrite |
 | Public Bifrost deployment | optional; local gateway path is verified |
 | Full-page fetch rollout | default off; needs an explicit allowlist and cost review |
-| Benchmark expansion | current 24-task suite is evaluation tooling, not a leaderboard |
+
 
 ## Evidence commands
 

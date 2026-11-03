@@ -79,6 +79,6 @@ This keeps the public demo useful without exposing Tavily/LLM cost.
 
 - This is a deterministic fault-injection layer, not production chaos
   engineering.
-- The 24-task dataset is demo scale.
+- The 40-task dataset is still demo scale.
 - Injected failures are marked in results and must not be presented as real
   agent reliability.

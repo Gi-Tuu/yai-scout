@@ -1,6 +1,6 @@
 # Benchmark & Stale-answer Detector（实现说明）
 
-> **v2 状态（2026-11-01，P0 已落地）**：数据模型加入 Temporal Sensitivity / target_time / 快照；Freshness 改为新状态机与可空分数；Benchmark 数据集改为四类 12 题；新增 `scout-adapter/1.0` HTTP 协议与外部 Agent 示例；两个入口拆为 `/benchmark` 与 `/freshness`。
+> **v3 状态（2026-11-04）**：40 题四类数据集（37 public + 3 compromised）；新增 repeated runs、failure injection、step/tool traces、stability stats；保留 `scout-adapter/1.0` 与 `/benchmark` + `/freshness` 双入口。
 > 详细规格见 [`differentiation-spec.md`](differentiation-spec.md)、[`spec-freshness-scoring.md`](spec-freshness-scoring.md)、[`spec-benchmark-adapter.md`](spec-benchmark-adapter.md)。
 > 下文保留为 demo v0 的说明，数字与状态以 v2 规格为准。
 
@@ -9,7 +9,7 @@
 
 ## 1. Dataset
 
-`benchmarks/tasks.json`：13 道 AI 开发者生态事实题，全部有官方/一手来源，适合做「新鲜度敏感」评测。
+`benchmarks/tasks.json`：40 道 AI 开发者生态与通用事实题，全部有官方/一手来源，适合做「新鲜度敏感」评测。
 
 | 字段 | 含义 |
 |---|---|
@@ -86,7 +86,7 @@
 
 1. claim 抽取是规则版，中文/英文混排与长句会漏；接 LLM 后需保留规则兜底。
 2. 关系判定只对数字型 claim 做值比较；法规/人事类目前只能 `mentions`（需 LLM 判断）。
-3. 数据集只有 13 题，金标是"静态值"；真实 benchmark 需要更多题、版本化与污染控制。
+3. 数据集已扩到 40 题，但仍是 demo 规模；金标是"静态值"，真实 benchmark 还需要独立标注、版本化与污染控制。
 4. 合成适配器只用于演示，不能当真实 Agent 排名。
 5. Freshness Score 是确定性规则分，不是概率；需要在评测报告里写清口径。
 

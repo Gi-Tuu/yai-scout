@@ -15,7 +15,7 @@
 | 两个独立产品 + 独立入口 + 共享代码（monorepo） | **保留**（ADR-0002） |
 | 规则 + LLM claim 抽取、Tavily 核验、Freshness 分数 | **保留并升级**：增加时间敏感性、target_time、validity window、关系与新鲜度分离 |
 | 6 项 Benchmark 指标 | **保留并扩展**：加入 Freshness / Evidence Quality / Claim Support / Stale Rate / 成本明细 |
-| 13 题数据集 | **升级**：按 Stable / Time-sensitive / Changed / Conflicting 四类重建为 24 题 |
+| 13 题数据集 | **升级**：按 Stable / Time-sensitive / Changed / Conflicting 四类重建为 40 题 |
 | 现有综合分（0–1 加权） | **降级为可选视图**；默认改为多维表 + Pareto，不再用单一不透明分数 |
 | As-of 时间旅行 | **新增**：必须以真实快照实现，禁止用当前搜索伪造历史 |
 
@@ -43,7 +43,7 @@
 - **技术**：规则（类型/关键词/实体）+ LLM 分类（JSON）；评分用确定性公式（见 `spec-freshness-scoring.md`）。
 - **依赖**：`scout_core/evidence`、`sources`、`dataset`。
 - **测试**：10 条边界向量（稳定事实旧来源不扣分、旧价格判 stale、MENTIONS 不算支持、冲突证据判 CONFLICTED、无证据判 INSUFFICIENT…）。
-- **如何证明有效**：24 题数据集上，Freshness 判定与人工标注一致率 ≥0.8；Stable 类不因来源旧被误判 ≥90%；报告展示每条证据的贡献项。
+- **如何证明有效**：40 题数据集上，Freshness 判定与人工标注一致率 ≥0.8；Stable 类不因来源旧被误判 ≥90%；报告展示每条证据的贡献项。
 
 **状态枚举**：`FRESH / STALE / CONFLICTED / INSUFFICIENT / UNKNOWN`
 （`UNKNOWN` 用于"该 claim 不属于可验证事实"或"无法判断"，不强行给结论。）
@@ -270,7 +270,7 @@ score = 100 * clamp(0.5*norm(relation_score) + 0.3*recency_score + 0.2*authority
 
 ### P1（尽量，11/12 前）
 
-Evidence Inspector、Freshness Dataset 24 题、Pareto Frontier、历史快照、答案漂移、外部 Agent demo。
+Evidence Inspector、Freshness Dataset 40 题、Pareto Frontier、历史快照、答案漂移、外部 Agent demo。
 
 ### P2（有余力）
 
@@ -326,7 +326,7 @@ Evidence Inspector、Freshness Dataset 24 题、Pareto Frontier、历史快照�
 | Claim 抽取 | LLM + 规则已实现 | 缺 target_time/时间敏感性分类 |
 | 证据核验 | Tavily + 关系 + LLM 复核 | 缺 INSUFFICIENT 显式、updated_at、snapshot_id |
 | Freshness | 规则分 + 权威性门槛 | 缺 4 档敏感性、窗口、confidence、breakdown、CONFLICTED |
-| Benchmark | 13 题 + 榜单 | 缺 4 类数据集、claim-level eval、Pareto、成本明细 |
+| Benchmark | 40 题 + 榜单 | 缺 4 类数据集、claim-level eval、Pareto、成本明细 |
 | Adapter | mock/检索/LLM，HTTP 类未实测 | 缺协议文档、manifest、外部 Agent demo |
 | As-of | 无 | 全新（P1） |
 | 独立入口 | `/detector` + `/bench` | 需改为 `/freshness` + `/benchmark` 并独立启动 |

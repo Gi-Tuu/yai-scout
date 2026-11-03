@@ -60,7 +60,7 @@ uv run uvicorn yai_scout.api.app:app --port 8010
 | `/freshness` | paste an LLM answer → claim-level freshness report |
 | `/inspector` | claims → sources → timestamps → score breakdown |
 | `/compare` | temporal drift between two reports (real replay) |
-| `/benchmark` | evaluation: 24 tasks, multiple agents, Pareto |
+| `/benchmark` | evaluation: 40 tasks, multiple agents, Pareto |
 | `/label` | blind accuracy labeling |
 | `/admin` | token-gated candidates / approve / reject / rollback |
 
@@ -110,7 +110,7 @@ flowchart LR
 | Bifrost integration | configurable OpenAI-compatible gateway; `healthz` reports the active gateway |
 | Temporal replay | GitHub release snapshots: 2026-10-28 FRESH vs 2026-11-01 STALE |
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
-| Benchmark | 24 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
+| Benchmark | 40 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
 | Quality gates | 265 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits

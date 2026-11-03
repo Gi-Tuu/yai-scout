@@ -82,12 +82,12 @@ async def test_llm_agent_adapter_returns_answer_and_citations():
     assert answer.cost_usd > 0
 
 
-def test_dataset_has_24_tasks_and_hidden_split():
+def test_dataset_has_40_tasks_and_hidden_split():
     version, tasks = load_dataset()
     assert version.startswith("freshness-bench/")
-    assert len(tasks) == 24
+    assert len(tasks) == 40
     assert sum(1 for task in tasks if task.hidden) == 3
-    assert len(load_tasks()) == 21
+    assert len(load_tasks()) == 37
 
 
 def test_pareto_frontier_marks_dominated_agents():
