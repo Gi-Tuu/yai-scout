@@ -31,7 +31,7 @@ Pre-1.0 versions are hackathon previews; APIs may change.
   benchmark sessions are owner-scoped (migration 5); admin candidate and
   benchmark read paths offloaded to worker threads; page/benchmark/research/
   freshness/admin routes moved to separate modules; JSON/column consistency
-  checker + migration 6.
+  checker + migration 6; snapshot search pagination; 80% coverage threshold.
 
 ### Fixed
 

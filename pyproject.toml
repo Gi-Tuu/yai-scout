@@ -48,6 +48,7 @@ source = ["yai_scout"]
 
 [tool.coverage.report]
 show_missing = true
+fail_under = 80
 
 [tool.mypy]
 python_version = "3.11"

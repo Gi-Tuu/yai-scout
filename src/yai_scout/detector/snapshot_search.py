@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -64,19 +65,21 @@ class SnapshotSearcher:
         self.target_time = target_time
         self.max_chars = max_chars
 
-    def _candidates(self, target_time: str | None) -> list[EvidenceSnapshot]:
-        snapshots = self.store.list_snapshots(limit=500)
-        if not target_time:
-            return snapshots
-        target = _parse_time(target_time)
-        if target is None:
-            return snapshots
-        usable = []
-        for snapshot in snapshots:
-            published = _parse_time(snapshot.published_at)
-            if published is not None and published <= target:
-                usable.append(snapshot)
-        return usable
+    def _candidates(self, target_time: str | None) -> Iterator[EvidenceSnapshot]:
+        target = _parse_time(target_time) if target_time else None
+        offset = 0
+        while True:
+            page = self.store.list_snapshots_page(offset=offset, limit=500)
+            if not page:
+                return
+            for snapshot in page:
+                if target is None:
+                    yield snapshot
+                    continue
+                published = _parse_time(snapshot.published_at)
+                if published is not None and published <= target:
+                    yield snapshot
+            offset += len(page)
 
     async def search(
         self,

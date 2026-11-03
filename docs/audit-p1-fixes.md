@@ -73,11 +73,13 @@ Tests:
 - `scripts/db_consistency.py --db ...` exits non-zero on issues.
 - Bench lifecycle updates now keep `config_json` in sync; migration 6
   backfills legacy sessions.
+- Snapshot search paginates instead of silently stopping at 500 rows.
+- Coverage has a CI threshold (`fail_under = 80`; current 86%).
 
 ## Verification
 
 ```text
-pytest      : 222 passed
+pytest      : 223 passed
 ruff        : pass
 mypy        : pass (50 files)
 architecture: ok

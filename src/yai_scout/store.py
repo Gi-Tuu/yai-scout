@@ -1246,6 +1246,16 @@ class Store:
             self._conn.commit()
         return snapshot
 
+    def list_snapshots_page(
+        self, offset: int = 0, limit: int = 500
+    ) -> list[EvidenceSnapshot]:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM snapshot ORDER BY fetched_at DESC LIMIT ? OFFSET ?",
+                (max(1, limit), max(0, offset)),
+            ).fetchall()
+        return [_row_to_snapshot(row) for row in rows]
+
     def list_snapshots_for_url(
         self, url: str, limit: int = 500
     ) -> list[EvidenceSnapshot]:
