@@ -223,6 +223,7 @@ def save_snapshot(
     snapshots_dir.mkdir(parents=True, exist_ok=True)
     text_path = snapshots_dir / f"{snapshot_id}.txt"
     text_path.write_text(text, encoding="utf-8")
+    stored_path = snapshot_storage_path(store, text_path)
     tier, _ = classify_source(url)
     snapshot = EvidenceSnapshot(
         id=snapshot_id,
@@ -231,13 +232,31 @@ def save_snapshot(
         origin=origin,  # type: ignore[arg-type]
         content_hash=digest,
         raw_path="",
-        text_path=str(text_path),
+        text_path=stored_path,
         published_at=published_at,
         fetched_at=datetime.now(UTC).isoformat(timespec="seconds"),
         tier=tier,
         notes=f"{len(text)} chars",
     )
     return store.save_snapshot(snapshot)
+
+
+def snapshot_storage_path(store: Store, text_path: Path) -> str:
+    """Store paths relative to the DB directory when possible."""
+    resolved = text_path.resolve()
+    if store.path != ":memory:":
+        try:
+            return str(resolved.relative_to(Path(store.path).parent.resolve()))
+        except ValueError:
+            pass
+    return str(resolved)
+
+
+def resolve_snapshot_path(store: Store, value: str) -> Path:
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    return Path(store.path).parent.resolve() / path
 
 
 async def capture(

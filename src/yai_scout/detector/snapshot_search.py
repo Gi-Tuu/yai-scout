@@ -9,10 +9,10 @@ from __future__ import annotations
 import re
 from collections.abc import Iterator
 from datetime import UTC, datetime
-from pathlib import Path
 
 from ..domain.models import EvidenceSnapshot
 from ..retrieval.tavily import SearchResult
+from ..sources.snapshot import resolve_snapshot_path
 from ..store import Store
 
 TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\.\-]{1,}|[\u4e00-\u9fff]{2,}|\d+(?:\.\d+)+")
@@ -93,7 +93,9 @@ class SnapshotSearcher:
         results: list[SearchResult] = []
         for snapshot in self._candidates(self.target_time):
             try:
-                text = Path(snapshot.text_path).read_text(encoding="utf-8")
+                text = resolve_snapshot_path(
+                    self.store, snapshot.text_path
+                ).read_text(encoding="utf-8")
             except OSError:
                 continue
             url_overlap = len(query_tokens & (_tokens(snapshot.url) - STOPWORDS))

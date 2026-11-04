@@ -16,6 +16,18 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.4] - 2026-11-05
+
+### Fixed
+
+- Benchmark runs now enforce a detector concurrency budget independent of the
+  adapter semaphore.
+- Snapshot text paths are stored relative to the DB directory when possible and
+  resolved on replay/search, so moving the data directory keeps replay working.
+- LLM relation, claim extraction and benchmark RAG prompts mark source text as
+  untrusted data and explicitly instruct the model not to follow instructions
+  inside it.
+
 ## [0.7.3] - 2026-11-05
 
 ### Fixed

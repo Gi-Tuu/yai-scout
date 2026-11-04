@@ -74,6 +74,7 @@ class BenchmarkRunner:
         cfg: Settings | None = None,
         agent_specs: dict[str, AgentSpec] | None = None,
         concurrency: int = 2,
+        detector_concurrency: int = 2,
         detect_freshness: bool = True,
         max_claims: int = 2,
         timeout_s: float = 120.0,
@@ -97,6 +98,7 @@ class BenchmarkRunner:
                 ),
             )
         self.concurrency = concurrency
+        self.detector_concurrency = max(1, detector_concurrency)
         self.detect_freshness = detect_freshness
         self.max_claims = max_claims
         self.timeout_s = timeout_s
@@ -209,6 +211,7 @@ class BenchmarkRunner:
     ) -> None:
         started = time.monotonic()
         semaphore = asyncio.Semaphore(self.concurrency)
+        detector_gate = asyncio.Semaphore(self.detector_concurrency)
 
         async def run_repeat(
             task: BenchmarkTask, agent_id: str, repeat: int
@@ -275,33 +278,37 @@ class BenchmarkRunner:
             stale_rate: float | None = None
             metrics: dict[str, float | None] = {}
             if self.detector is not None and detect_freshness and answer.text:
-                try:
-                    report = await self.detector.detect(
-                        answer.text, as_of=task.as_of, max_claims=self.max_claims
-                    )
-                    freshness = report.overall_score
-                    temporal = [
-                        c
-                        for c in report.claims
-                        if c.temporal_sensitivity
-                        in {TemporalSensitivity.SENSITIVE, TemporalSensitivity.VOLATILE}
-                    ]
-                    if temporal:
-                        stale_rate = round(
-                            sum(
-                                1
-                                for v in report.verdicts
-                                if v.claim_id in {c.id for c in temporal}
-                                and v.status.value == "stale"
-                            )
-                            / len(temporal),
-                            3,
+                async with detector_gate:
+                    try:
+                        report = await self.detector.detect(
+                            answer.text, as_of=task.as_of, max_claims=self.max_claims
                         )
-                    metrics = evidence_metrics(report)
-                    trace.append({"step": "freshness.completed", "status": "ok"})
-                except Exception:  # noqa: BLE001 - freshness failure must not stop the run
-                    freshness = None
-                    trace.append({"step": "freshness.completed", "status": "error"})
+                        freshness = report.overall_score
+                        temporal = [
+                            c
+                            for c in report.claims
+                            if c.temporal_sensitivity
+                            in {
+                                TemporalSensitivity.SENSITIVE,
+                                TemporalSensitivity.VOLATILE,
+                            }
+                        ]
+                        if temporal:
+                            stale_rate = round(
+                                sum(
+                                    1
+                                    for v in report.verdicts
+                                    if v.claim_id in {c.id for c in temporal}
+                                    and v.status.value == "stale"
+                                )
+                                / len(temporal),
+                                3,
+                            )
+                        metrics = evidence_metrics(report)
+                        trace.append({"step": "freshness.completed", "status": "ok"})
+                    except Exception:  # noqa: BLE001 - freshness failure must not stop the run
+                        freshness = None
+                        trace.append({"step": "freshness.completed", "status": "error"})
 
             numeric = expected_accuracy(task, answer.text)
             coverage = claim_coverage(task, answer.text)

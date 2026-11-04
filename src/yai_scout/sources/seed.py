@@ -11,6 +11,7 @@ from pathlib import Path
 
 from ..domain.models import EvidenceSnapshot
 from ..store import Store
+from .snapshot import snapshot_storage_path
 
 
 def seed_snapshots(store: Store, seed_path: Path, snapshots_dir: Path) -> int:
@@ -31,7 +32,7 @@ def seed_snapshots(store: Store, seed_path: Path, snapshots_dir: Path) -> int:
         target = snapshots_dir / f"{snapshot.id}.txt"
         if not target.exists():
             target.write_text(text, encoding="utf-8")
-        snapshot.text_path = str(target)
+        snapshot.text_path = snapshot_storage_path(store, target)
         store.save_snapshot(snapshot)
         count += 1
     return count

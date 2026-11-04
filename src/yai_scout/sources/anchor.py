@@ -21,7 +21,7 @@ import httpx
 from ..domain.models import Anchor, EvidenceKind
 from ..retrieval.tavily import SearchResult
 from ..store import Store
-from .snapshot import html_to_text
+from .snapshot import html_to_text, resolve_snapshot_path
 
 LIVE_MAX_BYTES = 500_000
 LIVE_TIMEOUT_S = 15.0
@@ -91,7 +91,9 @@ async def replay_anchor_result(
         return None
     published, snapshot = max(candidates, key=lambda pair: pair[0])
     try:
-        text = Path(snapshot.text_path).read_text(encoding="utf-8")
+        text = Path(resolve_snapshot_path(store, snapshot.text_path)).read_text(
+            encoding="utf-8"
+        )
     except OSError:
         return None
     return SearchResult(
