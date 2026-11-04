@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from ..api.limits import UsageLimiter
 from ..config import Settings
 from ..detector.accuracy_gate import GateObservation, evaluate_gate
 from ..detector.candidates import apply_candidate, independent_group_from_url
@@ -49,6 +50,14 @@ def _require_admin(request: Request, cfg: Settings) -> None:
         raise HTTPException(status_code=401, detail="unauthorized")
 
 
+def _require_xff_debug(request: Request, cfg: Settings) -> None:
+    if not cfg.xff_debug_token:
+        raise HTTPException(status_code=404, detail="diagnostic endpoint disabled")
+    supplied = request.headers.get("x-xff-debug", "")
+    if supplied != cfg.xff_debug_token:
+        raise HTTPException(status_code=401, detail="unauthorized")
+
+
 def register_admin_routes(
     app: FastAPI,
     *,
@@ -56,6 +65,30 @@ def register_admin_routes(
     store: Store,
     discovery: CachedDiscovery,
 ) -> None:
+    @app.get("/admin/debug/request", include_in_schema=False)
+    async def admin_debug_request(request: Request) -> dict[str, Any]:
+        """One-off XFF/proxy inspection; disabled unless XFF_DEBUG_TOKEN is set."""
+        _require_xff_debug(request, cfg)
+        headers = {key.lower(): value for key, value in request.headers.items()}
+        remote = request.client.host if request.client else "unknown"
+        return {
+            "client_host": remote,
+            "client_port": request.client.port if request.client else None,
+            "resolved_client_key": UsageLimiter.client_key(headers, remote),
+            "x_forwarded_for": headers.get("x-forwarded-for", ""),
+            "x_forwarded_for_chain": [
+                item.strip() for item in headers.get("x-forwarded-for", "").split(",")
+                if item.strip()
+            ],
+            "forwarded": headers.get("forwarded", ""),
+            "x_real_ip": headers.get("x-real-ip", ""),
+            "cf_connecting_ip": headers.get("cf-connecting-ip", ""),
+            "true_client_ip": headers.get("true-client-ip", ""),
+            "x_forwarded_proto": headers.get("x-forwarded-proto", ""),
+            "host": headers.get("host", ""),
+            "header_names": sorted(headers),
+        }
+
     @app.post("/admin/anchors/revalidate")
     async def admin_revalidate(
         request: Request, payload: RevalidateRequest | None = None
