@@ -11,7 +11,7 @@ from .rows import (
 
 class SnapshotRepository(Repository):
     def save_snapshot(self, snapshot: EvidenceSnapshot) -> EvidenceSnapshot:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 """INSERT INTO snapshot
                    (id, url, title, origin, content_hash, raw_path, text_path,
@@ -36,11 +36,10 @@ class SnapshotRepository(Repository):
                     snapshot.notes,
                 ),
             )
-            self._conn.commit()
         return snapshot
 
     def list_snapshots_page(self, offset: int = 0, limit: int = 500) -> list[EvidenceSnapshot]:
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(
                 "SELECT * FROM snapshot ORDER BY fetched_at DESC LIMIT ? OFFSET ?",
                 (max(1, limit), max(0, offset)),
@@ -53,7 +52,7 @@ class SnapshotRepository(Repository):
     def list_snapshots_for_url_page(
         self, url: str, offset: int = 0, limit: int = 500
     ) -> list[EvidenceSnapshot]:
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(
                 """SELECT * FROM snapshot WHERE url = ?
                    ORDER BY fetched_at DESC LIMIT ? OFFSET ?""",
@@ -62,7 +61,7 @@ class SnapshotRepository(Repository):
         return [_row_to_snapshot(row) for row in rows]
 
     def get_snapshot(self, snapshot_id: str) -> EvidenceSnapshot | None:
-        with self._lock:
+        with self.db.read():
             row = self._conn.execute(
                 "SELECT * FROM snapshot WHERE id = ?", (snapshot_id,)
             ).fetchone()
@@ -71,7 +70,7 @@ class SnapshotRepository(Repository):
         return _row_to_snapshot(row)
 
     def list_snapshots(self, limit: int = 50) -> list[EvidenceSnapshot]:
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(
                 "SELECT * FROM snapshot ORDER BY fetched_at DESC LIMIT ?", (limit,)
             ).fetchall()

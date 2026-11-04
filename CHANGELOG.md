@@ -16,6 +16,14 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.5.1] - 2026-11-04
+
+### Changed
+
+- Storage repositories now use `Database.read()` / `write()` / `atomic()`
+  contexts for SQL access instead of duplicating lock/commit handling.
+- Transactional methods remain explicit atomic scopes.
+
 ## [0.5.0] - 2026-11-04
 
 ### Changed

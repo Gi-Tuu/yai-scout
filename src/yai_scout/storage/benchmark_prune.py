@@ -43,7 +43,7 @@ class BenchmarkPruneRepository(Repository):
                 return None
             return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
 
-        with self._lock:
+        with self.db.atomic():
             rows = self._conn.execute(
                 "SELECT id, finished_at, created_at FROM bench_session "
                 "WHERE status IN ('done', 'failed')"
@@ -85,7 +85,6 @@ class BenchmarkPruneRepository(Repository):
                         f"DELETE FROM bench_session WHERE id IN ({placeholders})",
                         tuple(ids),
                     )
-                    self._conn.commit()
             if not dry_run:
                 audit_removed = self._cleanup_prune_audits(target_dir, audit_keep_days)
         return {

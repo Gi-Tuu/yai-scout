@@ -26,7 +26,7 @@ class ConsistencyChecker(Repository):
                 }
             )
 
-        with self._lock:
+        with self.db.read():
             for anchor_row in self._conn.execute("SELECT * FROM anchor"):
                 try:
                     anchor_payload = Anchor.model_validate_json(anchor_row["payload_json"])

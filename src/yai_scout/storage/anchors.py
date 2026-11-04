@@ -13,7 +13,7 @@ from .db import Repository
 
 class AnchorRepository(Repository):
     def save_anchor(self, anchor: Anchor) -> Anchor:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 """INSERT INTO anchor
                    (id, claim_key, claim_key_v2, claim_key_version, url, status,
@@ -30,7 +30,6 @@ class AnchorRepository(Repository):
                     anchor.last_verified_at,
                 ),
             )
-            self._conn.commit()
         return anchor
 
     def list_anchors(
@@ -48,19 +47,19 @@ class AnchorRepository(Repository):
             query += " WHERE " + " AND ".join(clauses)
         query += " ORDER BY created_at DESC LIMIT ?"
         vals.append(limit)
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(query, vals).fetchall()
         return [Anchor.model_validate_json(row["payload_json"]) for row in rows]
 
     def get_anchor(self, anchor_id: str) -> Anchor | None:
-        with self._lock:
+        with self.db.read():
             row = self._conn.execute(
                 "SELECT payload_json FROM anchor WHERE id = ?", (anchor_id,)
             ).fetchone()
         return Anchor.model_validate_json(row["payload_json"]) if row else None
 
     def save_anchor_observation(self, observation: AnchorObservation) -> AnchorObservation:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 """INSERT INTO anchor_observation
                    (id, anchor_id, status, content_changed, observed_hash, payload_json, created_at)
@@ -75,7 +74,6 @@ class AnchorRepository(Repository):
                     observation.observed_at,
                 ),
             )
-            self._conn.commit()
         return observation
 
     def list_anchor_observations(
@@ -88,7 +86,7 @@ class AnchorRepository(Repository):
             vals.append(anchor_id)
         query += " ORDER BY created_at DESC LIMIT ?"
         vals.append(limit)
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(query, vals).fetchall()
         return [AnchorObservation.model_validate_json(row["payload_json"]) for row in rows]
 
@@ -100,7 +98,7 @@ class AnchorRepository(Repository):
         related_id: str = "",
         details: dict[str, Any] | None = None,
     ) -> int:
-        with self._lock:
+        with self.db.write():
             cursor = self._conn.execute(
                 """INSERT INTO anchor_audit
                    (action, anchor_id, related_id, details_json, created_at)
@@ -113,11 +111,10 @@ class AnchorRepository(Repository):
                     utcnow_iso(),
                 ),
             )
-            self._conn.commit()
         return int(cursor.lastrowid or 0)
 
     def list_anchor_audit(self, limit: int = 100) -> list[dict[str, Any]]:
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(
                 """SELECT id, action, anchor_id, related_id, details_json, created_at
                    FROM anchor_audit ORDER BY id DESC LIMIT ?""",
@@ -138,7 +135,7 @@ class AnchorRepository(Repository):
         return result
 
     def update_anchor(self, anchor: Anchor) -> Anchor:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 "UPDATE anchor SET payload_json = ?, status = ?, claim_key_v2 = ?, "
                 "claim_key_version = ? WHERE id = ?",
@@ -150,7 +147,6 @@ class AnchorRepository(Repository):
                     anchor.id,
                 ),
             )
-            self._conn.commit()
         return anchor
 
     def rollback_anchor(self, anchor_id: str) -> tuple[Anchor, Anchor] | None:
@@ -162,7 +158,7 @@ class AnchorRepository(Repository):
             return None
         rolled_back = new_anchor.model_copy(update={"status": "rolled_back"})
         restored = old_anchor.model_copy(update={"status": "active", "superseded_by": None})
-        with self._lock:
+        with self.db.atomic():
             try:
                 self._conn.execute(
                     "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
@@ -172,7 +168,6 @@ class AnchorRepository(Repository):
                     "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
                     (restored.model_dump_json(), restored.status, restored.id),
                 )
-                self._conn.commit()
             except Exception:
                 self._conn.rollback()
                 raise
@@ -180,7 +175,7 @@ class AnchorRepository(Repository):
 
     def save_anchor_replacement(self, old_id: str, new_anchor: Anchor) -> bool:
         """Atomically insert replacement and mark the old anchor superseded."""
-        with self._lock:
+        with self.db.atomic():
             try:
                 row = self._conn.execute(
                     "SELECT payload_json FROM anchor WHERE id = ?", (old_id,)
@@ -211,7 +206,6 @@ class AnchorRepository(Repository):
                     "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
                     (superseded.model_dump_json(), superseded.status, old_id),
                 )
-                self._conn.commit()
             except Exception:
                 self._conn.rollback()
                 raise
@@ -222,9 +216,8 @@ class AnchorRepository(Repository):
         if anchor is None:
             return
         updated = anchor.model_copy(update={"status": "superseded", "superseded_by": new_id})
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
                 (updated.model_dump_json(), updated.status, old_id),
             )
-            self._conn.commit()

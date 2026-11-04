@@ -42,7 +42,7 @@ class BenchmarkRepository(Repository):
         return json.dumps(payload, ensure_ascii=False)
 
     def create_bench_session(self, session: BenchSession) -> BenchSession:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 """INSERT INTO bench_session
                    (id, owner_id, status, config_json, manifest_json, result_hash,
@@ -65,7 +65,6 @@ class BenchmarkRepository(Repository):
                     session.error,
                 ),
             )
-            self._conn.commit()
         return session
 
     def update_bench_session(
@@ -79,7 +78,7 @@ class BenchmarkRepository(Repository):
         manifest_json: str | None = None,
     ) -> None:
         """生命周期更新；完成后不可变。配置 hash 不允许被改写。"""
-        with self._lock:
+        with self.db.atomic():
             row = self._conn.execute(
                 "SELECT status, result_hash, manifest_json, config_json "
                 "FROM bench_session WHERE id = ?",
@@ -122,10 +121,9 @@ class BenchmarkRepository(Repository):
                 return
             vals.append(session_id)
             self._conn.execute(f"UPDATE bench_session SET {', '.join(sets)} WHERE id = ?", vals)
-            self._conn.commit()
 
     def get_bench_session(self, session_id: str) -> BenchSession | None:
-        with self._lock:
+        with self.db.read():
             row = self._conn.execute(
                 """SELECT id, owner_id, created_at, config_json, manifest_json,
                           result_hash, supersedes, status, finished_at, error
@@ -172,7 +170,7 @@ class BenchmarkRepository(Repository):
         return BenchSession.model_validate(payload)
 
     def add_bench_result(self, session_id: str, result: TaskResult) -> None:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 """INSERT INTO bench_result (session_id, task_id, agent_id, payload_json, score)
                    VALUES (?, ?, ?, ?, ?)""",
@@ -184,10 +182,9 @@ class BenchmarkRepository(Repository):
                     result.score,
                 ),
             )
-            self._conn.commit()
 
     def list_bench_results(self, session_id: str) -> list[TaskResult]:
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(
                 """SELECT payload_json FROM bench_result WHERE session_id = ?
                    ORDER BY id ASC""",

@@ -22,7 +22,7 @@ from .rows import (
 
 class TaskRepository(Repository):
     def create_task(self, task: ResearchTask) -> ResearchTask:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 """INSERT INTO research_task
                    (id, owner_id, question, as_of, status, created_at, stats_json)
@@ -37,11 +37,10 @@ class TaskRepository(Repository):
                     json.dumps(task.stats, ensure_ascii=False),
                 ),
             )
-            self._conn.commit()
         return task
 
     def get_task(self, task_id: str) -> ResearchTask | None:
-        with self._lock:
+        with self.db.read():
             row = self._conn.execute(
                 "SELECT * FROM research_task WHERE id = ?", (task_id,)
             ).fetchone()
@@ -55,7 +54,7 @@ class TaskRepository(Repository):
             vals.append(owner_id)
         query += " ORDER BY created_at DESC LIMIT ?"
         vals.append(limit)
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(query, vals).fetchall()
         return [_row_to_task(r) for r in rows]
 
@@ -89,22 +88,20 @@ class TaskRepository(Repository):
         if not sets:
             return
         vals.append(task_id)
-        with self._lock:
+        with self.db.write():
             self._conn.execute(f"UPDATE research_task SET {', '.join(sets)} WHERE id = ?", vals)
-            self._conn.commit()
 
     def save_plan(self, task_id: str, plan: Plan) -> None:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 """INSERT INTO plan (task_id, payload_json, created_at) VALUES (?, ?, ?)
                    ON CONFLICT(task_id) DO UPDATE SET
                    payload_json = excluded.payload_json, created_at = excluded.created_at""",
                 (task_id, plan.model_dump_json(), utcnow_iso()),
             )
-            self._conn.commit()
 
     def get_plan(self, task_id: str) -> Plan | None:
-        with self._lock:
+        with self.db.read():
             row = self._conn.execute(
                 "SELECT payload_json FROM plan WHERE task_id = ?", (task_id,)
             ).fetchone()
@@ -112,7 +109,7 @@ class TaskRepository(Repository):
 
     def add_source(self, source: SourceRecord) -> bool:
         """插入来源；同一 task 下 canonical_url 重复则忽略。返回是否新增。"""
-        with self._lock:
+        with self.db.write():
             cur = self._conn.execute(
                 """INSERT OR IGNORE INTO source
                    (id, task_id, url, canonical_url, domain, title, published_at,
@@ -134,11 +131,10 @@ class TaskRepository(Repository):
                     source.snippet,
                 ),
             )
-            self._conn.commit()
             return cur.rowcount > 0
 
     def list_sources(self, task_id: str) -> list[SourceRecord]:
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(
                 "SELECT * FROM source WHERE task_id = ? ORDER BY tier ASC, score DESC",
                 (task_id,),
@@ -146,14 +142,14 @@ class TaskRepository(Repository):
         return [_row_to_source(r) for r in rows]
 
     def count_sources(self, task_id: str) -> int:
-        with self._lock:
+        with self.db.read():
             row = self._conn.execute(
                 "SELECT COUNT(*) AS n FROM source WHERE task_id = ?", (task_id,)
             ).fetchone()
         return int(row["n"])
 
     def append_event(self, event: RunEvent) -> RunEvent:
-        with self._lock:
+        with self.db.write():
             cur = self._conn.execute(
                 """INSERT INTO run_event (task_id, stage, type, payload_json, ts)
                    VALUES (?, ?, ?, ?, ?)""",
@@ -165,12 +161,11 @@ class TaskRepository(Repository):
                     event.ts,
                 ),
             )
-            self._conn.commit()
             seq = int(cur.lastrowid or 0)
         return event.model_copy(update={"seq": seq})
 
     def list_events(self, task_id: str, after_seq: int = 0, limit: int = 1000) -> list[RunEvent]:
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(
                 """SELECT * FROM run_event WHERE task_id = ? AND seq > ?
                    ORDER BY seq ASC LIMIT ?""",
@@ -179,7 +174,7 @@ class TaskRepository(Repository):
         return [_row_to_event(r) for r in rows]
 
     def add_cost(self, entry: CostEntry) -> CostEntry:
-        with self._lock:
+        with self.db.write():
             cur = self._conn.execute(
                 """INSERT INTO cost_ledger
                    (task_id, provider, unit, amount, credits, usd_estimate, ts)
@@ -194,11 +189,10 @@ class TaskRepository(Repository):
                     entry.ts,
                 ),
             )
-            self._conn.commit()
             return entry.model_copy(update={"id": int(cur.lastrowid or 0)})
 
     def cost_sum(self, task_id: str) -> tuple[float, float]:
-        with self._lock:
+        with self.db.read():
             row = self._conn.execute(
                 """SELECT COALESCE(SUM(credits), 0) AS credits,
                           COALESCE(SUM(usd_estimate), 0) AS usd

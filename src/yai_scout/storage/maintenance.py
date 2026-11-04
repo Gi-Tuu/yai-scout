@@ -11,7 +11,7 @@ class MaintenanceRepository(Repository):
         """Mark tasks/sessions left running by a previous process as failed."""
         error = "interrupted by process restart"
         now = utcnow_iso()
-        with self._lock:
+        with self.db.atomic():
             self._conn.execute(
                 """UPDATE research_task
                    SET status = 'failed', finished_at = ?, error = ?
@@ -23,4 +23,3 @@ class MaintenanceRepository(Repository):
                 "error = ? WHERE status = 'running'",
                 (now, error),
             )
-            self._conn.commit()

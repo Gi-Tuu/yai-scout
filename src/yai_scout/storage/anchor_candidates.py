@@ -12,7 +12,7 @@ from .db import Repository
 
 class AnchorCandidateRepository(Repository):
     def save_anchor_candidate(self, candidate: AnchorCandidate) -> AnchorCandidate:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 """INSERT INTO anchor_candidate (id, anchor_id, status, payload_json, created_at)
                    VALUES (?, ?, ?, ?, ?)""",
@@ -24,16 +24,14 @@ class AnchorCandidateRepository(Repository):
                     candidate.created_at,
                 ),
             )
-            self._conn.commit()
         return candidate
 
     def update_anchor_candidate(self, candidate: AnchorCandidate) -> AnchorCandidate:
-        with self._lock:
+        with self.db.write():
             self._conn.execute(
                 "UPDATE anchor_candidate SET status = ?, payload_json = ? WHERE id = ?",
                 (candidate.accuracy_status, candidate.model_dump_json(), candidate.id),
             )
-            self._conn.commit()
         return candidate
 
     def apply_candidate_transaction(
@@ -48,7 +46,7 @@ class AnchorCandidateRepository(Repository):
 
         The candidate status check makes concurrent approvals single-winner.
         """
-        with self._lock:
+        with self.db.atomic():
             candidate_row = self._conn.execute(
                 "SELECT payload_json FROM anchor_candidate WHERE id = ?",
                 (candidate_id,),
@@ -107,14 +105,13 @@ class AnchorCandidateRepository(Repository):
                     "UPDATE anchor_candidate SET status = ?, payload_json = ? WHERE id = ?",
                     (updated.accuracy_status, updated.model_dump_json(), candidate_id),
                 )
-                self._conn.commit()
             except Exception:
                 self._conn.rollback()
                 raise
         return updated
 
     def get_anchor_candidate(self, candidate_id: str) -> AnchorCandidate | None:
-        with self._lock:
+        with self.db.read():
             row = self._conn.execute(
                 "SELECT payload_json FROM anchor_candidate WHERE id = ?", (candidate_id,)
             ).fetchone()
@@ -130,7 +127,7 @@ class AnchorCandidateRepository(Repository):
             vals.append(status)
         query += " ORDER BY created_at DESC LIMIT ?"
         vals.append(limit)
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(query, vals).fetchall()
         return [AnchorCandidate.model_validate_json(row["payload_json"]) for row in rows]
 
@@ -148,7 +145,7 @@ class AnchorCandidateRepository(Repository):
             f"WHERE anchor_id = ? AND status IN ({placeholders}) "
             "ORDER BY created_at DESC"
         )
-        with self._lock:
+        with self.db.read():
             rows = self._conn.execute(query, (anchor_id, *statuses)).fetchall()
         for row in rows:
             candidate = AnchorCandidate.model_validate_json(row["payload_json"])
