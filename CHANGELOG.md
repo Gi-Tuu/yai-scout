@@ -16,6 +16,20 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.4.0] - 2026-11-04
+
+### Changed
+
+- Benchmark session lifecycle has a single source of truth: database columns.
+  `config_json` is configuration-only; `manifest_json` is manifest-only; status,
+  timestamps, error and result hash are composed from columns on read.
+- Migration 10 normalizes legacy session JSON and backfills nested manifests.
+
+### Added
+
+- Consistency reporting rejects lifecycle fields embedded in config/manifest JSON.
+- Regression tests for create/update/interrupt and legacy migration.
+
 ## [0.3.7] - 2026-11-04
 
 ### Fixed

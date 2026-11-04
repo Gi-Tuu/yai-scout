@@ -212,6 +212,7 @@ class Store:
             (7, self._ensure_claim_key_columns),
             (8, self._refresh_claim_identity),
             (9, self._ensure_bench_result_unique),
+            (10, self._normalize_bench_session_state),
         )
         for version, migrate in migrations:
             if version in applied:
@@ -507,7 +508,8 @@ class Store:
                         )
 
             for session_row in self._conn.execute(
-                "SELECT id, owner_id, status, config_json FROM bench_session"
+                "SELECT id, owner_id, status, config_json, manifest_json "
+                "FROM bench_session"
             ):
                 try:
                     session_payload = json.loads(session_row["config_json"] or "{}")
@@ -520,15 +522,54 @@ class Store:
                         session_row["config_json"],
                     )
                     continue
-                for field in ("owner_id", "status"):
-                    if str(session_row[field]) != str(session_payload.get(field, "")):
+                if str(session_row["owner_id"]) != str(
+                    session_payload.get("owner_id", "")
+                ):
+                    add(
+                        "bench_session",
+                        session_row["id"],
+                        "owner_id",
+                        str(session_row["owner_id"]),
+                        str(session_payload.get("owner_id", "")),
+                    )
+                for field in (
+                    "manifest",
+                    "status",
+                    "finished_at",
+                    "error",
+                    "result_hash",
+                    "supersedes",
+                ):
+                    if field in session_payload:
                         add(
                             "bench_session",
                             session_row["id"],
                             field,
-                            str(session_row[field]),
-                            str(session_payload.get(field, "")),
+                            "unexpected_lifecycle_json",
+                            str(session_payload.get(field)),
                         )
+                raw_manifest = session_row["manifest_json"]
+                if raw_manifest and raw_manifest != "{}":
+                    try:
+                        manifest_payload = json.loads(raw_manifest)
+                    except ValueError:
+                        add(
+                            "bench_session",
+                            session_row["id"],
+                            "manifest_json",
+                            "invalid_json",
+                            raw_manifest,
+                        )
+                        continue
+                    for field in ("status", "finished_at", "result_hash"):
+                        if field in manifest_payload:
+                            add(
+                                "bench_session",
+                                session_row["id"],
+                                f"manifest.{field}",
+                                "unexpected_lifecycle_json",
+                                str(manifest_payload.get(field)),
+                            )
 
             orphan_checks = (
                 ("source", "task_id", "research_task", "id"),
@@ -652,37 +693,11 @@ class Store:
                    WHERE status IN ('pending', 'running')""",
                 (now, error),
             )
-            rows = self._conn.execute(
-                "SELECT id, config_json, manifest_json FROM bench_session "
-                "WHERE status = 'running'"
-            ).fetchall()
-            for row in rows:
-                config: dict[str, object] = {}
-                try:
-                    loaded = json.loads(row["config_json"] or "{}")
-                    if isinstance(loaded, dict):
-                        config = loaded
-                except ValueError:
-                    config = {}
-                config.update({"status": "failed", "finished_at": now, "error": error})
-                manifest_json = row["manifest_json"]
-                try:
-                    manifest = json.loads(manifest_json or "{}")
-                except ValueError:
-                    manifest = {}
-                if isinstance(manifest, dict) and manifest:
-                    manifest.update({
-                        "status": "failed",
-                        "finished_at": now,
-                        "result_hash": None,
-                    })
-                    manifest_json = json.dumps(manifest, ensure_ascii=False)
-                self._conn.execute(
-                    "UPDATE bench_session SET status = 'failed', finished_at = ?, "
-                    "error = ?, config_json = ?, manifest_json = ? WHERE id = ?",
-                    (now, error, json.dumps(config, ensure_ascii=False),
-                     manifest_json, row["id"]),
-                )
+            self._conn.execute(
+                "UPDATE bench_session SET status = 'failed', finished_at = ?, "
+                "error = ? WHERE status = 'running'",
+                (now, error),
+            )
             self._conn.commit()
 
     # ------------------------------------------------------------------ plan
@@ -849,6 +864,74 @@ class Store:
         return _parse_detector_report(row["payload_json"]) if row else None
 
     # ------------------------------------------------------------------ benchmark
+    @staticmethod
+    def _bench_config_payload(session: BenchSession) -> str:
+        return session.model_dump_json(
+            exclude={
+                "manifest",
+                "status",
+                "finished_at",
+                "error",
+                "result_hash",
+                "supersedes",
+            }
+        )
+
+    @staticmethod
+    def _normalize_manifest_payload(manifest: ExperimentManifest) -> str:
+        return manifest.model_dump_json(
+            exclude={"status", "finished_at", "result_hash"}
+        )
+
+    @staticmethod
+    def _normalize_manifest_json(raw: str) -> str:
+        try:
+            payload = json.loads(raw or "{}")
+        except ValueError:
+            return raw
+        if not isinstance(payload, dict):
+            return raw
+        for field in ("status", "finished_at", "result_hash"):
+            payload.pop(field, None)
+        return json.dumps(payload, ensure_ascii=False)
+
+    def _normalize_bench_session_state(self) -> None:
+        rows = self._conn.execute(
+            "SELECT id, config_json, manifest_json FROM bench_session"
+        ).fetchall()
+        for row in rows:
+            config_json = row["config_json"]
+            try:
+                config = json.loads(config_json or "{}")
+            except ValueError:
+                config = None
+            nested_manifest: object = None
+            if isinstance(config, dict):
+                nested_manifest = config.get("manifest")
+                for field in (
+                    "manifest",
+                    "status",
+                    "finished_at",
+                    "error",
+                    "result_hash",
+                    "supersedes",
+                ):
+                    config.pop(field, None)
+                config_json = json.dumps(config, ensure_ascii=False)
+            manifest_json = self._normalize_manifest_json(row["manifest_json"])
+            if (
+                manifest_json in {"", "{}"}
+                and isinstance(nested_manifest, dict)
+            ):
+                manifest_json = self._normalize_manifest_json(
+                    json.dumps(nested_manifest, ensure_ascii=False)
+                )
+            self._conn.execute(
+                "UPDATE bench_session SET config_json = ?, manifest_json = ? "
+                "WHERE id = ?",
+                (config_json, manifest_json, row["id"]),
+            )
+
     def create_bench_session(self, session: BenchSession) -> BenchSession:
         with self._lock:
             self._conn.execute(
@@ -860,8 +943,12 @@ class Store:
                     session.id,
                     session.owner_id,
                     session.status,
-                    session.model_dump_json(),
-                    session.manifest.model_dump_json() if session.manifest else "{}",
+                    self._bench_config_payload(session),
+                    (
+                        self._normalize_manifest_payload(session.manifest)
+                        if session.manifest
+                        else "{}"
+                    ),
                     session.result_hash,
                     session.supersedes,
                     session.created_at,
@@ -902,6 +989,7 @@ class Store:
                 incoming = json.loads(manifest_json or "{}")
                 if stored.get("config_hash") != incoming.get("config_hash"):
                     raise ValueError("manifest config_hash is immutable")
+                manifest_json = self._normalize_manifest_json(manifest_json)
             sets: list[str] = []
             vals: list[Any] = []
             if status is not None:
@@ -921,17 +1009,6 @@ class Store:
                 vals.append(manifest_json)
             if not sets:
                 return
-            config = json.loads(row["config_json"] or "{}")
-            if status is not None:
-                config["status"] = status
-            if finished_at is not None:
-                config["finished_at"] = finished_at
-            if error is not None:
-                config["error"] = error
-            if result_hash is not None:
-                config["result_hash"] = result_hash
-            sets.append("config_json = ?")
-            vals.append(json.dumps(config, ensure_ascii=False))
             vals.append(session_id)
             self._conn.execute(
                 f"UPDATE bench_session SET {', '.join(sets)} WHERE id = ?", vals
@@ -941,27 +1018,51 @@ class Store:
     def get_bench_session(self, session_id: str) -> BenchSession | None:
         with self._lock:
             row = self._conn.execute(
-                """SELECT config_json, manifest_json, result_hash, supersedes,
-                          status, finished_at, error
+                """SELECT id, owner_id, created_at, config_json, manifest_json,
+                          result_hash, supersedes, status, finished_at, error
                    FROM bench_session WHERE id = ?""",
                 (session_id,),
             ).fetchone()
         if row is None:
             return None
-        session = BenchSession.model_validate_json(row["config_json"])
-        manifest = None
-        if row["manifest_json"] and row["manifest_json"] != "{}":
-            manifest = ExperimentManifest.model_validate_json(row["manifest_json"])
-        return session.model_copy(
-            update={
+        try:
+            payload = json.loads(row["config_json"] or "{}")
+        except ValueError:
+            payload = {}
+        if not isinstance(payload, dict):
+            payload = {}
+        payload.setdefault("id", row["id"])
+        payload.setdefault("created_at", row["created_at"])
+        payload.update(
+            {
+                "owner_id": row["owner_id"],
                 "status": row["status"],
                 "finished_at": row["finished_at"],
                 "error": row["error"],
                 "result_hash": row["result_hash"],
                 "supersedes": row["supersedes"],
-                "manifest": manifest,
             }
         )
+        manifest = None
+        if row["manifest_json"] and row["manifest_json"] != "{}":
+            try:
+                manifest_payload = json.loads(row["manifest_json"])
+            except ValueError:
+                manifest_payload = {}
+            if isinstance(manifest_payload, dict):
+                manifest_payload.update(
+                    {
+                        "status": row["status"],
+                        "finished_at": row["finished_at"],
+                        "result_hash": row["result_hash"],
+                    }
+                )
+                try:
+                    manifest = ExperimentManifest.model_validate(manifest_payload)
+                except ValueError:
+                    manifest = None
+        payload["manifest"] = manifest
+        return BenchSession.model_validate(payload)
 
     def add_bench_result(self, session_id: str, result: TaskResult) -> None:
         with self._lock:
