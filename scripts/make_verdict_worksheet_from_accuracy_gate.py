@@ -80,8 +80,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", default=str(DEFAULT_SOURCE))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument("--version", default="freshness-verdicts-private/1.0")
+    parser.add_argument(
+        "--description",
+        default=(
+            "Unlabeled claim-level Freshness worksheet derived from accuracy-gate "
+            "private cases. No expected statuses."
+        ),
+    )
     args = parser.parse_args(argv)
     data = build(Path(args.source))
+    data["version"] = args.version
+    data["description"] = args.description
     Path(args.output).write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )

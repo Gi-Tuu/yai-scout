@@ -1,6 +1,6 @@
 # Open Tasks
 
-> Snapshot: 2026-11-04 · release `v0.3.6` · 278 tests · Python 3.12 local verification
+> Snapshot: 2026-11-04 · release `v0.3.6` · 283 tests · Python 3.12 local verification
 
 ## DONE
 
@@ -24,6 +24,8 @@
 | Live benchmark verification | `freshness-bench/0.3.0`; 37 public tasks exposed, full public run completed 37/37 |
 | Freshness verdict evaluation | 50 fixed claim/evidence cases (standard/adversarial/ambiguous); precision/recall/confusion |
 | Private verdict labeling bridge | accuracy-gate private cases → unlabeled verdict worksheet → local labels → evaluator |
+| Holdout v2 worksheet | 60 unlabeled cases from separate accuracy-gate worksheet; human status labels only |
+| Benchmark retention | migration 9 unique cell index; explicit prune CLI with dry-run |
 
 ## IN PROGRESS
 

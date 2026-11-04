@@ -116,7 +116,12 @@ Annotate at:
 
 ```text
 /label/verdict
+/label/verdict?worksheet=holdout
 ```
+
+`holdout` uses the separate 60-case v2 worksheet. The source 60-case accuracy
+set is publicly documented as compromised, so use it for contamination and
+labeling workflow checks, not as evidence of independent generalization.
 
 Labels stay in the browser and export as:
 

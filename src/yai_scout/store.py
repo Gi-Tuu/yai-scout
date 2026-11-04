@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -209,6 +210,7 @@ class Store:
             (6, self._sync_bench_config_json),
             (7, self._ensure_claim_key_columns),
             (8, self._refresh_claim_identity),
+            (9, self._ensure_bench_result_unique),
         )
         for version, migrate in migrations:
             if version in applied:
@@ -344,6 +346,20 @@ class Store:
                     row["id"],
                 ),
             )
+
+    def _ensure_bench_result_unique(self) -> None:
+        """Deduplicate legacy cells, then enforce one result per task/agent/session."""
+        self._conn.execute(
+            """DELETE FROM bench_result
+               WHERE id NOT IN (
+                   SELECT MIN(id) FROM bench_result
+                   GROUP BY session_id, task_id, agent_id
+               )"""
+        )
+        self._conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_bench_result_cell "
+            "ON bench_result(session_id, task_id, agent_id)"
+        )
 
     def _ensure_bench_owner_column(self) -> None:
         columns = {
@@ -960,6 +976,45 @@ class Store:
                 ),
             )
             self._conn.commit()
+
+    def prune_benchmarks(
+        self, *, days: int = 30, dry_run: bool = False
+    ) -> dict[str, int | str | bool]:
+        """Delete terminal benchmark sessions older than ``days``.
+
+        Results are removed by the bench_session foreign-key cascade. Running
+        sessions are never touched.
+        """
+        if days < 0:
+            raise ValueError("days must be >= 0")
+        cutoff = datetime.now(UTC) - timedelta(days=days)
+        cutoff_iso = cutoff.isoformat(timespec="seconds").replace("+00:00", "Z")
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT id FROM bench_session WHERE status IN ('done', 'failed') "
+                "AND COALESCE(finished_at, created_at) < ?",
+                (cutoff_iso,),
+            ).fetchall()
+            ids = [str(row["id"]) for row in rows]
+            result_count = 0
+            if ids:
+                placeholders = ",".join("?" for _ in ids)
+                result_count = int(self._conn.execute(
+                    f"SELECT COUNT(*) FROM bench_result WHERE session_id IN ({placeholders})",
+                    tuple(ids),
+                ).fetchone()[0])
+                if not dry_run:
+                    self._conn.execute(
+                        f"DELETE FROM bench_session WHERE id IN ({placeholders})",
+                        tuple(ids),
+                    )
+                    self._conn.commit()
+        return {
+            "sessions": len(ids),
+            "results": result_count,
+            "cutoff": cutoff_iso,
+            "dry_run": dry_run,
+        }
 
     def list_bench_results(self, session_id: str) -> list[TaskResult]:
         with self._lock:

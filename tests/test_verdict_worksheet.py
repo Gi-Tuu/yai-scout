@@ -11,6 +11,7 @@ from yai_scout.detector.verdict_eval import (
 
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE = ROOT / "benchmarks" / "freshness_verdicts_private.json"
+HOLDOUT = ROOT / "benchmarks" / "freshness_verdicts_holdout_v2.json"
 
 
 def test_private_worksheet_has_no_gold_status() -> None:
@@ -45,3 +46,10 @@ def test_missing_labels_are_rejected(tmp_path: Path) -> None:
         assert "missing labels" in str(exc)
     else:
         raise AssertionError("missing labels should raise")
+
+
+def test_holdout_v2_is_unlabeled_and_larger() -> None:
+    version, cases = load_verdict_worksheet(HOLDOUT)
+    assert version == "freshness-verdicts-holdout/2.0"
+    assert len(cases) == 60
+    assert all(case.expected_status is None for case in cases)

@@ -2,7 +2,9 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
   const STATUSES = ["fresh", "stale", "conflicted", "insufficient"];
-  const LABELS_KEY = "freshnessVerdictLabelsV1";
+  const worksheet = new URLSearchParams(location.search).get("worksheet") === "holdout"
+    ? "holdout" : "private";
+  const LABELS_KEY = "freshnessVerdictLabelsV1:" + worksheet;
   const LABELER_KEY = "freshnessVerdictLabeler";
   let cases = [];
   let index = 0;
@@ -12,7 +14,7 @@
   $("labeler").oninput = () => localStorage.setItem(LABELER_KEY, $("labeler").value.trim());
 
   async function init() {
-    const response = await fetch("/label/verdict/worksheet");
+    const response = await fetch("/label/verdict/worksheet?worksheet=" + worksheet);
     const payload = await response.json();
     cases = payload.cases || [];
     render();
@@ -27,7 +29,7 @@
       panel.textContent = "no cases";
       return;
     }
-    $("progress").textContent = `${index + 1}/${cases.length} · labeled ${Object.keys(labels).length}`;
+    $("progress").textContent = `${worksheet} ${index + 1}/${cases.length} · labeled ${Object.keys(labels).length}`;
     panel.className = "";
     panel.innerHTML = "";
     const title = document.createElement("div");
