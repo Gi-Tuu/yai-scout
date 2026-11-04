@@ -29,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print(
             f"sessions={result['sessions']} results={result['results']} "
+            f"skipped={result.get('skipped', 0)} "
             f"cutoff={result['cutoff']} dry_run={result['dry_run']}"
         )
     return 0
