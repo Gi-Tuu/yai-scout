@@ -111,7 +111,8 @@ flowchart LR
 | Temporal replay | GitHub release snapshots: 2026-10-28 FRESH vs 2026-11-01 STALE |
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
 | Benchmark | 40 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
-| Quality gates | 266 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Verdict evaluation | claim-level Freshness status suite; no Tavily/LLM; precision/recall/confusion |
+| Quality gates | 274 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
@@ -124,7 +125,7 @@ flowchart LR
 ## Documentation
 
 - [Bifrost integration](docs/bifrost-integration.md) · [Bifrost verification](docs/bifrost-verification.md)
-- [Benchmark reliability](docs/benchmark-reliability.md)
+- [Benchmark reliability](docs/benchmark-reliability.md) · [Freshness verdict evaluation](docs/freshness-verdict-eval.md)
 - [Claim key versioning](docs/claim-key-versioning.md)
 - [Full-page fetch](docs/full-page-fetch.md)
 - [Freshness scoring](docs/spec-freshness-scoring.md) · [Temporal replay](docs/spec-temporal-replay.md)
