@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from yai_scout.detector.verify import ClaimVerifier
-from yai_scout.domain.models import Claim, ClaimType
+from yai_scout.domain.models import Claim, ClaimType, TemporalSensitivity
 from yai_scout.retrieval.tavily import SearchResult
 
 
@@ -91,5 +91,37 @@ def test_generic_version_claim_does_not_borrow_other_project_release():
         title="v9.0.0",
         url="https://github.com/other/project/releases/tag/v9.0.0",
         content="release v9.0.0",
+    )
+    assert ClaimVerifier._relation(claim, result) == "mentions"
+
+
+def test_stable_release_date_claim_supported_by_version_table():
+    claim = Claim(
+        id="c",
+        text="Python 3.12 于 2023 年发布",
+        type=ClaimType.VERSION,
+        numbers=["3.12"],
+        temporal_sensitivity=TemporalSensitivity.STABLE,
+    )
+    result = SearchResult(
+        title="Python End-of-Life Dates",
+        url="https://endoflife.date/python",
+        content="3.12 | 2023\n3.15 | latest",
+    )
+    assert ClaimVerifier._relation(claim, result) == "supports"
+
+
+def test_stable_release_date_claim_not_contradicted_by_latest_only():
+    claim = Claim(
+        id="c",
+        text="Python 3.12 于 2023 年发布",
+        type=ClaimType.VERSION,
+        numbers=["3.12"],
+        temporal_sensitivity=TemporalSensitivity.STABLE,
+    )
+    result = SearchResult(
+        title="Python End-of-Life Dates",
+        url="https://endoflife.date/python",
+        content="Latest version: 3.15",
     )
     assert ClaimVerifier._relation(claim, result) == "mentions"

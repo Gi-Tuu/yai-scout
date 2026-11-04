@@ -112,7 +112,7 @@ flowchart LR
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
 | Benchmark | 40 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
 | Verdict evaluation | claim-level Freshness status suite; no Tavily/LLM; precision/recall/confusion |
-| Quality gates | 318 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Quality gates | 323 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
@@ -121,6 +121,11 @@ flowchart LR
 - The benchmark is a small evaluation suite, not an academic leaderboard.
 - Bifrost is verified locally; the public demo uses the direct fallback unless a public Bifrost deployment is configured.
 - LLM/Tavily keys are not in this repo; keyless and rule-based fallbacks exist.
+
+
+## Feedback
+
+Bugs and questions: <https://github.com/Gi-Tuu/yai-scout/issues>
 
 ## Documentation
 

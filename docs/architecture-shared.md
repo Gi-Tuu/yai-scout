@@ -1,10 +1,14 @@
 # YAI Scout 共享技术架构（Shared Core）
 
+> **状态（2026-11-04）：规划中的 monorepo 拆分方案。**
+> 当前实现位于 `src/yai_scout/`，尚未按 `packages/` / `apps/` 拆分；
+> 下方目录树是目标结构，不是当前仓库结构。
+
 > 适用范围：Benchmark 与 Freshness 两个入口共享的证据核心
 > **v2 升级（2026-11-01）**：Claim/Evidence/Snapshot 模型、Adapter 协议、Pareto 与 Replay 的详细规格见 [`differentiation-spec.md`](differentiation-spec.md) 及三份 `spec-*.md`；本文的模块边界与部署方式不变。
 > 原则：**共享底座、独立产品、独立交付**。共享层只实现"两个产品都真正需要"的能力；不为形式独立复制组件。
 
-## 1. 仓库组织（monorepo）
+## 1. 仓库组织（目标 monorepo，尚未拆分）
 
 ```text
 yai-scout/

@@ -17,6 +17,7 @@ from ..domain.models import (
     EvidenceRef,
     FreshnessStatus,
     FreshnessVerdict,
+    TemporalSensitivity,
 )
 from ..llm import LLMClient
 from ..retrieval.quality import classify_source
@@ -310,6 +311,14 @@ class ClaimVerifier:
         if claim.type is ClaimType.VERSION:
             if not claim_versions or not result_versions:
                 return "mentions"
+            if _is_historical_release_claim(claim):
+                claim_years = set(re.findall(r"(?:19|20)\d{2}", claim_text))
+                result_years = set(re.findall(r"(?:19|20)\d{2}", text))
+                if claim_versions & result_versions:
+                    if claim_years & result_years:
+                        return "supports"
+                    return "mentions"
+                return "mentions"
             latest, historical, unmarked = _version_contexts(text)
             if latest:
                 if claim_versions & latest:
@@ -390,6 +399,21 @@ HISTORICAL_RE = re.compile(
 )
 _CURRENT_CLAIM_RE = re.compile(r"current|latest|最新|当前|现在", re.I)
 _HISTORICAL_CLAIM_RE = re.compile(r"previous|prior|older|历史|上一|旧版", re.I)
+
+
+_HISTORICAL_RELEASE_RE = re.compile(
+    r"(?:于|在)\s*(?:19|20)\d{2}\s*年[^。；;]{0,24}(?:发布|推出|上线|成立)"
+    r"|(?:released?|release date)\s*(?:in|:)?\s*(?:19|20)\d{2}",
+    re.I,
+)
+
+
+def _is_historical_release_claim(claim: Claim) -> bool:
+    if _CURRENT_CLAIM_RE.search(claim.text) or LATEST_RE.search(claim.text):
+        return False
+    if claim.temporal_sensitivity is TemporalSensitivity.STABLE:
+        return True
+    return bool(_HISTORICAL_RELEASE_RE.search(claim.text))
 
 
 def _version_contexts(text: str) -> tuple[set[str], set[str], set[str]]:

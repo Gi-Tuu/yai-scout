@@ -16,6 +16,21 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.4.3] - 2026-11-04
+
+### Fixed
+
+- Stable historical release claims (for example `Python 3.12 于 2023 年发布`)
+  are supported by version/date tables and are no longer contradicted by
+  `latest` markers.
+- Fixed demo cache is re-recorded; offline fixed-case tests cover replay and the
+  stable live path without network calls.
+- Freshness evaluation documentation now reports the measured 19/20 and MAE
+  11.25, including the L16 decision-table explanation.
+- Architecture documentation marks the monorepo split as planned; current code
+  lives in `src/yai_scout`.
+- README now has a concrete feedback/issues entry point.
+
 ## [0.4.2] - 2026-11-04
 
 ### Fixed

@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 
@@ -25,6 +26,11 @@ DEFAULT_WEIGHTS = {"relation": 0.6, "recency": 0.1, "authority": 0.3}
 TIER_WEIGHTS = {1: 1.0, 2: 0.8, 3: 0.5, 4: 0.25}
 RECENT_DAYS = 120
 YEAR_DAYS = 365
+_STABLE_RELEASE_RE = re.compile(
+    r"(?:于|在)\s*(?:19|20)\d{2}\s*年[^。；;]{0,24}(?:发布|推出|上线|成立)"
+    r"|(?:released?|release date)\s*(?:in|:)?\s*(?:19|20)\d{2}",
+    re.I,
+)
 
 
 def parse_published(value: str | None) -> datetime | None:
@@ -104,8 +110,18 @@ def score_claim(
     # Expired support may establish a STABLE fact; expired contradictions never
     # make a current STALE verdict. Unknown dates are display-only.
     eligible: list[tuple[EvidenceRef, str]] = []
+    stable_release = _is_stable_release_claim(claim)
     for item, state in usable:
         if state == "current" or state == "expired" and sensitivity is TemporalSensitivity.STABLE:
+            eligible.append((item, state))
+        elif (
+            state == "unknown"
+            and stable_release
+            and item.relation == "supports"
+        ):
+            # A stable historical release fact may be supported by a version
+            # table without a publication timestamp; the version/year match is
+            # the evidence, not the fetch date.
             eligible.append((item, state))
 
     # 版本类 claim：只比较"最新一次发布"，旧版本不是矛盾证据。
@@ -224,6 +240,14 @@ def score_claim(
             "date_coverage": date_coverage,
         },
         evidence=usable_items[:5],
+    )
+
+
+def _is_stable_release_claim(claim: Claim) -> bool:
+    return (
+        claim.type is ClaimType.VERSION
+        and claim.temporal_sensitivity is TemporalSensitivity.STABLE
+        and bool(_STABLE_RELEASE_RE.search(claim.text))
     )
 
 
