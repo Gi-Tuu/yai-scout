@@ -95,3 +95,23 @@ def test_migration_9_dedupes_legacy_duplicate_results(tmp_path: Path) -> None:
     else:
         raise AssertionError("migration 9 did not install the unique index")
     reopened.close()
+
+
+def test_prune_parses_non_z_timestamps() -> None:
+    store = Store(":memory:")
+    _session(store, "old-plus", finished_at="2020-01-01T00:00:00+00:00")
+    removed = store.prune_benchmarks(days=30)
+    assert removed["sessions"] == 1
+    assert removed["skipped"] == 0
+    assert store.get_bench_session("old-plus") is None
+    store.close()
+
+
+def test_prune_skips_unparseable_timestamps() -> None:
+    store = Store(":memory:")
+    _session(store, "bad", finished_at="not-a-date")
+    result = store.prune_benchmarks(days=30)
+    assert result["sessions"] == 0
+    assert result["skipped"] == 1
+    assert store.get_bench_session("bad") is not None
+    store.close()

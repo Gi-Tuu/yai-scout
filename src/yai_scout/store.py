@@ -989,13 +989,30 @@ class Store:
             raise ValueError("days must be >= 0")
         cutoff = datetime.now(UTC) - timedelta(days=days)
         cutoff_iso = cutoff.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+        def parse_timestamp(value: object) -> datetime | None:
+            if not value:
+                return None
+            try:
+                parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            except ValueError:
+                return None
+            return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
+
         with self._lock:
             rows = self._conn.execute(
-                "SELECT id FROM bench_session WHERE status IN ('done', 'failed') "
-                "AND COALESCE(finished_at, created_at) < ?",
-                (cutoff_iso,),
+                "SELECT id, finished_at, created_at FROM bench_session "
+                "WHERE status IN ('done', 'failed')"
             ).fetchall()
-            ids = [str(row["id"]) for row in rows]
+            ids: list[str] = []
+            skipped = 0
+            for row in rows:
+                timestamp = parse_timestamp(row["finished_at"] or row["created_at"])
+                if timestamp is None:
+                    skipped += 1
+                    continue
+                if timestamp < cutoff:
+                    ids.append(str(row["id"]))
             result_count = 0
             if ids:
                 placeholders = ",".join("?" for _ in ids)
@@ -1012,6 +1029,7 @@ class Store:
         return {
             "sessions": len(ids),
             "results": result_count,
+            "skipped": skipped,
             "cutoff": cutoff_iso,
             "dry_run": dry_run,
         }
