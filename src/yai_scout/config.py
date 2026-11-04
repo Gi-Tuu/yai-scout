@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     scout_mode: str = "all"
     snapshots_seed: str = "benchmarks/snapshots.json"
     admin_token: str = ""
+    # Optional one-off diagnostic token for XFF/proxy header inspection.
+    # Empty disables the diagnostic endpoint.
+    xff_debug_token: str = ""
     benchmark_run_requires_admin: bool = True
     benchmark_public_agent_ids: str = "mock_good,mock_stale"
     accuracy_auto_update: bool = False

@@ -112,7 +112,7 @@ flowchart LR
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
 | Benchmark | 40 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
 | Verdict evaluation | claim-level Freshness status suite; no Tavily/LLM; precision/recall/confusion |
-| Quality gates | 291 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Quality gates | 294 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
@@ -131,7 +131,7 @@ flowchart LR
 - [Freshness scoring](docs/spec-freshness-scoring.md) · [Temporal replay](docs/spec-temporal-replay.md)
 - [Anchor retrieval](docs/spec-anchor-retrieval.md) · [Accuracy gate](docs/spec-accuracy-gate.md) · [Accuracy eval](docs/accuracy-eval.md)
 - [Database operations](docs/db-operations.md) · [Migration plan](docs/db-migration-plan.md)
-- [Deployment](docs/deploy-free.md)
+- [Deployment](docs/deploy-free.md) · [XFF diagnosis](docs/xff-diagnosis.md)
 - [Governance](docs/governance/engineering-governance-v1.md) · [ADR-0003](docs/adr/0003-engineering-governance.md)
 - [Engineering audit](docs/audit-2026-11-02.md) · [Changelog](CHANGELOG.md)
 
