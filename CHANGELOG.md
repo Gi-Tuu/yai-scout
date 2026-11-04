@@ -16,6 +16,16 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.4.5] - 2026-11-04
+
+### Added
+
+- Local staging load harness: `scripts/staging_server.py` uses a separate DB,
+  packaged snapshots and deterministic Fake Tavily.
+- k6 scenario `load/k6-fixed-cases.js` and `docs/staging-load-test.md` record
+  local HTTP p50/p95/p99, error rate and RPS.
+- Calibration sorting regression test.
+
 ## [0.4.4] - 2026-11-04
 
 ### Fixed
