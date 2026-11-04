@@ -213,6 +213,7 @@ class Store:
             (8, self._refresh_claim_identity),
             (9, self._ensure_bench_result_unique),
             (10, self._normalize_bench_session_state),
+            (11, self._ensure_bench_status_trigger),
         )
         for version, migrate in migrations:
             if version in applied:
@@ -522,6 +523,23 @@ class Store:
                         session_row["config_json"],
                     )
                     continue
+                if not isinstance(session_payload, dict):
+                    add(
+                        "bench_session",
+                        session_row["id"],
+                        "config_json",
+                        "invalid_schema",
+                        session_row["config_json"],
+                    )
+                    continue
+                if str(session_row["status"]) not in {"running", "done", "failed"}:
+                    add(
+                        "bench_session",
+                        session_row["id"],
+                        "status",
+                        "invalid_status",
+                        str(session_row["status"]),
+                    )
                 if str(session_row["owner_id"]) != str(
                     session_payload.get("owner_id", "")
                 ):
@@ -558,6 +576,15 @@ class Store:
                             session_row["id"],
                             "manifest_json",
                             "invalid_json",
+                            raw_manifest,
+                        )
+                        continue
+                    if not isinstance(manifest_payload, dict):
+                        add(
+                            "bench_session",
+                            session_row["id"],
+                            "manifest_json",
+                            "invalid_schema",
                             raw_manifest,
                         )
                         continue
@@ -912,6 +939,24 @@ class Store:
             payload.pop(field, None)
         return json.dumps(payload, ensure_ascii=False)
 
+    def _ensure_bench_status_trigger(self) -> None:
+        self._conn.executescript(
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_bench_session_status_insert
+            BEFORE INSERT ON bench_session
+            WHEN NEW.status NOT IN ('running', 'done', 'failed')
+            BEGIN
+                SELECT RAISE(ABORT, 'invalid bench_session status');
+            END;
+            CREATE TRIGGER IF NOT EXISTS trg_bench_session_status_update
+            BEFORE UPDATE OF status ON bench_session
+            WHEN NEW.status NOT IN ('running', 'done', 'failed')
+            BEGIN
+                SELECT RAISE(ABORT, 'invalid bench_session status');
+            END;
+            """
+        )
+
     def _normalize_bench_session_state(self) -> None:
         count = int(self._conn.execute(
             "SELECT COUNT(*) FROM bench_session"
@@ -919,19 +964,21 @@ class Store:
         if not count:
             return
         if self.path != ":memory:":
-            backup = Path(self.path).with_name(f"{Path(self.path).name}.pre-v10.bak")
-            if not backup.exists():
+            stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+            backup = Path(self.path).with_name(
+                f"{Path(self.path).name}.pre-v10.{stamp}.{uuid.uuid4().hex[:8]}.bak"
+            )
+            try:
+                self._conn.commit()
+                destination = sqlite3.connect(backup)
                 try:
-                    self._conn.commit()
-                    destination = sqlite3.connect(backup)
-                    try:
-                        self._conn.backup(destination)
-                    finally:
-                        destination.close()
-                except sqlite3.Error as exc:
-                    raise RuntimeError(
-                        f"cannot create pre-migration backup at {backup}"
-                    ) from exc
+                    self._conn.backup(destination)
+                finally:
+                    destination.close()
+            except sqlite3.Error as exc:
+                raise RuntimeError(
+                    f"cannot create pre-migration backup at {backup}"
+                ) from exc
         rows = self._conn.execute(
             "SELECT id, config_json, manifest_json FROM bench_session"
         ).fetchall()
@@ -1014,6 +1061,8 @@ class Store:
             ).fetchone()
             if row is None:
                 raise KeyError(f"bench session not found: {session_id}")
+            if status is not None and status not in {"running", "done", "failed"}:
+                raise ValueError("invalid bench session status")
             if str(row["status"]) in {"done", "failed"}:
                 raise ValueError("bench session is immutable after completion")
             if result_hash is not None and row["result_hash"] is not None:

@@ -107,7 +107,7 @@ def test_migration_10_strips_lifecycle_json(tmp_path: Path) -> None:
     loaded = store.get_bench_session("old")
     assert loaded is not None and loaded.status == "done"
     assert loaded.manifest is not None and loaded.manifest.status == "done"
-    assert db.with_name("legacy.sqlite3.pre-v10.bak").is_file()
+    assert list(db.parent.glob("legacy.sqlite3.pre-v10.*.bak"))
     store.close()
 
 
@@ -156,4 +156,30 @@ def test_invalid_manifest_fails_closed() -> None:
         assert "manifest_json" in str(exc)
     else:
         raise AssertionError("invalid manifest must not be silently dropped")
+    store.close()
+
+
+def test_consistency_handles_non_object_json() -> None:
+    store = Store(":memory:")
+    store.create_bench_session(BenchSession(id="b1", status="running"))
+    store._conn.execute(
+        "UPDATE bench_session SET config_json = '[]' WHERE id = 'b1'"
+    )
+    store._conn.commit()
+    issues = store.consistency_report()
+    assert any(item["column"] == "invalid_schema" for item in issues)
+    store.close()
+
+
+def test_bench_status_trigger_rejects_invalid_value() -> None:
+    store = Store(":memory:")
+    try:
+        store._conn.execute(
+            "INSERT INTO bench_session (id, status, created_at) VALUES (?, ?, ?)",
+            ("bad", "bogus", "2026-11-01T00:00:00Z"),
+        )
+    except sqlite3.IntegrityError:
+        pass
+    else:
+        raise AssertionError("invalid status should be rejected by the trigger")
     store.close()

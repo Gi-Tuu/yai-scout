@@ -42,3 +42,11 @@ that reappear in JSON.
 - `consistency_report()` validates manifest schema and flags unexpected
   lifecycle JSON.
 - Migration 10 writes `<db>.pre-v10.bak` before rewriting session JSON.
+
+
+## Final integrity guards
+
+- `status` is enforced by SQLite insert/update triggers.
+- `consistency_report()` records non-object JSON as `invalid_schema` instead of
+  crashing.
+- Pre-v10 backups are timestamped per migration attempt.

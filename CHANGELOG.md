@@ -16,6 +16,16 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.4.2] - 2026-11-04
+
+### Fixed
+
+- Consistency checks handle non-object JSON payloads without crashing.
+- Benchmark status has database-level insert/update triggers rejecting values
+  outside `running`, `done`, `failed`.
+- Pre-v10 migration backups are timestamped per attempt instead of reusing a
+  stale fixed filename.
+
 ## [0.4.1] - 2026-11-04
 
 ### Fixed
