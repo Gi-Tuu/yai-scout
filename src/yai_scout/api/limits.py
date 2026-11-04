@@ -28,6 +28,7 @@ class UsageLimiter:
         self._day = datetime.now(UTC).date().isoformat()
         self._daily_used: dict[str, int] = {bucket: 0 for bucket in BUCKETS}
         self._lock = Lock()
+        self._last_sweep = time.monotonic()
 
     def _roll_day(self) -> None:
         today = datetime.now(UTC).date().isoformat()
@@ -36,6 +37,20 @@ class UsageLimiter:
             self._daily_used = {bucket: 0 for bucket in BUCKETS}
             self._events.clear()
             self._global_events.clear()
+            self._last_sweep = time.monotonic()
+
+    def _sweep(self, now: float) -> None:
+        """Drop per-client buckets whose last event is outside the window."""
+        if now - self._last_sweep < 60.0:
+            return
+        cutoff = now - 60.0
+        stale = [
+            key for key, events in self._events.items()
+            if not events or events[-1] <= cutoff
+        ]
+        for key in stale:
+            del self._events[key]
+        self._last_sweep = now
 
     def check(self, bucket: str, client: str) -> tuple[bool, int]:
         """返回 (allowed, retry_after_seconds)。允许时同时记账。"""
@@ -44,6 +59,7 @@ class UsageLimiter:
         now = time.monotonic()
         with self._lock:
             self._roll_day()
+            self._sweep(now)
             if self._daily_used[bucket] >= self.daily[bucket]:
                 tomorrow = datetime.now(UTC) + timedelta(days=1)
                 midnight = datetime(
@@ -77,6 +93,7 @@ class UsageLimiter:
                 "per_minute": self.per_minute,
                 "daily_limit": dict(self.daily),
                 "daily_used": dict(self._daily_used),
+                "buckets": len(self._events),
             }
 
     @staticmethod

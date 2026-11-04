@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
+import logging
 import os
 import secrets
 from collections.abc import AsyncIterator
@@ -37,6 +37,8 @@ from .freshness_routes import register_freshness_routes
 from .limits import UsageLimiter
 from .pages import register_pages
 from .research_routes import register_research_routes
+
+logger = logging.getLogger(__name__)
 
 
 def create_app(
@@ -174,9 +176,24 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         store.mark_interrupted_work()
+        retention: dict[str, object] = {
+            "enabled": cfg.benchmark_retention_days > 0,
+            "days": cfg.benchmark_retention_days,
+            "result": None,
+            "error": None,
+        }
         if cfg.benchmark_retention_days > 0:
-            with contextlib.suppress(Exception):
-                store.prune_benchmarks(days=cfg.benchmark_retention_days)
+            try:
+                retention["result"] = store.prune_benchmarks(
+                    days=cfg.benchmark_retention_days
+                )
+            except Exception as exc:  # noqa: BLE001 - startup must continue
+                retention["error"] = f"{type(exc).__name__}: {exc}"
+                logger.warning(
+                    "benchmark retention failed: %s", retention["error"],
+                    exc_info=True,
+                )
+        _app.state.benchmark_retention = retention
         yield
         await director.shutdown()
         await runner.shutdown()
@@ -229,6 +246,11 @@ def create_app(
             "version": cfg.app_version,
             "mode": cfg.scout_mode,
             "snapshots": snapshots,
+            "retention": getattr(
+                app.state, "benchmark_retention",
+                {"enabled": cfg.benchmark_retention_days > 0,
+                 "days": cfg.benchmark_retention_days, "result": None, "error": None},
+            ),
             "discovery": discovery.usage(),
             "build": os.environ.get("RENDER_GIT_COMMIT", "dev")[:12],
             "limits": limiter.usage(),

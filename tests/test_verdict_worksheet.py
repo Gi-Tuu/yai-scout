@@ -4,10 +4,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from yai_scout.detector.freshness import as_of_datetime, score_claim
 from yai_scout.detector.verdict_eval import (
     evaluate_labeled_worksheet,
     load_verdict_worksheet,
 )
+from yai_scout.domain.models import Claim, FreshnessStatus
 
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE = ROOT / "benchmarks" / "freshness_verdicts_private.json"
@@ -58,7 +60,39 @@ def test_holdout_v2_is_unlabeled_and_larger() -> None:
 
 def test_holdout_v3_is_new_and_unlabeled() -> None:
     version, cases = load_verdict_worksheet(HOLDOUT_V3)
-    assert version == "freshness-verdicts-holdout/3.0"
-    assert len(cases) == 30
+    assert version == "freshness-verdicts-holdout/3.1"
+    assert len(cases) == 60
     assert all(case.expected_status is None for case in cases)
     assert all(case.id.startswith("HV3-") for case in cases)
+
+
+def test_holdout_v3_evidence_is_balanced() -> None:
+    _, cases = load_verdict_worksheet(HOLDOUT_V3)
+    counts = {status: 0 for status in ("fresh", "stale", "conflicted", "insufficient")}
+    for case in cases:
+        assert case.claim.target_time is not None
+        verdict = score_claim(
+            Claim(
+                id=case.id,
+                text=case.claim.text,
+                type=case.claim.type,
+                temporal_sensitivity=case.claim.temporal_sensitivity,
+                target_time=case.claim.target_time,
+            ),
+            case.evidence,
+            as_of=as_of_datetime(case.claim.target_time),
+        )
+        if verdict.status is FreshnessStatus.FRESH:
+            counts["fresh"] += 1
+        elif verdict.status is FreshnessStatus.STALE:
+            counts["stale"] += 1
+        elif verdict.status is FreshnessStatus.CONFLICTED:
+            counts["conflicted"] += 1
+        elif verdict.status is FreshnessStatus.INSUFFICIENT:
+            counts["insufficient"] += 1
+    assert counts == {
+        "fresh": 15,
+        "stale": 15,
+        "conflicted": 15,
+        "insufficient": 15,
+    }

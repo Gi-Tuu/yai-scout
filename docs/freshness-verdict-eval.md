@@ -124,9 +124,9 @@ Annotate at:
 set is publicly documented as compromised; use it for contamination and
 labeling workflow checks, not as evidence of independent generalization.
 
-`holdout-v3` uses 30 new unlabeled cases that are not derived from that
-compromised key. It still requires independent human labels; it is not a gold
-set by itself.
+`holdout-v3` uses 60 balanced unlabeled cases (15 fresh, 15 stale, 15 conflicted,
+15 insufficient evidence designs) that are not derived from that compromised key.
+It still requires independent human labels; it is not a gold set by itself.
 
 Labels stay in the browser and export as:
 
