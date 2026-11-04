@@ -407,9 +407,27 @@ class BenchmarkRunner:
             self.store.add_bench_result(session.id, aggregate)
 
         try:
-            await asyncio.gather(
-                *(run_cell(task, agent_id) for task in tasks for agent_id in agent_ids)
+            outcomes = await asyncio.gather(
+                *(run_cell(task, agent_id) for task in tasks for agent_id in agent_ids),
+                return_exceptions=True,
             )
+            cancelled = [
+                outcome for outcome in outcomes
+                if isinstance(outcome, asyncio.CancelledError)
+            ]
+            if cancelled:
+                raise cancelled[0]
+            failures = [
+                outcome for outcome in outcomes
+                if isinstance(outcome, Exception)
+            ]
+            if failures:
+                detail = "; ".join(
+                    f"{type(exc).__name__}: {exc}" for exc in failures[:5]
+                )
+                raise RuntimeError(
+                    f"{len(failures)} benchmark cells failed: {detail}"
+                ) from failures[0]
             finished_at = utcnow_iso()
             results = self.store.list_bench_results(session.id)
             digest = compute_result_hash(results)

@@ -15,13 +15,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--db", default=None, help="SQLite path (default: current settings)")
     parser.add_argument("--days", type=int, default=30, help="retention window in days")
     parser.add_argument("--dry-run", action="store_true", help="report without deleting")
+    parser.add_argument(
+        "--audit-dir",
+        default=None,
+        help="directory for pre-delete audit JSON (default: beside the DB)",
+    )
     parser.add_argument("--json", action="store_true", help="machine-readable output")
     args = parser.parse_args(argv)
 
     db_path = Path(args.db) if args.db else Settings().db_path
     store = Store(db_path)
     try:
-        result = store.prune_benchmarks(days=args.days, dry_run=args.dry_run)
+        result = store.prune_benchmarks(
+            days=args.days, dry_run=args.dry_run, audit_dir=args.audit_dir
+        )
     finally:
         store.close()
     if args.json:

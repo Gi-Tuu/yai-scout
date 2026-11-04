@@ -1,6 +1,6 @@
 # Open Tasks
 
-> Snapshot: 2026-11-04 · release `v0.3.6` · 298 tests · Python 3.12 local verification
+> Snapshot: 2026-11-04 · release `v0.3.6` · 301 tests · Python 3.12 local verification
 
 ## DONE
 
@@ -30,7 +30,8 @@
 | Rate-limit bucket sweep | stale per-client buckets removed after 60s |
 | Browser CI | pinned Playwright 1.64.1 admin rollback/approve smoke job |
 | Automatic benchmark retention | opt-in `BENCHMARK_RETENTION_DAYS`, startup prune, default off |
-| Benchmark retention | migration 9 unique cell index; explicit prune CLI with dry-run |
+| Benchmark retention | migration 9 unique cell index; explicit prune CLI with dry-run and pre-delete JSON audit |
+| Benchmark failure aggregation | gather waits for siblings and reports all cell failures before failing the session |
 
 ## IN PROGRESS
 
