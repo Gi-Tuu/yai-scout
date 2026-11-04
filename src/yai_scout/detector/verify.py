@@ -323,6 +323,18 @@ class ClaimVerifier:
                 if _CURRENT_CLAIM_RE.search(claim_text):
                     return "contradicts"
                 return "mentions"
+            # A release URL/title is stronger than an unmarked body: if the
+            # claim says "current" and the cited release is strictly newer,
+            # it contradicts the claim. Version-list pages without a release
+            # target stay ambiguous.
+            release_version = _release_target_version(result)
+            if release_version and _CURRENT_CLAIM_RE.search(claim_text):
+                claim_max = max(
+                    (_version_tuple(version) for version in claim_versions),
+                    default=(0, 0, 0),
+                )
+                if _version_tuple(release_version) > claim_max:
+                    return "contradicts"
             if result_versions == claim_versions:
                 return "supports"
             if len(result_versions) == 1 and claim_versions & result_versions:
@@ -363,6 +375,12 @@ class ClaimVerifier:
 
 VERSION_TOKEN_RE = re.compile(r"v?\d+\.\d+(?:\.\d+)?", re.I)
 LATEST_RE = re.compile(r"latest|current|newest|最新|当前|现在", re.I)
+RELEASE_URL_RE = re.compile(
+    r"(?:releases?/tag|/tag/)(v?\d+\.\d+(?:\.\d+)?)", re.I
+)
+RELEASE_TITLE_RE = re.compile(
+    r"^(?:release|version)\s+v?\d+\.\d+(?:\.\d+)?$", re.I
+)
 HISTORICAL_RE = re.compile(
     r"previous|prior|older|old|deprecated|历史|上一|旧版|旧版本", re.I
 )
@@ -451,3 +469,23 @@ def _units_conflict(claim_units: set[str], result_units: set[str]) -> bool:
         return True
     return bool(claim_currencies) and "credits" in result_units
 
+
+
+def _version_tuple(value: str) -> tuple[int, ...]:
+    parts = [int(part) for part in value.lstrip("vV").split(".") if part.isdigit()]
+    while len(parts) < 3:
+        parts.append(0)
+    return tuple(parts)
+
+
+def _release_target_version(result: SearchResult) -> str | None:
+    """Return a version only when URL/title clearly names a release target."""
+    for value in (result.url, result.title):
+        match = RELEASE_URL_RE.search(value)
+        if match:
+            return match.group(1).lstrip("vV").lower()
+        if RELEASE_TITLE_RE.fullmatch(value.strip()):
+            match = VERSION_TOKEN_RE.search(value)
+            if match:
+                return match.group(0).lstrip("vV").lower()
+    return None

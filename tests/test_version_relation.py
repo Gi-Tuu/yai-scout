@@ -48,3 +48,18 @@ def test_multiple_unmarked_versions_are_ambiguous():
 
 def test_latest_suffix_marker_supports():
     assert _relation("当前版本是 0.24.0", "version 0.24.0 (latest)") == "supports"
+
+
+def test_newer_release_url_contradicts_current_claim():
+    claim = Claim(
+        id="c",
+        text="YAI Agent Core 当前版本是 0.24.0",
+        type=ClaimType.VERSION,
+        numbers=["0.24.0"],
+    )
+    result = SearchResult(
+        title="v0.25.0",
+        url="https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+        content="release v0.25.0",
+    )
+    assert ClaimVerifier._relation(claim, result) == "contradicts"

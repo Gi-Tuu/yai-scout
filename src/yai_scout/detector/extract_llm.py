@@ -6,7 +6,7 @@ import uuid
 
 from ..domain.models import Claim, ClaimType
 from ..llm import LLMClient
-from .claims import extract_numbers
+from .claims import extract_numbers, is_citation_only
 
 VALID_TYPES = {
     "pricing": ClaimType.PRICING,
@@ -63,6 +63,8 @@ async def extract_claims_llm(
             continue
         text = " ".join(str(item.get("text") or "").split()).strip()
         if not text or len(text) > 400:
+            continue
+        if is_citation_only(text):
             continue
         norm = _normalize(text)
         if not norm or norm not in normalized_answer:

@@ -16,9 +16,18 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
-## [0.3.6] - 2026-11-02
+## [0.3.6] - 2026-11-04
 
 ### Fixed (deep audit)
+
+- Replay: newer explicit release URL now contradicts a "current version" claim;
+  version comparison is numeric, not lexical.
+- Citation-only URL sentences no longer become standalone claims.
+- Benchmark sibling failures are aggregated before terminal state; prune writes
+  a pre-delete JSON audit and aborts deletion if the audit cannot be written.
+- Client IP uses Cloudflare authoritative headers with documented deployment
+  boundaries.
+- Added balanced 60-case unlabeled holdout v3 and version consistency checks.
 
 - P1-1: malformed upstream payload -> INSUFFICIENT, not 500; per-claim isolation.
 - P1-2: URL scheme sanitization + CSP/security headers.

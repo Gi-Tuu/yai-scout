@@ -26,3 +26,15 @@ def test_extract_claims_keeps_time_sensitive_sentences():
     assert "0.25.0" in texts
     assert all(c.type is not ClaimType.OTHER for c in claims)
     assert all(c.id for c in claims)
+
+
+def test_citation_only_url_is_not_a_claim():
+    answer = (
+        "YAI Agent Core 当前版本是 0.24.0。"
+        "来源：https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.24.0"
+    )
+    claims = extract_claims(answer)
+    assert len(claims) == 1
+    assert claims[0].type is ClaimType.VERSION
+    assert "来源" not in claims[0].text
+    assert "https://" not in claims[0].text

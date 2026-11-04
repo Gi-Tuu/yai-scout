@@ -16,6 +16,8 @@ SENTENCE_SPLIT_RE = re.compile(r"(?<!\d)[.!?](?!\d)|[。！？]|\n+")
 NUMBER_RE = re.compile(r"\d+(?:\.\d+)+|\d[\d,]*")
 MAX_CLAIM_CHARS = 400
 MIN_CLAIM_CHARS = 12
+URL_RE = re.compile(r"(?:https?://|www\.)\S+", re.I)
+CITATION_RE = re.compile(r"^(?:来源|source|参考|链接|引用)\s*[:：]?\s*", re.I)
 
 
 def normalize_number(raw: str) -> str:
@@ -33,8 +35,40 @@ def extract_numbers(text: str) -> list[str]:
 
 
 def split_sentences(text: str) -> list[str]:
-    """按句末标点切分，但不切开 0.25.0 这类版本号/小数。"""
-    return [part.strip() for part in SENTENCE_SPLIT_RE.split(text) if part.strip()]
+    """按句末标点切分，但不切开版本号/小数或 URL。"""
+    urls: list[str] = []
+
+    def protect(match: re.Match[str]) -> str:
+        urls.append(match.group(0))
+        return f" __URL_{len(urls) - 1}__ "
+
+    protected = URL_RE.sub(protect, text)
+    parts = [
+        part.strip()
+        for part in SENTENCE_SPLIT_RE.split(protected)
+        if part.strip()
+    ]
+    restored: list[str] = []
+    for part in parts:
+        for index, url in enumerate(urls):
+            part = part.replace(f"__URL_{index}__", url)
+        restored.append(part)
+    return restored
+
+
+def strip_urls(text: str) -> str:
+    return URL_RE.sub(" ", text)
+
+
+def is_citation_only(text: str) -> bool:
+    """True when a sentence is just a citation/URL, not a factual claim."""
+    residual = CITATION_RE.sub("", strip_urls(text))
+    residual = residual.strip(" \t\r\n,，.。;；:：!?！？")
+    if not residual:
+        return True
+    # Keep short fact-bearing text such as "0.24.0 来源：..." but drop
+    # citation scaffolding that has no fact content.
+    return len(residual) < MIN_CLAIM_CHARS and not re.search(r"\d", residual)
 
 
 def extract_claims(answer: str, *, max_claims: int = 8) -> list[Claim]:
@@ -45,6 +79,8 @@ def extract_claims(answer: str, *, max_claims: int = 8) -> list[Claim]:
         if not text or text.endswith("?") or text.endswith("？"):
             continue
         if not (MIN_CLAIM_CHARS <= len(text) <= MAX_CLAIM_CHARS):
+            continue
+        if is_citation_only(text):
             continue
         claim_type, signals = classify(text)
         if claim_type is ClaimType.OTHER:
