@@ -1,0 +1,758 @@
+{
+  "version": "freshness-verdicts-holdout/3.0",
+  "as_of": "2026-11-01",
+  "source": "new synthetic holdout v3; not derived from the public compromised 60-case key",
+  "description": "Unlabeled holdout v3 cases. No expected statuses; human labels must be collected independently.",
+  "cases": [
+    {
+      "id": "HV3-001",
+      "claim": {
+        "text": "HTTP 200 表示 OK",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200",
+          "title": "HTTP 200 表示 OK",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-002",
+      "claim": {
+        "text": "HTTP 201 表示 Created",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/201",
+          "title": "HTTP 201 表示 Created",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-003",
+      "claim": {
+        "text": "HTTP 204 表示 No Content",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/204",
+          "title": "HTTP 204 表示 No Content",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-004",
+      "claim": {
+        "text": "HTTP 400 表示 Bad Request",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+          "title": "HTTP 400 表示 Bad Request",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-005",
+      "claim": {
+        "text": "HTTP 401 表示 Unauthorized",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+          "title": "HTTP 401 表示 Unauthorized",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-006",
+      "claim": {
+        "text": "HTTP 403 表示 Forbidden",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403",
+          "title": "HTTP 403 表示 Forbidden",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-007",
+      "claim": {
+        "text": "HTTP 429 表示 Too Many Requests",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429",
+          "title": "HTTP 429 表示 Too Many Requests",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-008",
+      "claim": {
+        "text": "HTTP 500 表示 Internal Server Error",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+          "title": "HTTP 500 表示 Internal Server Error",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-009",
+      "claim": {
+        "text": "DNS 默认端口是 53",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.iana.org/assignments/service-names-port-numbers",
+          "title": "DNS 默认端口是 53",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-010",
+      "claim": {
+        "text": "TCP 三次握手的第二步是 SYN-ACK",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc9293",
+          "title": "TCP 三次握手的第二步是 SYN-ACK",
+          "published_at": "2022-08-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-011",
+      "claim": {
+        "text": "TLS 1.3 在 RFC 8446 中定义",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc8446",
+          "title": "TLS 1.3 在 RFC 8446 中定义",
+          "published_at": "2018-08-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-012",
+      "claim": {
+        "text": "JSON 布尔值是小写 true/false",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc8259",
+          "title": "JSON 布尔值是小写 true/false",
+          "published_at": "2017-12-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-013",
+      "claim": {
+        "text": "Unicode 码点 U+1F600 表示 😀",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.unicode.org/charts/PDF/U1F600.pdf",
+          "title": "Unicode 码点 U+1F600 表示 😀",
+          "published_at": "2020-01-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-014",
+      "claim": {
+        "text": "Python 3.13 于 2024 年发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.python.org/3.13/whatsnew/3.13.html",
+          "title": "Python 3.13 于 2024 年发布",
+          "published_at": "2024-10-07T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-015",
+      "claim": {
+        "text": "Python 3.14 于 2025 年发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.python.org/3.14/whatsnew/3.14.html",
+          "title": "Python 3.14 于 2025 年发布",
+          "published_at": "2025-10-07T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-016",
+      "claim": {
+        "text": "Node.js 22 于 2024 年进入 LTS",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://nodejs.org/en/about/previous-releases",
+          "title": "Node.js 22 于 2024 年进入 LTS",
+          "published_at": "2024-10-29T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-017",
+      "claim": {
+        "text": "PostgreSQL 16 于 2023 年发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.postgresql.org/about/news/postgresql-16-released-2715/",
+          "title": "PostgreSQL 16 于 2023 年发布",
+          "published_at": "2023-09-14T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-018",
+      "claim": {
+        "text": "PostgreSQL 17 于 2024 年发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.postgresql.org/about/news/postgresql-17-released-2936/",
+          "title": "PostgreSQL 17 于 2024 年发布",
+          "published_at": "2024-09-26T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-019",
+      "claim": {
+        "text": "Tavily basic search 每次消耗 1 credit",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "title": "Tavily basic search 每次消耗 1 credit",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-020",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "title": "Tavily 免费计划每月提供 1,000 credits",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-021",
+      "claim": {
+        "text": "GitHub REST API 未认证限额是每小时 60 次",
+        "type": "statistic",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api",
+          "title": "GitHub REST API 未认证限额是每小时 60 次",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-022",
+      "claim": {
+        "text": "DeepSeek API base URL 是 https://api.deepseek.com",
+        "type": "other",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://api-docs.deepseek.com/",
+          "title": "DeepSeek API base URL 是 https://api.deepseek.com",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-023",
+      "claim": {
+        "text": "Bifrost 支持 OpenAI-compatible API",
+        "type": "other",
+        "temporal_sensitivity": "slow",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "title": "Bifrost 支持 OpenAI-compatible API",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-024",
+      "claim": {
+        "text": "React 19 于 2024 年发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://react.dev/blog/2024/12/05/react-19",
+          "title": "React 19 于 2024 年发布",
+          "published_at": "2024-12-05T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-025",
+      "claim": {
+        "text": "HTTP 404 表示 Not Found",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "title": "HTTP 404 表示 Not Found",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-026",
+      "claim": {
+        "text": "HTTP 301 表示 Moved Permanently",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301",
+          "title": "HTTP 301 表示 Moved Permanently",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-027",
+      "claim": {
+        "text": "真空光速约为 299792 km/s",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://physics.example/constants",
+          "title": "真空光速约为 299792 km/s",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-028",
+      "claim": {
+        "text": "一公里等于 1000 米",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.bipm.org/en/measurement-units",
+          "title": "一公里等于 1000 米",
+          "published_at": "2019-01-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-029",
+      "claim": {
+        "text": "某 API 每次请求消耗 3 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.example/api",
+          "title": "某 API 每次请求消耗 3 credits",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    },
+    {
+      "id": "HV3-030",
+      "claim": {
+        "text": "某服务每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.example/service",
+          "title": "某服务每月提供 1,000 credits",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "case_type": "holdout-v3",
+      "tags": [
+        "new",
+        "unlabeled",
+        "requires-human-labels"
+      ],
+      "notes": "New holdout case; no expected_status is stored."
+    }
+  ]
+}

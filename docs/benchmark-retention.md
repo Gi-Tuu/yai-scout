@@ -32,8 +32,17 @@ Rules:
 - `running` sessions are never touched;
 - `--dry-run` only reports counts.
 
-The command is explicit; the app does not automatically delete benchmark
-history on startup.
+The CLI is explicit. A startup hook is also available but disabled by default:
+
+```text
+BENCHMARK_RETENTION_DAYS=0   # disabled
+BENCHMARK_RETENTION_DAYS=30  # prune terminal sessions older than 30 days at startup
+```
+
+Startup pruning never touches `running` sessions and failures are non-fatal.
+
+The default is `0` (disabled), so enabling retention is an explicit deployment
+decision. `prune_benchmarks.py` remains the safe dry-run/inspection path.
 
 ## Notes
 

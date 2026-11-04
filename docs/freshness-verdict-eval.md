@@ -117,11 +117,16 @@ Annotate at:
 ```text
 /label/verdict
 /label/verdict?worksheet=holdout
+/label/verdict?worksheet=holdout-v3
 ```
 
-`holdout` uses the separate 60-case v2 worksheet. The source 60-case accuracy
-set is publicly documented as compromised, so use it for contamination and
+`holdout` uses the separate 60-case v2 worksheet. Its source 60-case accuracy
+set is publicly documented as compromised; use it for contamination and
 labeling workflow checks, not as evidence of independent generalization.
+
+`holdout-v3` uses 30 new unlabeled cases that are not derived from that
+compromised key. It still requires independent human labels; it is not a gold
+set by itself.
 
 Labels stay in the browser and export as:
 

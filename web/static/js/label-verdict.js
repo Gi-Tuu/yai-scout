@@ -2,8 +2,9 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
   const STATUSES = ["fresh", "stale", "conflicted", "insufficient"];
-  const worksheet = new URLSearchParams(location.search).get("worksheet") === "holdout"
-    ? "holdout" : "private";
+  const requested = new URLSearchParams(location.search).get("worksheet");
+  const worksheet = ["holdout", "holdout-v3", "v3"].includes(requested || "")
+    ? (requested === "holdout" ? "holdout" : "holdout-v3") : "private";
   const LABELS_KEY = "freshnessVerdictLabelsV1:" + worksheet;
   const LABELER_KEY = "freshnessVerdictLabeler";
   let cases = [];

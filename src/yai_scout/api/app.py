@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import secrets
 from collections.abc import AsyncIterator
@@ -173,6 +174,9 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         store.mark_interrupted_work()
+        if cfg.benchmark_retention_days > 0:
+            with contextlib.suppress(Exception):
+                store.prune_benchmarks(days=cfg.benchmark_retention_days)
         yield
         await director.shutdown()
         await runner.shutdown()
