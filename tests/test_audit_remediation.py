@@ -146,3 +146,11 @@ async def test_research_submit_enforces_capacity_atomically() -> None:
 def test_forwarded_for_uses_nearest_trusted_hop() -> None:
     headers = {"x-forwarded-for": "203.0.113.99, 198.51.100.7"}
     assert UsageLimiter.client_key(headers, "127.0.0.1") == "198.51.100.7"
+
+
+def test_cloudflare_client_ip_headers_take_precedence() -> None:
+    headers = {
+        "x-forwarded-for": "203.0.113.99, 104.23.160.7, 10.0.0.8",
+        "cf-connecting-ip": "198.51.100.7",
+    }
+    assert UsageLimiter.client_key(headers, "127.0.0.1") == "198.51.100.7"
