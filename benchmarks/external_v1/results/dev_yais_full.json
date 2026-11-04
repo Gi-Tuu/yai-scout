@@ -1,0 +1,343 @@
+{
+  "method": "yais_full",
+  "split": "dev",
+  "cases": 56,
+  "predictions": [
+    {
+      "id": "ext_fastapi_0_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_fastapi_0_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_requests_2_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_requests_2_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_requests_3_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_requests_3_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_requests_4_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_requests_4_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_requests_5_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_requests_5_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_requests_6_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_requests_6_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_requests_7_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_requests_7_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_django_0_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_django_0_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_django_1_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_django_1_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_django_2_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_django_2_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_django_4_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_django_4_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_django_6_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_django_6_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_numpy_0_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_numpy_0_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_numpy_1_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_numpy_1_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_numpy_2_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_numpy_2_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_numpy_3_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_numpy_3_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_numpy_4_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_numpy_4_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_numpy_5_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_numpy_5_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_numpy_6_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_numpy_6_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_numpy_7_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_numpy_7_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_pytest_0_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_pytest_0_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_pytest_1_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_pytest_1_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_pytest_2_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_pytest_2_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_pytest_3_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_pytest_3_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_pytest_4_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_pytest_4_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_pytest_5_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_pytest_5_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_pytest_6_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_pytest_6_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    },
+    {
+      "id": "ext_pytest_7_fresh",
+      "expected": "fresh",
+      "predicted": "fresh",
+      "score": 100
+    },
+    {
+      "id": "ext_pytest_7_stale",
+      "expected": "stale",
+      "predicted": "stale",
+      "score": 30
+    }
+  ]
+}

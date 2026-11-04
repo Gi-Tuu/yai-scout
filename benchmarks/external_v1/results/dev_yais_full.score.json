@@ -1,0 +1,28 @@
+{
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "stale_recall": 1.0,
+  "false_fresh_rate": 0.0,
+  "stable_false_stale": 0.0,
+  "abstention_rate": 0.0,
+  "stale_cases": 28.0,
+  "fresh_cases": 28.0,
+  "bootstrap_95ci": {
+    "accuracy": [
+      1.0,
+      1.0
+    ],
+    "stale_recall": [
+      1.0,
+      1.0
+    ]
+  },
+  "confusion": {
+    "fresh->fresh": 28,
+    "stale->stale": 28
+  },
+  "cases": 56,
+  "method": "yais_full",
+  "split": "dev",
+  "result_hash": "sha256:caf02ae3d363c6abb5b57559f0f63e0eda1a6ee8148cf5ac6b68b75e45958f0b"
+}

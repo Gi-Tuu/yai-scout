@@ -1,0 +1,28 @@
+{
+  "accuracy": 0.5,
+  "macro_f1": 0.3333333333333333,
+  "stale_recall": 0.0,
+  "false_fresh_rate": 1.0,
+  "stable_false_stale": 0.0,
+  "abstention_rate": 0.0,
+  "stale_cases": 28.0,
+  "fresh_cases": 28.0,
+  "bootstrap_95ci": {
+    "accuracy": [
+      0.375,
+      0.625
+    ],
+    "stale_recall": [
+      0.0,
+      0.0
+    ]
+  },
+  "confusion": {
+    "fresh->fresh": 28,
+    "stale->fresh": 28
+  },
+  "cases": 56,
+  "method": "recency_only",
+  "split": "dev",
+  "result_hash": "sha256:10fb12310f4af0b42fdae9f93f27e953b36a15695fd236bf6378bdf30caa7c80"
+}

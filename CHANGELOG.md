@@ -16,6 +16,17 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.0] - 2026-11-05
+
+### Added
+
+- External Track A dev set from official PyPI release timestamps
+  (`benchmarks/external_v1`, 56 cases, frozen snapshots).
+- `build_external_set.py`, `run_external_eval.py` and
+  `score_external_eval.py` with always-fresh, recency-only, citation-only and
+  full-system baselines.
+- Pre-registration and dev-results docs. No sealed external test labels yet.
+
 ## [0.6.1] - 2026-11-04
 
 ### Tests

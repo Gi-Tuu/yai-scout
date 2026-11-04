@@ -1,0 +1,16 @@
+{
+  "version": "external-v1",
+  "split": "dev",
+  "cases": 56,
+  "source_families": [
+    "pypi:django",
+    "pypi:fastapi",
+    "pypi:numpy",
+    "pypi:pytest",
+    "pypi:requests"
+  ],
+  "dev_hash": "508a619486302f84b1c05d58e9cfbd8b58c4ff04f157bf6c224b9496e0409ede",
+  "snapshot_hash": "2d0d6dd21a46197bff314e47651d6860b2533955ebf704b688d8ffc00f3466c7",
+  "generated_at": "2026-11-04T16:10:52.834380+00:00",
+  "source": "PyPI JSON API"
+}

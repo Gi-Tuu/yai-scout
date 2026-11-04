@@ -1,0 +1,28 @@
+{
+  "accuracy": 0.5,
+  "macro_f1": 0.5,
+  "stale_recall": 0.0,
+  "false_fresh_rate": 0.0,
+  "stable_false_stale": 0.0,
+  "abstention_rate": 0.5,
+  "stale_cases": 28.0,
+  "fresh_cases": 28.0,
+  "bootstrap_95ci": {
+    "accuracy": [
+      0.375,
+      0.625
+    ],
+    "stale_recall": [
+      0.0,
+      0.0
+    ]
+  },
+  "confusion": {
+    "fresh->fresh": 28,
+    "stale->insufficient": 28
+  },
+  "cases": 56,
+  "method": "citation_only",
+  "split": "dev",
+  "result_hash": "sha256:951903b3b989a2d0bfac735961b90679c15aba08533d0fdeb98a4654f370dd72"
+}
