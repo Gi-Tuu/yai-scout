@@ -84,9 +84,10 @@ class UsageLimiter:
         """Render/代理场景取 X-Forwarded-For 第一个地址。"""
         forwarded = headers.get("x-forwarded-for", "")
         if forwarded:
-            first = forwarded.split(",")[0].strip()
-            if first:
-                return first
+            # Trust the nearest proxy hop, not a browser-supplied first entry.
+            last = forwarded.split(",")[-1].strip()
+            if last:
+                return last
         return fallback or "unknown"
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import random
 import statistics
 import time
@@ -118,7 +119,9 @@ class BenchmarkRunner:
         effective_freshness = (
             self.detect_freshness if detect_freshness is None else detect_freshness
         )
-        chosen_agents = [agent_id for agent_id in (agent_ids or []) if agent_id in self.adapters]
+        chosen_agents = list(dict.fromkeys(
+            agent_id for agent_id in (agent_ids or []) if agent_id in self.adapters
+        ))
         if agent_ids and not chosen_agents:
             raise ValueError(f"unknown agent ids: {agent_ids}")
         if not chosen_agents:
@@ -130,7 +133,7 @@ class BenchmarkRunner:
         dataset_version, all_task_list = load_dataset()
         all_tasks = {task.id: task for task in all_task_list}
         public_tasks = [task.id for task in all_task_list if not task.hidden]
-        chosen_tasks = task_ids or public_tasks
+        chosen_tasks = list(dict.fromkeys(task_ids or public_tasks))
         missing = [task_id for task_id in chosen_tasks if task_id not in all_tasks]
         if missing:
             raise ValueError(f"unknown task ids: {missing}")
@@ -428,6 +431,34 @@ class BenchmarkRunner:
                     final_manifest.model_dump_json() if final_manifest else None
                 ),
             )
+        except asyncio.CancelledError:
+            # app shutdown cancels the background job; persist a terminal state
+            # instead of leaving a permanently-running session row.
+            finished_at = utcnow_iso()
+            error = "benchmark run cancelled by shutdown"
+            results = self.store.list_bench_results(session.id)
+            digest = compute_result_hash(results)
+            final_manifest = None
+            if session.manifest is not None:
+                final_manifest = session.manifest.model_copy(
+                    update={
+                        "finished_at": finished_at,
+                        "status": "failed",
+                        "result_hash": digest,
+                    }
+                )
+            with contextlib.suppress(Exception):
+                self.store.update_bench_session(
+                    session.id,
+                    status="failed",
+                    finished_at=finished_at,
+                    error=error,
+                    result_hash=digest,
+                    manifest_json=(
+                        final_manifest.model_dump_json() if final_manifest else None
+                    ),
+                )
+            raise
         except Exception as exc:  # noqa: BLE001 - top-level run failure
             finished_at = utcnow_iso()
             error = f"{type(exc).__name__}: {exc}"

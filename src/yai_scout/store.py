@@ -544,6 +544,11 @@ class Store:
         with self._lock:
             self._conn.close()
 
+    def ping(self) -> None:
+        """Raise when the SQLite connection cannot execute a trivial query."""
+        with self._lock:
+            self._conn.execute("SELECT 1").fetchone()
+
     # ------------------------------------------------------------------ tasks
     def create_task(self, task: ResearchTask) -> ResearchTask:
         with self._lock:
@@ -621,20 +626,46 @@ class Store:
 
     def mark_interrupted_work(self) -> None:
         """Mark tasks/sessions left running by a previous process as failed."""
+        error = "interrupted by process restart"
         now = utcnow_iso()
         with self._lock:
             self._conn.execute(
                 """UPDATE research_task
                    SET status = 'failed', finished_at = ?, error = ?
                    WHERE status IN ('pending', 'running')""",
-                (now, "interrupted by process restart"),
+                (now, error),
             )
-            self._conn.execute(
-                """UPDATE bench_session
-                   SET status = 'failed', finished_at = ?, error = ?
-                   WHERE status = 'running'""",
-                (now, "interrupted by process restart"),
-            )
+            rows = self._conn.execute(
+                "SELECT id, config_json, manifest_json FROM bench_session "
+                "WHERE status = 'running'"
+            ).fetchall()
+            for row in rows:
+                config: dict[str, object] = {}
+                try:
+                    loaded = json.loads(row["config_json"] or "{}")
+                    if isinstance(loaded, dict):
+                        config = loaded
+                except ValueError:
+                    config = {}
+                config.update({"status": "failed", "finished_at": now, "error": error})
+                manifest_json = row["manifest_json"]
+                try:
+                    manifest = json.loads(manifest_json or "{}")
+                except ValueError:
+                    manifest = {}
+                if isinstance(manifest, dict) and manifest:
+                    manifest.update({
+                        "status": "failed",
+                        "finished_at": now,
+                        "result_hash": None,
+                    })
+                    manifest_json = json.dumps(manifest, ensure_ascii=False)
+                self._conn.execute(
+                    "UPDATE bench_session SET status = 'failed', finished_at = ?, "
+                    "error = ?, config_json = ?, manifest_json = ? WHERE id = ?",
+                    (now, error, json.dumps(config, ensure_ascii=False),
+                     manifest_json, row["id"]),
+                )
             self._conn.commit()
 
     # ------------------------------------------------------------------ plan
@@ -1263,50 +1294,58 @@ class Store:
             update={"status": "active", "superseded_by": None}
         )
         with self._lock:
-            self._conn.execute(
-                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
-                (rolled_back.model_dump_json(), rolled_back.status, rolled_back.id),
-            )
-            self._conn.execute(
-                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
-                (restored.model_dump_json(), restored.status, restored.id),
-            )
-            self._conn.commit()
+            try:
+                self._conn.execute(
+                    "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
+                    (rolled_back.model_dump_json(), rolled_back.status, rolled_back.id),
+                )
+                self._conn.execute(
+                    "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
+                    (restored.model_dump_json(), restored.status, restored.id),
+                )
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
         return restored, rolled_back
 
     def save_anchor_replacement(self, old_id: str, new_anchor: Anchor) -> bool:
         """Atomically insert replacement and mark the old anchor superseded."""
         with self._lock:
-            row = self._conn.execute(
-                "SELECT payload_json FROM anchor WHERE id = ?", (old_id,)
-            ).fetchone()
-            if row is None:
-                return False
-            old = Anchor.model_validate_json(row["payload_json"])
-            superseded = old.model_copy(
-                update={"status": "superseded", "superseded_by": new_anchor.id}
-            )
-            self._conn.execute(
-                """INSERT INTO anchor
-                   (id, claim_key, claim_key_v2, claim_key_version, url, status,
-                    payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    new_anchor.id,
-                    new_anchor.claim_key,
-                    new_anchor.claim_key_v2,
-                    new_anchor.claim_key_version,
-                    new_anchor.url,
-                    new_anchor.status,
-                    new_anchor.model_dump_json(),
-                    new_anchor.last_verified_at,
-                ),
-            )
-            self._conn.execute(
-                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
-                (superseded.model_dump_json(), superseded.status, old_id),
-            )
-            self._conn.commit()
+            try:
+                row = self._conn.execute(
+                    "SELECT payload_json FROM anchor WHERE id = ?", (old_id,)
+                ).fetchone()
+                if row is None:
+                    return False
+                old = Anchor.model_validate_json(row["payload_json"])
+                superseded = old.model_copy(
+                    update={"status": "superseded", "superseded_by": new_anchor.id}
+                )
+                self._conn.execute(
+                    """INSERT INTO anchor
+                       (id, claim_key, claim_key_v2, claim_key_version, url, status,
+                        payload_json, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        new_anchor.id,
+                        new_anchor.claim_key,
+                        new_anchor.claim_key_v2,
+                        new_anchor.claim_key_version,
+                        new_anchor.url,
+                        new_anchor.status,
+                        new_anchor.model_dump_json(),
+                        new_anchor.last_verified_at,
+                    ),
+                )
+                self._conn.execute(
+                    "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
+                    (superseded.model_dump_json(), superseded.status, old_id),
+                )
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
         return True
 
     def supersede_anchor(self, old_id: str, new_id: str) -> None:
