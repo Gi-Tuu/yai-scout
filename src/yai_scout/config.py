@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 4
     daily_detector_limit: int = 60
     daily_benchmark_limit: int = 20
+    # 0 disables automatic benchmark retention; explicit opt-in only.
+    benchmark_retention_days: int = Field(default=0, ge=0)
     daily_anchor_limit: int = 30
     daily_research_limit: int = 5
     max_active_research_tasks: int = 2

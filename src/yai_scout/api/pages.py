@@ -37,6 +37,11 @@ def register_pages(app: FastAPI, static_dir: Path) -> None:
         / "benchmarks"
         / "freshness_verdicts_holdout_v2.json"
     )
+    verdict_holdout_v3 = (
+        Path(__file__).resolve().parents[3]
+        / "benchmarks"
+        / "freshness_verdicts_holdout_v3.json"
+    )
 
     @app.get("/label/verdict", include_in_schema=False)
     async def verdict_label_route() -> FileResponse:
@@ -46,7 +51,12 @@ def register_pages(app: FastAPI, static_dir: Path) -> None:
 
     @app.get("/label/verdict/worksheet", include_in_schema=False)
     async def verdict_worksheet_route(worksheet: str = "private") -> FileResponse:
-        target = verdict_holdout if worksheet == "holdout" else verdict_worksheet
+        targets = {
+            "holdout": verdict_holdout,
+            "holdout-v3": verdict_holdout_v3,
+            "v3": verdict_holdout_v3,
+        }
+        target = targets.get(worksheet, verdict_worksheet)
         if not target.is_file():
             raise HTTPException(status_code=404, detail="verdict worksheet not found")
         return FileResponse(target, media_type="application/json")

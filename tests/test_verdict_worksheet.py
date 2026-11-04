@@ -12,6 +12,7 @@ from yai_scout.detector.verdict_eval import (
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE = ROOT / "benchmarks" / "freshness_verdicts_private.json"
 HOLDOUT = ROOT / "benchmarks" / "freshness_verdicts_holdout_v2.json"
+HOLDOUT_V3 = ROOT / "benchmarks" / "freshness_verdicts_holdout_v3.json"
 
 
 def test_private_worksheet_has_no_gold_status() -> None:
@@ -53,3 +54,11 @@ def test_holdout_v2_is_unlabeled_and_larger() -> None:
     assert version == "freshness-verdicts-holdout/2.0"
     assert len(cases) == 60
     assert all(case.expected_status is None for case in cases)
+
+
+def test_holdout_v3_is_new_and_unlabeled() -> None:
+    version, cases = load_verdict_worksheet(HOLDOUT_V3)
+    assert version == "freshness-verdicts-holdout/3.0"
+    assert len(cases) == 30
+    assert all(case.expected_status is None for case in cases)
+    assert all(case.id.startswith("HV3-") for case in cases)
