@@ -1,0 +1,894 @@
+{
+  "version": "freshness-verdicts-private/1.0",
+  "as_of": "2026-11-01",
+  "source": "benchmarks\\accuracy_gate\\private_worksheet.json",
+  "description": "Unlabeled claim-level Freshness worksheet derived from accuracy-gate private cases. No expected statuses.",
+  "cases": [
+    {
+      "id": "PV-001",
+      "claim": {
+        "text": "Tavily 学生计划每月提供 4,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://help.tavily.com/student",
+          "title": "https://help.tavily.com/student",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "4000"
+        },
+        {
+          "url": "https://docs.tavily.com/student",
+          "title": "https://docs.tavily.com/student",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "4,000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-002",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/credits",
+          "title": "https://docs.tavily.com/credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "1000"
+        },
+        {
+          "url": "https://github.com/tavily-ai/tavily-python",
+          "title": "https://github.com/tavily-ai/tavily-python",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "1,000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-003",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://some-blog.example/tavily",
+          "title": "https://some-blog.example/tavily",
+          "tier": 3,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "1000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-004",
+      "claim": {
+        "text": "Tavily basic extract 每 5 个 URL 消耗 1 credit",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/extract",
+          "title": "https://docs.tavily.com/extract",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "1"
+        },
+        {
+          "url": "https://github.com/tavily-ai/tavily-python",
+          "title": "https://github.com/tavily-ai/tavily-python",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "1"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-005",
+      "claim": {
+        "text": "Tavily advanced search 每次 2 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/search",
+          "title": "https://docs.tavily.com/search",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "2"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-006",
+      "claim": {
+        "text": "DeepSeek V4.1-Flash 输入 $0.30 / 百万 token",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://api-docs.deepseek.com/pricing",
+          "title": "https://api-docs.deepseek.com/pricing",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "$0.30"
+        },
+        {
+          "url": "https://platform.deepseek.com/pricing",
+          "title": "https://platform.deepseek.com/pricing",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "0.30"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-007",
+      "claim": {
+        "text": "DeepSeek V4.1-Flash 输入 $0.30 / 百万 token",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://api-docs.deepseek.com/pricing",
+          "title": "https://api-docs.deepseek.com/pricing",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "€0.30"
+        },
+        {
+          "url": "https://platform.deepseek.com/pricing",
+          "title": "https://platform.deepseek.com/pricing",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "$0.30"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-008",
+      "claim": {
+        "text": "Claude Haiku 5.5 输出 $0.50 / 百万 token",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://platform.claude.com/pricing",
+          "title": "https://platform.claude.com/pricing",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "$0.50"
+        },
+        {
+          "url": "https://docs.anthropic.com/pricing",
+          "title": "https://docs.anthropic.com/pricing",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "0.50"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-009",
+      "claim": {
+        "text": "Bifrost 使用 Apache-2.0 许可证",
+        "type": "version",
+        "temporal_sensitivity": "slow",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "title": "https://github.com/maximhq/bifrost",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "Apache-2.0"
+        },
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "title": "https://docs.getbifrost.ai/overview",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "Apache 2.0"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-010",
+      "claim": {
+        "text": "Bifrost 默认监听 8080 端口",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "title": "https://docs.getbifrost.ai/overview",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "8080"
+        },
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "title": "https://github.com/maximhq/bifrost",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "8080"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-011",
+      "claim": {
+        "text": "YAI Agent Core 当前版本是 0.25.0",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "title": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "v0.25.0"
+        },
+        {
+          "url": "https://pypi.org/project/yai-agent-core/",
+          "title": "https://pypi.org/project/yai-agent-core/",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "0.25.0"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-012",
+      "claim": {
+        "text": "Python 3.13 于 2024 年发布",
+        "type": "version",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.python.org/3.13/whatsnew",
+          "title": "https://docs.python.org/3.13/whatsnew",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "2024"
+        },
+        {
+          "url": "https://en.wikipedia.org/wiki/CPython",
+          "title": "https://en.wikipedia.org/wiki/CPython",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "2024"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-013",
+      "claim": {
+        "text": "HTTP 404 表示 Not Found",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "title": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "Not Found"
+        },
+        {
+          "url": "https://en.wikipedia.org/wiki/List_of_HTTP_status_codes",
+          "title": "https://en.wikipedia.org/wiki/List_of_HTTP_status_codes",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "Not Found"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-014",
+      "claim": {
+        "text": "Python 3.13 于 2024 年 10 月发布",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.python.org/3.13/whatsnew/3.13.html",
+          "title": "https://docs.python.org/3.13/whatsnew/3.13.html",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "2026-11-15"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-015",
+      "claim": {
+        "text": "Tavily 学生计划每月提供 4,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://some-blog.example/tavily-student",
+          "title": "https://some-blog.example/tavily-student",
+          "tier": 3,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "4000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-016",
+      "claim": {
+        "text": "DeepSeek V4.1-Flash 输入 $0.30 / 百万 token",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://api-docs.deepseek.com/pricing",
+          "title": "https://api-docs.deepseek.com/pricing",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "0.30"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-017",
+      "claim": {
+        "text": "Bifrost 默认监听 8080 端口",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "title": "https://docs.getbifrost.ai/overview",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "8080"
+        },
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "title": "https://github.com/maximhq/bifrost",
+          "tier": 2,
+          "relation": "supports",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "8000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-018",
+      "claim": {
+        "text": "YAI Agent Core 当前版本是 0.25.0",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "title": "https://github.com/Gi-Tuu/yai-agent-core/releases/tag/v0.25.0",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2024-01-01T00:00:00Z",
+          "snippet": "0.24.0"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-019",
+      "claim": {
+        "text": "Bifrost 使用 MIT 许可证",
+        "type": "law",
+        "temporal_sensitivity": "slow",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "title": "https://github.com/maximhq/bifrost",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "MIT"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-020",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/credits",
+          "title": "https://docs.tavily.com/credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2024-01-01T00:00:00Z",
+          "snippet": "500"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-021",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/credits",
+          "title": "https://docs.tavily.com/credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "$1000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-022",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/credits",
+          "title": "https://docs.tavily.com/credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "1000 credits/year"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-023",
+      "claim": {
+        "text": "YAI Agent Core 当前版本是 0.25",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://github.com/Gi-Tuu/yai-agent-core/releases",
+          "title": "https://github.com/Gi-Tuu/yai-agent-core/releases",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "0.25"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-024",
+      "claim": {
+        "text": "Python 3.13 于 2024 年 10 月发布",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.python.org/3.13/whatsnew/3.13.html",
+          "title": "https://docs.python.org/3.13/whatsnew/3.13.html",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "2026-11-15"
+        },
+        {
+          "url": "https://www.tavily.com/community",
+          "title": "https://www.tavily.com/community",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "2026-11-15"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-025",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/credits",
+          "title": "https://docs.tavily.com/credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "1000"
+        },
+        {
+          "url": "https://cdn.docs.tavily.com/credits",
+          "title": "https://cdn.docs.tavily.com/credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "1000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-026",
+      "claim": {
+        "text": "Bifrost 默认监听 8080 端口",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "title": "https://docs.getbifrost.ai/overview",
+          "tier": 1,
+          "relation": "mentions",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": ""
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-027",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://some-blog.example/tavily",
+          "title": "https://some-blog.example/tavily",
+          "tier": 4,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "1000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-028",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/credits",
+          "title": "https://docs.tavily.com/credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "1000"
+        },
+        {
+          "url": "https://docs.tavily.com/credits-v2",
+          "title": "https://docs.tavily.com/credits-v2",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "500"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-029",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/credits",
+          "title": "https://docs.tavily.com/credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "1,000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    },
+    {
+      "id": "PV-030",
+      "claim": {
+        "text": "Bifrost 默认监听 8080 端口",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "title": "https://docs.getbifrost.ai/overview",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "8080"
+        },
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "title": "https://github.com/maximhq/bifrost",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z",
+          "snippet": "8080"
+        },
+        {
+          "url": "https://some-blog.example/bifrost",
+          "title": "https://some-blog.example/bifrost",
+          "tier": 3,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z",
+          "snippet": "8000"
+        }
+      ],
+      "case_type": "accuracy-gate-private",
+      "tags": [
+        "accuracy-gate",
+        "human-labeling"
+      ],
+      "notes": "Relation is derived from anchor/observation value equality; label the claim status independently."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
-  "version": "freshness-verdicts/1.0",
+  "version": "freshness-verdicts/1.1",
   "as_of": "2026-11-01",
-  "description": "Claim-level verdict fixtures for the deterministic Freshness scorer. No live network, no LLM; evidence is fixed and gold status is explicit.",
+  "description": "Claim-level verdict fixtures (50 cases) for the deterministic Freshness scorer; standard, adversarial and ambiguous fixed-evidence cases. No live network or LLM.",
   "cases": [
     {
       "id": "FV-001",
@@ -12,9 +12,19 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://docs.tavily.com/pricing", "title": "Tavily pricing", "published_at": "2026-10-01T00:00:00Z", "tier": 1, "relation": "supports"}
+        {
+          "url": "https://docs.tavily.com/pricing",
+          "title": "Tavily pricing",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
       ],
-      "expected_status": "fresh"
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-002",
@@ -25,9 +35,19 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://docs.tavily.com/pricing", "title": "Tavily pricing", "published_at": "2026-10-01T00:00:00Z", "tier": 1, "relation": "contradicts"}
+        {
+          "url": "https://docs.tavily.com/pricing",
+          "title": "Tavily pricing",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "contradicts"
+        }
       ],
-      "expected_status": "stale"
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-003",
@@ -38,10 +58,26 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://docs.getbifrost.ai/overview", "title": "Bifrost docs", "published_at": "2026-10-01T00:00:00Z", "tier": 1, "relation": "supports"},
-        {"url": "https://github.com/maximhq/bifrost", "title": "Bifrost repository", "published_at": "2026-10-02T00:00:00Z", "tier": 1, "relation": "contradicts"}
+        {
+          "url": "https://docs.getbifrost.ai/overview",
+          "title": "Bifrost docs",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        },
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "title": "Bifrost repository",
+          "published_at": "2026-10-02T00:00:00Z",
+          "tier": 1,
+          "relation": "contradicts"
+        }
       ],
-      "expected_status": "conflicted"
+      "expected_status": "conflicted",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-004",
@@ -52,7 +88,11 @@
         "target_time": "2026-11-01"
       },
       "evidence": [],
-      "expected_status": "insufficient"
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-005",
@@ -63,9 +103,19 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://some-blog.example/tool", "title": "A blog", "published_at": "2026-10-01T00:00:00Z", "tier": 3, "relation": "supports"}
+        {
+          "url": "https://some-blog.example/tool",
+          "title": "A blog",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
       ],
-      "expected_status": "insufficient"
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-006",
@@ -76,9 +126,19 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404", "title": "MDN 404", "published_at": "2018-01-01T00:00:00Z", "tier": 3, "relation": "supports"}
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "title": "MDN 404",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
       ],
-      "expected_status": "fresh"
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-007",
@@ -89,9 +149,18 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://docs.tavily.com/pricing", "title": "Tavily pricing", "tier": 1, "relation": "supports"}
+        {
+          "url": "https://docs.tavily.com/pricing",
+          "title": "Tavily pricing",
+          "tier": 1,
+          "relation": "supports"
+        }
       ],
-      "expected_status": "insufficient"
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-008",
@@ -102,9 +171,19 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://docs.tavily.com/pricing", "title": "Tavily pricing", "published_at": "2020-01-01T00:00:00Z", "tier": 1, "relation": "supports"}
+        {
+          "url": "https://docs.tavily.com/pricing",
+          "title": "Tavily pricing",
+          "published_at": "2020-01-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
       ],
-      "expected_status": "insufficient"
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-009",
@@ -115,9 +194,19 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://physics.example/constants", "title": "Constants", "published_at": "2018-01-01T00:00:00Z", "tier": 1, "relation": "supports"}
+        {
+          "url": "https://physics.example/constants",
+          "title": "Constants",
+          "published_at": "2018-01-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
       ],
-      "expected_status": "fresh"
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-010",
@@ -128,9 +217,19 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://github.com/maximhq/bifrost/releases", "title": "Bifrost releases", "published_at": "2026-10-01T00:00:00Z", "tier": 1, "relation": "supports"}
+        {
+          "url": "https://github.com/maximhq/bifrost/releases",
+          "title": "Bifrost releases",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
       ],
-      "expected_status": "fresh"
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-011",
@@ -141,10 +240,26 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://docs.tavily.com/pricing", "title": "Tavily pricing", "published_at": "2026-10-01T00:00:00Z", "tier": 1, "relation": "supports"},
-        {"url": "https://future.example/pricing", "title": "Future page", "published_at": "2026-11-05T00:00:00Z", "tier": 1, "relation": "contradicts"}
+        {
+          "url": "https://docs.tavily.com/pricing",
+          "title": "Tavily pricing",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        },
+        {
+          "url": "https://future.example/pricing",
+          "title": "Future page",
+          "published_at": "2026-11-05T00:00:00Z",
+          "tier": 1,
+          "relation": "contradicts"
+        }
       ],
-      "expected_status": "fresh"
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-012",
@@ -155,10 +270,26 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://docs.example/api", "title": "Official docs", "published_at": "2026-10-01T00:00:00Z", "tier": 1, "relation": "supports"},
-        {"url": "https://news.example/api", "title": "News", "published_at": "2026-10-02T00:00:00Z", "tier": 2, "relation": "contradicts"}
+        {
+          "url": "https://docs.example/api",
+          "title": "Official docs",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        },
+        {
+          "url": "https://news.example/api",
+          "title": "News",
+          "published_at": "2026-10-02T00:00:00Z",
+          "tier": 2,
+          "relation": "contradicts"
+        }
       ],
-      "expected_status": "conflicted"
+      "expected_status": "conflicted",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-013",
@@ -169,9 +300,19 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://docs.example/service", "title": "Docs", "published_at": "2026-10-01T00:00:00Z", "tier": 1, "relation": "mentions"}
+        {
+          "url": "https://docs.example/service",
+          "title": "Docs",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "mentions"
+        }
       ],
-      "expected_status": "insufficient"
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
     },
     {
       "id": "FV-014",
@@ -182,10 +323,927 @@
         "target_time": "2026-11-01"
       },
       "evidence": [
-        {"url": "https://docs.example/service", "title": "Official docs", "published_at": "2026-10-01T00:00:00Z", "tier": 1, "relation": "contradicts"},
-        {"url": "https://blog.example/service", "title": "Blog", "published_at": "2026-10-01T00:00:00Z", "tier": 3, "relation": "supports"}
+        {
+          "url": "https://docs.example/service",
+          "title": "Official docs",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 1,
+          "relation": "contradicts"
+        },
+        {
+          "url": "https://blog.example/service",
+          "title": "Blog",
+          "published_at": "2026-10-01T00:00:00Z",
+          "tier": 3,
+          "relation": "supports"
+        }
       ],
-      "expected_status": "stale"
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "baseline"
+      ]
+    },
+    {
+      "id": "FV-015",
+      "claim": {
+        "text": "Python 3.13 于 2024 年 10 月正式发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.python.org/3.13/whatsnew/3.13.html",
+          "title": "https://docs.python.org/3.13/whatsnew/3.13.html",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2024-10-07T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "release",
+        "date"
+      ]
+    },
+    {
+      "id": "FV-016",
+      "claim": {
+        "text": "HTTP 301 表示 Moved Permanently",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301",
+          "title": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301",
+          "tier": 3,
+          "relation": "supports",
+          "published_at": "2018-01-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "http",
+        "stable"
+      ]
+    },
+    {
+      "id": "FV-017",
+      "claim": {
+        "text": "DNS 默认使用 53 端口",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.iana.org/assignments/service-names-port-numbers",
+          "title": "https://www.iana.org/assignments/service-names-port-numbers",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2018-01-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "network",
+        "stable"
+      ]
+    },
+    {
+      "id": "FV-018",
+      "claim": {
+        "text": "JSON 布尔值是小写 true 和 false",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc8259",
+          "title": "https://www.rfc-editor.org/rfc/rfc8259",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2017-12-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "json",
+        "stable"
+      ]
+    },
+    {
+      "id": "FV-019",
+      "claim": {
+        "text": "TCP 三次握手的第二步是 SYN-ACK",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc9293",
+          "title": "https://www.rfc-editor.org/rfc/rfc9293",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2022-08-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "network",
+        "stable"
+      ]
+    },
+    {
+      "id": "FV-020",
+      "claim": {
+        "text": "Tavily basic search 每次消耗 1 credit",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "title": "https://docs.tavily.com/documentation/api-credits",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "pricing"
+      ]
+    },
+    {
+      "id": "FV-021",
+      "claim": {
+        "text": "GitHub REST API 未认证限额为每小时 60 次",
+        "type": "statistic",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api",
+          "title": "https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "api"
+      ]
+    },
+    {
+      "id": "FV-022",
+      "claim": {
+        "text": "DeepSeek API base URL 是 https://api.deepseek.com",
+        "type": "other",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://api-docs.deepseek.com/",
+          "title": "https://api-docs.deepseek.com/",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "api"
+      ]
+    },
+    {
+      "id": "FV-023",
+      "claim": {
+        "text": "React 19 于 2024 年正式发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://react.dev/blog/2024/12/05/react-19",
+          "title": "https://react.dev/blog/2024/12/05/react-19",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2024-12-05T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "release",
+        "date"
+      ]
+    },
+    {
+      "id": "FV-024",
+      "claim": {
+        "text": "Python 3.14 于 2025 年正式发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.python.org/3.14/whatsnew/3.14.html",
+          "title": "https://docs.python.org/3.14/whatsnew/3.14.html",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2025-10-07T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "release",
+        "date"
+      ]
+    },
+    {
+      "id": "FV-025",
+      "claim": {
+        "text": "PostgreSQL 16 于 2023 年正式发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.postgresql.org/about/news/postgresql-16-released-2715/",
+          "title": "https://www.postgresql.org/about/news/postgresql-16-released-2715/",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2023-09-14T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "release",
+        "date"
+      ]
+    },
+    {
+      "id": "FV-026",
+      "claim": {
+        "text": "Node.js 22 于 2024 年 10 月进入 Active LTS",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://nodejs.org/en/about/previous-releases",
+          "title": "https://nodejs.org/en/about/previous-releases",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2024-10-29T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "standard",
+      "tags": [
+        "release",
+        "date"
+      ]
+    },
+    {
+      "id": "FV-027",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 500 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "title": "https://docs.tavily.com/documentation/api-credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "pricing",
+        "contradiction"
+      ]
+    },
+    {
+      "id": "FV-028",
+      "claim": {
+        "text": "Tavily basic search 每次消耗 2 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/documentation/api-credits",
+          "title": "https://docs.tavily.com/documentation/api-credits",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "pricing",
+        "contradiction"
+      ]
+    },
+    {
+      "id": "FV-029",
+      "claim": {
+        "text": "GitHub REST API 未认证限额为每小时 100 次",
+        "type": "statistic",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api",
+          "title": "https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "api",
+        "contradiction"
+      ]
+    },
+    {
+      "id": "FV-030",
+      "claim": {
+        "text": "Node.js 20 于 2025 年 4 月结束支持",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://nodejs.org/en/about/previous-releases",
+          "title": "https://nodejs.org/en/about/previous-releases",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-04-30T00:00:00Z"
+        }
+      ],
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "release",
+        "contradiction"
+      ]
+    },
+    {
+      "id": "FV-031",
+      "claim": {
+        "text": "PostgreSQL 17 于 2023 年正式发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.postgresql.org/about/news/postgresql-17-released-2936/",
+          "title": "https://www.postgresql.org/about/news/postgresql-17-released-2936/",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2024-09-26T00:00:00Z"
+        }
+      ],
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "release",
+        "contradiction"
+      ]
+    },
+    {
+      "id": "FV-032",
+      "claim": {
+        "text": "React 19 于 2023 年正式发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://react.dev/blog/2024/12/05/react-19",
+          "title": "https://react.dev/blog/2024/12/05/react-19",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2024-12-05T00:00:00Z"
+        }
+      ],
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "release",
+        "contradiction"
+      ]
+    },
+    {
+      "id": "FV-033",
+      "claim": {
+        "text": "DNS 默认使用 54 端口",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.iana.org/assignments/service-names-port-numbers",
+          "title": "https://www.iana.org/assignments/service-names-port-numbers",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2018-01-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "network",
+        "contradiction"
+      ]
+    },
+    {
+      "id": "FV-034",
+      "claim": {
+        "text": "TCP 三次握手的第二步是 ACK",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc9293",
+          "title": "https://www.rfc-editor.org/rfc/rfc9293",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2022-08-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "stale",
+      "case_type": "standard",
+      "tags": [
+        "network",
+        "contradiction"
+      ]
+    },
+    {
+      "id": "FV-035",
+      "claim": {
+        "text": "HTTP 404 表示 Gone",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "title": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        },
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/410",
+          "title": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/410",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "conflicted",
+      "case_type": "standard",
+      "tags": [
+        "conflict",
+        "http"
+      ]
+    },
+    {
+      "id": "FV-036",
+      "claim": {
+        "text": "某 API 每次请求消耗 3 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.example/api",
+          "title": "https://docs.example/api",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        },
+        {
+          "url": "https://news.example/api",
+          "title": "https://news.example/api",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z"
+        }
+      ],
+      "expected_status": "conflicted",
+      "case_type": "standard",
+      "tags": [
+        "conflict",
+        "pricing"
+      ]
+    },
+    {
+      "id": "FV-037",
+      "claim": {
+        "text": "Bifrost 最新版本是 v2.4.0",
+        "type": "version",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://github.com/maximhq/bifrost/releases",
+          "title": "https://github.com/maximhq/bifrost/releases",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        },
+        {
+          "url": "https://docs.getbifrost.ai/changelog",
+          "title": "https://docs.getbifrost.ai/changelog",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "conflicted",
+      "case_type": "standard",
+      "tags": [
+        "conflict",
+        "version"
+      ]
+    },
+    {
+      "id": "FV-038",
+      "claim": {
+        "text": "Python 3.14 于 2025 年正式发布",
+        "type": "date",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.python.org/3.14/whatsnew/3.14.html",
+          "title": "https://docs.python.org/3.14/whatsnew/3.14.html",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2025-10-07T00:00:00Z"
+        },
+        {
+          "url": "https://python.example/news",
+          "title": "https://python.example/news",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2025-10-08T00:00:00Z"
+        }
+      ],
+      "expected_status": "conflicted",
+      "case_type": "standard",
+      "tags": [
+        "conflict",
+        "date"
+      ]
+    },
+    {
+      "id": "FV-039",
+      "claim": {
+        "text": "Bifrost 使用 Apache-2.0 许可证",
+        "type": "law",
+        "temporal_sensitivity": "slow",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://github.com/maximhq/bifrost",
+          "title": "https://github.com/maximhq/bifrost",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        },
+        {
+          "url": "https://license.example/bifrost",
+          "title": "https://license.example/bifrost",
+          "tier": 2,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z"
+        }
+      ],
+      "expected_status": "conflicted",
+      "case_type": "standard",
+      "tags": [
+        "conflict",
+        "license"
+      ]
+    },
+    {
+      "id": "FV-040",
+      "claim": {
+        "text": "某项目现任 CEO 是 Alice",
+        "type": "leadership",
+        "temporal_sensitivity": "slow",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://company.example/about",
+          "title": "https://company.example/about",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        },
+        {
+          "url": "https://news.example/ceo",
+          "title": "https://news.example/ceo",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-10-02T00:00:00Z"
+        }
+      ],
+      "expected_status": "conflicted",
+      "case_type": "standard",
+      "tags": [
+        "conflict",
+        "leadership"
+      ]
+    },
+    {
+      "id": "FV-041",
+      "claim": {
+        "text": "某新工具每月提供 9,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [],
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "no-evidence"
+      ]
+    },
+    {
+      "id": "FV-042",
+      "claim": {
+        "text": "某服务每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.example/service",
+          "title": "https://docs.example/service",
+          "tier": 1,
+          "relation": "mentions",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "mentions-only"
+      ]
+    },
+    {
+      "id": "FV-043",
+      "claim": {
+        "text": "某服务每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.example/service",
+          "title": "https://docs.example/service",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "undated"
+      ]
+    },
+    {
+      "id": "FV-044",
+      "claim": {
+        "text": "某服务每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.example/service",
+          "title": "https://docs.example/service",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2020-01-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "expired"
+      ]
+    },
+    {
+      "id": "FV-045",
+      "claim": {
+        "text": "某小众工具每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://forum.example/tool",
+          "title": "https://forum.example/tool",
+          "tier": 3,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "low-authority"
+      ]
+    },
+    {
+      "id": "FV-046",
+      "claim": {
+        "text": "某服务明年价格是 $20",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://future.example/pricing",
+          "title": "https://future.example/pricing",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-11-05T00:00:00Z"
+        }
+      ],
+      "expected_status": "insufficient",
+      "case_type": "standard",
+      "tags": [
+        "future-only"
+      ]
+    },
+    {
+      "id": "FV-047",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/pricing",
+          "title": "https://docs.tavily.com/pricing",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        },
+        {
+          "url": "https://future.example/pricing",
+          "title": "https://future.example/pricing",
+          "tier": 1,
+          "relation": "contradicts",
+          "published_at": "2026-11-05T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "adversarial",
+      "tags": [
+        "future",
+        "contradiction"
+      ]
+    },
+    {
+      "id": "FV-048",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/pricing",
+          "title": "https://docs.tavily.com/pricing",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "not-a-date"
+        }
+      ],
+      "expected_status": "insufficient",
+      "case_type": "adversarial",
+      "tags": [
+        "malformed-date"
+      ]
+    },
+    {
+      "id": "FV-049",
+      "claim": {
+        "text": "Tavily 免费计划每月提供 1,000 credits",
+        "type": "pricing",
+        "temporal_sensitivity": "sensitive",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://docs.tavily.com/pricing",
+          "title": "Pricing",
+          "published_at": "2026-10-01T00:00:00Z",
+          "updated_at": "2026-12-01T00:00:00Z",
+          "tier": 1,
+          "relation": "supports"
+        }
+      ],
+      "expected_status": "insufficient",
+      "case_type": "adversarial",
+      "tags": [
+        "future-updated-at"
+      ]
+    },
+    {
+      "id": "FV-050",
+      "claim": {
+        "text": "HTTP 404 表示 Not Found",
+        "type": "other",
+        "temporal_sensitivity": "stable",
+        "target_time": "2026-11-01"
+      },
+      "evidence": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "title": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+          "tier": 1,
+          "relation": "supports",
+          "published_at": "2026-10-01T00:00:00Z"
+        },
+        {
+          "url": "https://blog.example/http",
+          "title": "https://blog.example/http",
+          "tier": 3,
+          "relation": "contradicts",
+          "published_at": "2026-10-01T00:00:00Z"
+        }
+      ],
+      "expected_status": "fresh",
+      "case_type": "ambiguous",
+      "tags": [
+        "stable",
+        "low-authority-conflict"
+      ]
     }
   ]
 }

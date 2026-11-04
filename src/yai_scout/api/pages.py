@@ -26,6 +26,24 @@ def register_pages(app: FastAPI, static_dir: Path) -> None:
     admin_page = static_dir / "admin-anchors.html"
     label_page = static_dir / "label.html"
     label_recover_page = static_dir / "label-recover.html"
+    verdict_label_page = static_dir / "label-verdict.html"
+    verdict_worksheet = (
+        Path(__file__).resolve().parents[3]
+        / "benchmarks"
+        / "freshness_verdicts_private.json"
+    )
+
+    @app.get("/label/verdict", include_in_schema=False)
+    async def verdict_label_route() -> FileResponse:
+        if not verdict_label_page.is_file():
+            raise HTTPException(status_code=404, detail="verdict label page not found")
+        return FileResponse(verdict_label_page)
+
+    @app.get("/label/verdict/worksheet", include_in_schema=False)
+    async def verdict_worksheet_route() -> FileResponse:
+        if not verdict_worksheet.is_file():
+            raise HTTPException(status_code=404, detail="verdict worksheet not found")
+        return FileResponse(verdict_worksheet, media_type="application/json")
 
     @app.get("/detector", include_in_schema=False)
     @app.get("/freshness", include_in_schema=False)

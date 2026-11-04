@@ -1,6 +1,6 @@
 # Open Tasks
 
-> Snapshot: 2026-11-04 · release `v0.3.6` · 274 tests · Python 3.12 local verification
+> Snapshot: 2026-11-04 · release `v0.3.6` · 278 tests · Python 3.12 local verification
 
 ## DONE
 
@@ -22,7 +22,8 @@
 | Benchmark dataset | 40 tasks (37 public + 3 compromised) across four freshness categories |
 | Full-page production rollout | public deployment enabled with explicit allowlist; live `fetched_page` evidence verified |
 | Live benchmark verification | `freshness-bench/0.3.0`; 37 public tasks exposed, full public run completed 37/37 |
-| Freshness verdict evaluation | 14 fixed claim/evidence cases; 100% conformance, precision/recall/confusion reported |
+| Freshness verdict evaluation | 50 fixed claim/evidence cases (standard/adversarial/ambiguous); precision/recall/confusion |
+| Private verdict labeling bridge | accuracy-gate private cases → unlabeled verdict worksheet → local labels → evaluator |
 
 ## IN PROGRESS
 
