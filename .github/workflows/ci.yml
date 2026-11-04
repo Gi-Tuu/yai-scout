@@ -54,7 +54,7 @@ jobs:
       - name: Sync dependencies
         run: uv sync --extra dev --python 3.12
       - name: Install Playwright
-        run: .venv/bin/python -m pip install playwright
+        run: uv pip install --python .venv/bin/python playwright
       - name: Install Chromium
         run: .venv/bin/playwright install --with-deps chromium
       - name: Admin Playwright smoke
