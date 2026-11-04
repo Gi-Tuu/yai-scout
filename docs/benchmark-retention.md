@@ -39,9 +39,9 @@ BENCHMARK_RETENTION_DAYS=0   # disabled
 BENCHMARK_RETENTION_DAYS=30  # prune terminal sessions older than 30 days at startup
 ```
 
-Startup pruning never touches `running` sessions. Its result or error is exposed
-in `/api/healthz` under `retention`, and a failure is logged instead of being
-silently swallowed.
+Startup pruning never touches `running` sessions. Its result is exposed in
+`/api/healthz` under `retention`; a failure is logged server-side and reported
+publicly only as `retention_failed`, without raw exception details.
 
 The default is `0` (disabled), so enabling retention is an explicit deployment
 decision. `prune_benchmarks.py` remains the safe dry-run/inspection path.

@@ -64,6 +64,7 @@ def test_holdout_v3_is_new_and_unlabeled() -> None:
     assert len(cases) == 60
     assert all(case.expected_status is None for case in cases)
     assert all(case.id.startswith("HV3-") for case in cases)
+    assert len({case.claim.text for case in cases}) == 60
 
 
 def test_holdout_v3_evidence_is_balanced() -> None:

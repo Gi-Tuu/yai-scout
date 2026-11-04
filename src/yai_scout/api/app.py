@@ -187,12 +187,9 @@ def create_app(
                 retention["result"] = store.prune_benchmarks(
                     days=cfg.benchmark_retention_days
                 )
-            except Exception as exc:  # noqa: BLE001 - startup must continue
-                retention["error"] = f"{type(exc).__name__}: {exc}"
-                logger.warning(
-                    "benchmark retention failed: %s", retention["error"],
-                    exc_info=True,
-                )
+            except Exception:  # noqa: BLE001 - startup must continue
+                retention["error"] = "retention_failed"
+                logger.warning("benchmark retention failed", exc_info=True)
         _app.state.benchmark_retention = retention
         yield
         await director.shutdown()

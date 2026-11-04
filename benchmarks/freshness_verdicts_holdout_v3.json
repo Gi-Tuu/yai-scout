@@ -787,7 +787,7 @@
     {
       "id": "HV3-031",
       "claim": {
-        "text": "HTTP 404 表示 Gone",
+        "text": "HTTP 410 表示 Gone",
         "type": "other",
         "temporal_sensitivity": "stable",
         "target_time": "2026-11-01"
@@ -820,7 +820,7 @@
     {
       "id": "HV3-032",
       "claim": {
-        "text": "Python 3.14 于 2025 年发布",
+        "text": "Python 3.15 于 2026 年发布",
         "type": "date",
         "temporal_sensitivity": "stable",
         "target_time": "2026-11-01"
@@ -853,7 +853,7 @@
     {
       "id": "HV3-033",
       "claim": {
-        "text": "某 API 每次请求消耗 3 credits",
+        "text": "某 API 每次请求消耗 4 credits",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -886,7 +886,7 @@
     {
       "id": "HV3-034",
       "claim": {
-        "text": "某服务每月提供 1,000 credits",
+        "text": "某服务 A 每月提供 1,000 credits",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -952,7 +952,7 @@
     {
       "id": "HV3-036",
       "claim": {
-        "text": "某项目现任 CEO 是 Alice",
+        "text": "某项目现任 CFO 是 Alice",
         "type": "leadership",
         "temporal_sensitivity": "slow",
         "target_time": "2026-11-01"
@@ -1018,7 +1018,7 @@
     {
       "id": "HV3-038",
       "claim": {
-        "text": "HTTP 429 表示 Too Many Requests",
+        "text": "HTTP 502 表示 Bad Gateway",
         "type": "other",
         "temporal_sensitivity": "stable",
         "target_time": "2026-11-01"
@@ -1084,7 +1084,7 @@
     {
       "id": "HV3-040",
       "claim": {
-        "text": "DNS 默认端口是 53",
+        "text": "DNS over TLS 默认端口是 853",
         "type": "other",
         "temporal_sensitivity": "stable",
         "target_time": "2026-11-01"
@@ -1150,7 +1150,7 @@
     {
       "id": "HV3-042",
       "claim": {
-        "text": "某服务每年收费 $200",
+        "text": "某服务每年收费 $300",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1216,7 +1216,7 @@
     {
       "id": "HV3-044",
       "claim": {
-        "text": "某数据集有 10,000 行",
+        "text": "某数据集有 20,000 行",
         "type": "statistic",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1249,7 +1249,7 @@
     {
       "id": "HV3-045",
       "claim": {
-        "text": "某法规于 2024 年生效",
+        "text": "某法规于 2025 年生效",
         "type": "law",
         "temporal_sensitivity": "slow",
         "target_time": "2026-11-01"
@@ -1300,7 +1300,7 @@
     {
       "id": "HV3-047",
       "claim": {
-        "text": "某服务每月提供 1,000 credits",
+        "text": "某服务 B 每月提供 1,000 credits",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1326,7 +1326,7 @@
     {
       "id": "HV3-048",
       "claim": {
-        "text": "某服务每月提供 1,000 credits",
+        "text": "某服务 C 每月提供 1,000 credits",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1351,7 +1351,7 @@
     {
       "id": "HV3-049",
       "claim": {
-        "text": "某服务每月提供 1,000 credits",
+        "text": "某服务 D 每月提供 1,000 credits",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1455,7 +1455,7 @@
     {
       "id": "HV3-053",
       "claim": {
-        "text": "某服务每月提供 1,000 credits",
+        "text": "某服务 E 每月提供 1,000 credits",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1488,7 +1488,7 @@
     {
       "id": "HV3-054",
       "claim": {
-        "text": "某服务每月提供 1,000 credits",
+        "text": "某服务 F 每月提供 1,000 credits",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1513,7 +1513,7 @@
     {
       "id": "HV3-055",
       "claim": {
-        "text": "某服务每月提供 1,000 credits",
+        "text": "某服务 G 每月提供 1,000 credits",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1539,7 +1539,7 @@
     {
       "id": "HV3-056",
       "claim": {
-        "text": "某 API 每次请求消耗 3 credits",
+        "text": "某 API 每次请求消耗 6 credits",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1565,7 +1565,7 @@
     {
       "id": "HV3-057",
       "claim": {
-        "text": "某项目现任 CEO 是 Alice",
+        "text": "某项目现任 CTO 是 Bob",
         "type": "leadership",
         "temporal_sensitivity": "slow",
         "target_time": "2026-11-01"
@@ -1591,7 +1591,7 @@
     {
       "id": "HV3-058",
       "claim": {
-        "text": "某法规于 2024 年生效",
+        "text": "某法规于 2026 年生效",
         "type": "law",
         "temporal_sensitivity": "slow",
         "target_time": "2026-11-01"
@@ -1617,7 +1617,7 @@
     {
       "id": "HV3-059",
       "claim": {
-        "text": "某数据集有 10,000 行",
+        "text": "某数据集有 30,000 行",
         "type": "statistic",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"
@@ -1643,7 +1643,7 @@
     {
       "id": "HV3-060",
       "claim": {
-        "text": "某服务每年收费 $200",
+        "text": "某服务每年收费 $400",
         "type": "pricing",
         "temporal_sensitivity": "sensitive",
         "target_time": "2026-11-01"

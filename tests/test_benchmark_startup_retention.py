@@ -81,4 +81,4 @@ def test_retention_failure_is_visible(monkeypatch, tmp_path: Path) -> None:
         retention = client.get("/api/healthz").json()["retention"]
         assert retention["enabled"] is True
         assert retention["result"] is None
-        assert "retention disk error" in retention["error"]
+        assert retention["error"] == "retention_failed"

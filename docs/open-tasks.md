@@ -25,10 +25,10 @@
 | Freshness verdict evaluation | 50 fixed claim/evidence cases (standard/adversarial/ambiguous); precision/recall/confusion |
 | Private verdict labeling bridge | accuracy-gate private cases → unlabeled verdict worksheet → local labels → evaluator |
 | Holdout v2 worksheet | 60 unlabeled cases from separate accuracy-gate worksheet; human status labels only |
-| Holdout v3 worksheet | 60 balanced unlabeled cases (15 fresh/stale/conflicted/insufficient) not derived from the public compromised key |
-| Retention observability | startup result/error exposed in `/api/healthz` |
+| Holdout v3 worksheet | 60 balanced unlabeled cases (15 fresh/stale/conflicted/insufficient), 60 unique claims, not derived from the public compromised key |
+| Retention observability | startup result exposed; failures logged and reported as generic `retention_failed` |
 | Rate-limit bucket sweep | stale per-client buckets removed after 60s |
-| Browser CI | Playwright admin rollback/approve smoke job |
+| Browser CI | pinned Playwright 1.64.1 admin rollback/approve smoke job |
 | Automatic benchmark retention | opt-in `BENCHMARK_RETENTION_DAYS`, startup prune, default off |
 | Benchmark retention | migration 9 unique cell index; explicit prune CLI with dry-run |
 
