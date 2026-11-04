@@ -22,6 +22,7 @@ Terminal benchmark sessions can be removed with:
 python scripts/prune_benchmarks.py --days 30 --dry-run
 python scripts/prune_benchmarks.py --days 30
 python scripts/prune_benchmarks.py --db data/scout.sqlite3 --days 30 --json
+python scripts/prune_benchmarks.py --days 30 --audit-dir data/benchmark_prune_audit
 ```
 
 Rules:
@@ -31,6 +32,13 @@ Rules:
 - `bench_result` rows are removed by FK cascade;
 - `running` sessions are never touched;
 - `--dry-run` only reports counts.
+
+## Audit before delete
+
+Before deleting, the affected sessions and results are written to a JSON
+audit file. The default location is `benchmark_prune_audit/` beside the
+database; `--audit-dir` overrides it. If the audit write fails, deletion is
+aborted. The returned `audit_file` is the basename of the audit file.
 
 The CLI is explicit. A startup hook is also available but disabled by default:
 

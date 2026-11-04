@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
+from yai_scout.benchmark.dataset import load_tasks
 from yai_scout.benchmark.runner import BenchmarkRunner, FailureInjection
 from yai_scout.benchmark.scoring import leaderboard
 from yai_scout.domain.models import AgentAnswer
@@ -121,4 +122,46 @@ async def test_fault_injection_is_reproducible_across_sessions():
     second_result = store.list_bench_results(second.id)[0]
     assert first_result.faults == second_result.faults
     assert first_result.success_rate == second_result.success_rate
+    store.close()
+
+
+class SlowAdapter:
+    def __init__(self, slow_task_id: str) -> None:
+        self.id = "slow"
+        self.name = "slow"
+        self.description = "slow"
+        self.slow_task_id = slow_task_id
+
+    async def answer(self, task):
+        if task.id == self.slow_task_id:
+            await asyncio.sleep(0.2)
+        return AgentAnswer(text="ok")
+
+
+async def test_cell_failure_waits_for_siblings_and_prevents_late_writes(monkeypatch):
+    store = Store(":memory:")
+    tasks = sorted(load_tasks(), key=lambda task: task.id)
+    failing_id, slow_id = tasks[0].id, tasks[1].id
+    adapter = SlowAdapter(slow_id)
+    runner = BenchmarkRunner(
+        store, {"slow": adapter}, None, concurrency=2, detect_freshness=False
+    )
+    original = store.add_bench_result
+    calls: list[str] = []
+
+    def flaky(session_id: str, result) -> None:
+        calls.append(result.task_id)
+        if result.task_id == failing_id:
+            raise RuntimeError("cell failed")
+        original(session_id, result)
+
+    monkeypatch.setattr(store, "add_bench_result", flaky)
+    session = runner.start(["slow"], [failing_id, slow_id], repeats=1)
+    loaded = await _wait(store, session.id)
+    assert loaded.status == "failed"
+    assert "benchmark cells failed" in (loaded.error or "")
+    count = len(store.list_bench_results(session.id))
+    await asyncio.sleep(0.1)
+    assert len(store.list_bench_results(session.id)) == count
+    assert slow_id in calls
     store.close()

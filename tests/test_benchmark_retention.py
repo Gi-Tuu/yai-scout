@@ -1,6 +1,7 @@
 """Tests for benchmark result uniqueness and TTL pruning."""
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -114,4 +115,37 @@ def test_prune_skips_unparseable_timestamps() -> None:
     assert result["sessions"] == 0
     assert result["skipped"] == 1
     assert store.get_bench_session("bad") is not None
+    store.close()
+
+
+def test_prune_writes_audit_before_delete(tmp_path: Path) -> None:
+    store = Store(tmp_path / "db.sqlite3")
+    _session(store, "old")
+    _result(store, "old")
+    audit_dir = tmp_path / "audit"
+    result = store.prune_benchmarks(days=30, audit_dir=audit_dir)
+    assert result["sessions"] == 1
+    assert result["results"] == 1
+    assert result["audit_file"]
+    audit_path = audit_dir / str(result["audit_file"])
+    assert audit_path.is_file()
+    payload = json.loads(audit_path.read_text(encoding="utf-8"))
+    assert len(payload["sessions"]) == 1
+    assert len(payload["results"]) == 1
+    assert store.get_bench_session("old") is None
+    store.close()
+
+
+def test_prune_audit_failure_aborts_delete(tmp_path: Path) -> None:
+    store = Store(tmp_path / "db2.sqlite3")
+    _session(store, "old")
+    audit_dir = tmp_path / "not-a-directory"
+    audit_dir.write_text("file", encoding="utf-8")
+    try:
+        store.prune_benchmarks(days=30, audit_dir=audit_dir)
+    except OSError:
+        pass
+    else:
+        raise AssertionError("audit failure should abort pruning")
+    assert store.get_bench_session("old") is not None
     store.close()

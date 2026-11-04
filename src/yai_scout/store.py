@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -978,11 +979,16 @@ class Store:
             self._conn.commit()
 
     def prune_benchmarks(
-        self, *, days: int = 30, dry_run: bool = False
+        self,
+        *,
+        days: int = 30,
+        dry_run: bool = False,
+        audit_dir: str | Path | None = None,
     ) -> dict[str, int | str | bool]:
         """Delete terminal benchmark sessions older than ``days``.
 
-        Results are removed by the bench_session foreign-key cascade. Running
+        Before deletion, the affected sessions and results are written to an
+        audit JSON file. If the audit write fails, deletion is aborted. Running
         sessions are never touched.
         """
         if days < 0:
@@ -1014,13 +1020,27 @@ class Store:
                 if timestamp < cutoff:
                     ids.append(str(row["id"]))
             result_count = 0
+            audit_file = ""
             if ids:
                 placeholders = ",".join("?" for _ in ids)
-                result_count = int(self._conn.execute(
-                    f"SELECT COUNT(*) FROM bench_result WHERE session_id IN ({placeholders})",
+                session_rows = self._conn.execute(
+                    "SELECT id, status, config_json, manifest_json, created_at, "
+                    "finished_at, error FROM bench_session "
+                    f"WHERE id IN ({placeholders})",
                     tuple(ids),
-                ).fetchone()[0])
+                ).fetchall()
+                result_rows = self._conn.execute(
+                    "SELECT session_id, task_id, agent_id, payload_json, score "
+                    f"FROM bench_result WHERE session_id IN ({placeholders})",
+                    tuple(ids),
+                ).fetchall()
+                result_count = len(result_rows)
                 if not dry_run:
+                    audit_path = self._write_prune_audit(
+                        session_rows, result_rows, cutoff_iso, audit_dir
+                    )
+                    if audit_path is not None:
+                        audit_file = audit_path.name
                     self._conn.execute(
                         f"DELETE FROM bench_session WHERE id IN ({placeholders})",
                         tuple(ids),
@@ -1032,7 +1052,39 @@ class Store:
             "skipped": skipped,
             "cutoff": cutoff_iso,
             "dry_run": dry_run,
+            "audit_file": audit_file,
         }
+
+    def _write_prune_audit(
+        self,
+        session_rows: list[sqlite3.Row],
+        result_rows: list[sqlite3.Row],
+        cutoff: str,
+        audit_dir: str | Path | None,
+    ) -> Path | None:
+        if self.path == ":memory:" and audit_dir is None:
+            return None
+        if audit_dir is None:
+            target_dir = Path(self.path).parent / "benchmark_prune_audit"
+        else:
+            target_dir = Path(audit_dir)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        path = target_dir / (
+            f"prune_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}_"
+            f"{uuid.uuid4().hex[:8]}.json"
+        )
+        payload = {
+            "created_at": utcnow_iso(),
+            "cutoff": cutoff,
+            "sessions": [dict(row) for row in session_rows],
+            "results": [dict(row) for row in result_rows],
+        }
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        temporary.replace(path)
+        return path
 
     def list_bench_results(self, session_id: str) -> list[TaskResult]:
         with self._lock:

@@ -86,3 +86,25 @@ and `True-Client-IP` were rejected/overwritten at the edge in this deployment.
 
 The diagnostic endpoint was enabled only for this one-off check and then
 disabled by clearing `XFF_DEBUG_TOKEN`.
+
+
+## Deployment contract
+
+Supported public deployment:
+
+```text
+client -> Cloudflare -> Render -> app
+```
+
+Requirements:
+
+- `CF-Connecting-IP` or `True-Client-IP` must be present and authoritative;
+- `X-Forwarded-For` may end in an internal Render address and must not be used
+  as the sole client identity;
+- custom domains must remain behind Cloudflare.
+
+If the app is deployed without Cloudflare, do not keep the public rate-limit
+assumption silently: either put a trusted reverse proxy in front and supply a
+known client-IP header, or change `UsageLimiter.client_key` for that topology.
+The last-hop XFF fallback is only for simple direct/proxy deployments where the
+last hop is actually the client.
