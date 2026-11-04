@@ -53,3 +53,36 @@ Compare with the real egress address from `https://api.ipify.org`.
 Remove or empty `XFF_DEBUG_TOKEN` and redeploy/restart. The route then returns 404.
 
 The endpoint is read-only and includes no authentication secrets in its response.
+
+
+## Observed on Render (2026-11-04)
+
+The live deployment is behind Cloudflare + Render. A request without a client
+XFF produced a chain shaped like:
+
+```text
+<client-egress>, <cloudflare-edge>, <internal-render-address>
+```
+
+Cloudflare also supplied:
+
+```text
+cf-connecting-ip: <client-egress>
+true-client-ip:   <client-egress>
+```
+
+Consequences:
+
+- `X-Forwarded-For` is appended, but its **last hop is an internal Render
+  address**, not the client;
+- naively taking the last XFF hop collapses all clients into one rate-limit
+  bucket;
+- `CF-Connecting-IP` / `True-Client-IP` are the correct client identity on this
+  deployment.
+
+`UsageLimiter.client_key` now prefers those headers, then falls back to the last
+XFF hop for environments without Cloudflare. Client-supplied `CF-Connecting-IP`
+and `True-Client-IP` were rejected/overwritten at the edge in this deployment.
+
+The diagnostic endpoint was enabled only for this one-off check and then
+disabled by clearing `XFF_DEBUG_TOKEN`.

@@ -112,7 +112,7 @@ flowchart LR
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
 | Benchmark | 40 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
 | Verdict evaluation | claim-level Freshness status suite; no Tavily/LLM; precision/recall/confusion |
-| Quality gates | 294 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Quality gates | 295 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 

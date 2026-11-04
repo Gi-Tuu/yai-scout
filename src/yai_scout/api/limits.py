@@ -81,10 +81,20 @@ class UsageLimiter:
 
     @staticmethod
     def client_key(headers: dict[str, str], fallback: str) -> str:
-        """Render/代理场景取 X-Forwarded-For 第一个地址。"""
-        forwarded = headers.get("x-forwarded-for", "")
+        """Resolve the client IP behind the Render/Cloudflare proxy.
+
+        Cloudflare supplies authoritative client-IP headers. Using the last
+        X-Forwarded-For hop alone is wrong here: the chain ends in an internal
+        Render address, so every client would share the same rate-limit bucket.
+        """
+        lowered = {key.lower(): value for key, value in headers.items()}
+        for name in ("cf-connecting-ip", "true-client-ip"):
+            value = str(lowered.get(name, "")).strip()
+            if value:
+                return value
+        forwarded = lowered.get("x-forwarded-for", "")
         if forwarded:
-            # Trust the nearest proxy hop, not a browser-supplied first entry.
+            # Fallback for direct/proxy deployments without Cloudflare headers.
             last = forwarded.split(",")[-1].strip()
             if last:
                 return last
