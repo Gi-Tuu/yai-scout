@@ -47,20 +47,21 @@ def register_research_routes(
         if not cfg.research_enabled:
             raise HTTPException(status_code=404, detail="research disabled")
         guard_cost(request, "research")
-        if director.active_count() >= cfg.max_active_research_tasks:
-            raise HTTPException(
-                status_code=429,
-                detail="too many active research tasks; retry later",
-                headers={"Retry-After": "30"},
-            )
         task = ResearchTask(
             id=f"task_{uuid.uuid4().hex[:12]}",
             owner_id=session_id(request, response),
             question=" ".join(payload.question.split()),
             as_of=validated_as_of(payload.as_of),
         )
-        await asyncio.to_thread(store.create_task, task)
-        director.start(task)
+        accepted = await director.submit(
+            task, max_active=cfg.max_active_research_tasks
+        )
+        if not accepted:
+            raise HTTPException(
+                status_code=429,
+                detail="too many active research tasks; retry later",
+                headers={"Retry-After": "30"},
+            )
         return {
             "task": task.model_dump(mode="json"),
             "events_url": f"/api/research/{task.id}/events",

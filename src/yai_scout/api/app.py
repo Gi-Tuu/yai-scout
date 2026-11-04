@@ -192,7 +192,7 @@ def create_app(
             "Content-Security-Policy",
             "default-src 'self'; img-src 'self' data:; "
             "style-src 'self' 'unsafe-inline'; "
-            "script-src 'self' 'unsafe-inline'; "
+            "script-src 'self'; "
             "connect-src 'self'; object-src 'none'; base-uri 'self'; "
             "frame-ancestors 'none'",
         )
@@ -209,15 +209,22 @@ def create_app(
 
     # ------------------------------------------------------------------ meta
     @app.get("/api/healthz")
-    async def healthz() -> dict[str, Any]:
-        return {
+    async def healthz() -> JSONResponse:
+        try:
+            await asyncio.to_thread(store.ping)
+            snapshots = len(await asyncio.to_thread(store.list_snapshots, limit=1000))
+        except Exception as exc:  # noqa: BLE001 - health endpoint must report failure
+            return JSONResponse(
+                {"status": "error", "database": "unavailable",
+                 "error": f"{type(exc).__name__}: {exc}"},
+                status_code=503,
+            )
+        return JSONResponse({
             "status": "ok",
             "app": cfg.app_name,
             "version": cfg.app_version,
             "mode": cfg.scout_mode,
-            "snapshots": len(
-                await asyncio.to_thread(store.list_snapshots, limit=1000)
-            ),
+            "snapshots": snapshots,
             "discovery": discovery.usage(),
             "build": os.environ.get("RENDER_GIT_COMMIT", "dev")[:12],
             "limits": limiter.usage(),
@@ -227,7 +234,7 @@ def create_app(
                 "gateway": llm.gateway,
                 "model": llm.model,
             },
-        }
+        })
 
     register_research_routes(
         app,

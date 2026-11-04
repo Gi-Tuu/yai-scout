@@ -34,6 +34,7 @@ class ResearchDirector:
         self.tavily = tavily
         self.settings = settings
         self._tasks: dict[str, asyncio.Task[None]] = {}
+        self._start_lock = asyncio.Lock()
 
     # ------------------------------------------------------------------ public
     def start(self, task: ResearchTask) -> None:
@@ -43,6 +44,21 @@ class ResearchDirector:
         job = asyncio.create_task(self._run(task), name=f"research:{task.id}")
         self._tasks[task.id] = job
         job.add_done_callback(lambda _job: self._tasks.pop(task.id, None))
+
+    async def submit(self, task: ResearchTask, *, max_active: int) -> bool:
+        """Atomically reserve capacity, persist the task, and start its job.
+
+        The route must not check active_count separately: that check-to-start
+        window allows concurrent requests to exceed the configured cap.
+        """
+        async with self._start_lock:
+            if self.active_count() >= max_active:
+                return False
+            await asyncio.to_thread(self.store.create_task, task)
+            job = asyncio.create_task(self._run(task), name=f"research:{task.id}")
+            self._tasks[task.id] = job
+            job.add_done_callback(lambda _job: self._tasks.pop(task.id, None))
+            return True
 
     def active_count(self) -> int:
         return sum(1 for job in self._tasks.values() if not job.done())
