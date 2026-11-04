@@ -20,3 +20,7 @@ independent annotators; see `docs/external-benchmark.md`.
 
 No author project is included. Each snapshot is the source of truth used by
 all baselines.
+
+The dev run includes a negative result: `yais_full` does not meet the
+pre-registered +0.10 advantage over `llm_only`; see
+`docs/external-benchmark-results.md`.

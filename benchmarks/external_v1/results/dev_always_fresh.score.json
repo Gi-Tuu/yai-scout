@@ -5,6 +5,8 @@
   "false_fresh_rate": 1.0,
   "stable_false_stale": 0.0,
   "abstention_rate": 0.0,
+  "current_value_accuracy": 1.0,
+  "current_value_cases": 28.0,
   "stale_cases": 28.0,
   "fresh_cases": 28.0,
   "bootstrap_95ci": {
@@ -24,5 +26,5 @@
   "cases": 56,
   "method": "always_fresh",
   "split": "dev",
-  "result_hash": "sha256:59155518ec52884967a01d8ef1aaa99d0f0498cab6f497856aa89b01f1025182"
+  "result_hash": "sha256:613ceffef6f66f9ab04084606931c5d7381a2b0a85683321433dc48b18acc844"
 }

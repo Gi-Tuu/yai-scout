@@ -16,6 +16,15 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.1] - 2026-11-05
+
+### Added
+
+- `llm_only` and `retrieval_only` external baselines.
+- Current-value accuracy on STALE rows.
+- Dev result: full system does not meet the pre-registered +0.10 advantage over
+  LLM-only; recorded as a negative result.
+
 ## [0.7.0] - 2026-11-05
 
 ### Added

@@ -1,0 +1,30 @@
+{
+  "accuracy": 0.0,
+  "macro_f1": 0.0,
+  "stale_recall": 0.0,
+  "false_fresh_rate": 0.0,
+  "stable_false_stale": 0.0,
+  "abstention_rate": 1.0,
+  "current_value_accuracy": 0.0,
+  "current_value_cases": 0.0,
+  "stale_cases": 28.0,
+  "fresh_cases": 28.0,
+  "bootstrap_95ci": {
+    "accuracy": [
+      0.0,
+      0.0
+    ],
+    "stale_recall": [
+      0.0,
+      0.0
+    ]
+  },
+  "confusion": {
+    "fresh->insufficient": 28,
+    "stale->insufficient": 28
+  },
+  "cases": 56,
+  "method": "retrieval_only",
+  "split": "dev",
+  "result_hash": "sha256:c6d45e962efdfcd7072975bf0fee6050eb554dda5e952c47a49c79ff0f30e527"
+}

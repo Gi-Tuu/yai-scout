@@ -1,0 +1,511 @@
+{
+  "method": "retrieval_only",
+  "split": "dev",
+  "cases": 56,
+  "predictions": [
+    {
+      "id": "ext_fastapi_0_fresh",
+      "expected": "fresh",
+      "gold_current_value": "0.1.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_fastapi_0_stale",
+      "expected": "stale",
+      "gold_current_value": "0.1.10",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_requests_2_fresh",
+      "expected": "fresh",
+      "gold_current_value": "0.2.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_requests_2_stale",
+      "expected": "stale",
+      "gold_current_value": "0.2.3",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_requests_3_fresh",
+      "expected": "fresh",
+      "gold_current_value": "0.2.3",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_requests_3_stale",
+      "expected": "stale",
+      "gold_current_value": "0.2.4",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_requests_4_fresh",
+      "expected": "fresh",
+      "gold_current_value": "0.2.4",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_requests_4_stale",
+      "expected": "stale",
+      "gold_current_value": "0.3.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_requests_5_fresh",
+      "expected": "fresh",
+      "gold_current_value": "0.3.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_requests_5_stale",
+      "expected": "stale",
+      "gold_current_value": "0.3.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_requests_6_fresh",
+      "expected": "fresh",
+      "gold_current_value": "0.3.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_requests_6_stale",
+      "expected": "stale",
+      "gold_current_value": "0.3.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_requests_7_fresh",
+      "expected": "fresh",
+      "gold_current_value": "0.3.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_requests_7_stale",
+      "expected": "stale",
+      "gold_current_value": "0.3.3",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_0_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.2.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_0_stale",
+      "expected": "stale",
+      "gold_current_value": "1.2.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_1_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.2.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_1_stale",
+      "expected": "stale",
+      "gold_current_value": "1.2.3",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_2_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.2.3",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_2_stale",
+      "expected": "stale",
+      "gold_current_value": "1.2.4",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_4_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.2.4",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_4_stale",
+      "expected": "stale",
+      "gold_current_value": "1.1.4",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_6_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.1.4",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_django_6_stale",
+      "expected": "stale",
+      "gold_current_value": "1.2.7",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_0_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.3.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_numpy_0_stale",
+      "expected": "stale",
+      "gold_current_value": "1.4.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_numpy_1_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.4.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_1_stale",
+      "expected": "stale",
+      "gold_current_value": "1.5.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_2_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.5.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_2_stale",
+      "expected": "stale",
+      "gold_current_value": "1.5.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_3_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.5.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_3_stale",
+      "expected": "stale",
+      "gold_current_value": "1.6.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_4_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.6.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_4_stale",
+      "expected": "stale",
+      "gold_current_value": "1.6.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_5_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.6.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_5_stale",
+      "expected": "stale",
+      "gold_current_value": "1.6.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_6_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.6.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_6_stale",
+      "expected": "stale",
+      "gold_current_value": "1.7.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_7_fresh",
+      "expected": "fresh",
+      "gold_current_value": "1.7.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_numpy_7_stale",
+      "expected": "stale",
+      "gold_current_value": "1.7.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_pytest_0_fresh",
+      "expected": "fresh",
+      "gold_current_value": "2.0.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_pytest_0_stale",
+      "expected": "stale",
+      "gold_current_value": "2.0.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_pytest_1_fresh",
+      "expected": "fresh",
+      "gold_current_value": "2.0.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_pytest_1_stale",
+      "expected": "stale",
+      "gold_current_value": "2.0.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_pytest_2_fresh",
+      "expected": "fresh",
+      "gold_current_value": "2.0.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_pytest_2_stale",
+      "expected": "stale",
+      "gold_current_value": "2.0.3",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_pytest_3_fresh",
+      "expected": "fresh",
+      "gold_current_value": "2.0.3",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_pytest_3_stale",
+      "expected": "stale",
+      "gold_current_value": "2.1.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_pytest_4_fresh",
+      "expected": "fresh",
+      "gold_current_value": "2.1.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_pytest_4_stale",
+      "expected": "stale",
+      "gold_current_value": "2.1.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "contradicts"
+    },
+    {
+      "id": "ext_pytest_5_fresh",
+      "expected": "fresh",
+      "gold_current_value": "2.1.1",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_pytest_5_stale",
+      "expected": "stale",
+      "gold_current_value": "2.1.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_pytest_6_fresh",
+      "expected": "fresh",
+      "gold_current_value": "2.1.2",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_pytest_6_stale",
+      "expected": "stale",
+      "gold_current_value": "2.1.3",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_pytest_7_fresh",
+      "expected": "fresh",
+      "gold_current_value": "2.1.3",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    },
+    {
+      "id": "ext_pytest_7_stale",
+      "expected": "stale",
+      "gold_current_value": "2.2.0",
+      "current_value": null,
+      "credits": 1.0,
+      "predicted": "insufficient",
+      "relation": "mentions"
+    }
+  ]
+}

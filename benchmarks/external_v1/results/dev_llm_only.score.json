@@ -1,0 +1,31 @@
+{
+  "accuracy": 0.9821428571428571,
+  "macro_f1": 0.9821371610845295,
+  "stale_recall": 1.0,
+  "false_fresh_rate": 0.0,
+  "stable_false_stale": 0.03571428571428571,
+  "abstention_rate": 0.0,
+  "current_value_accuracy": 1.0,
+  "current_value_cases": 28.0,
+  "stale_cases": 28.0,
+  "fresh_cases": 28.0,
+  "bootstrap_95ci": {
+    "accuracy": [
+      0.9464285714285714,
+      1.0
+    ],
+    "stale_recall": [
+      1.0,
+      1.0
+    ]
+  },
+  "confusion": {
+    "fresh->fresh": 27,
+    "stale->stale": 28,
+    "fresh->stale": 1
+  },
+  "cases": 56,
+  "method": "llm_only",
+  "split": "dev",
+  "result_hash": "sha256:0f77b072a938a5045bdeb47614fc7acedd4ea7a129ff8eb2ef8f22fa13d4178f"
+}

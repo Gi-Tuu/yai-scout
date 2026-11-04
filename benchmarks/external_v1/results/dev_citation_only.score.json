@@ -5,6 +5,8 @@
   "false_fresh_rate": 0.0,
   "stable_false_stale": 0.0,
   "abstention_rate": 0.5,
+  "current_value_accuracy": 1.0,
+  "current_value_cases": 28.0,
   "stale_cases": 28.0,
   "fresh_cases": 28.0,
   "bootstrap_95ci": {
@@ -24,5 +26,5 @@
   "cases": 56,
   "method": "citation_only",
   "split": "dev",
-  "result_hash": "sha256:951903b3b989a2d0bfac735961b90679c15aba08533d0fdeb98a4654f370dd72"
+  "result_hash": "sha256:4169b1ca1bc372be93a169c5ce1f832a40af865ca5c1d437b134d4feb6581de7"
 }

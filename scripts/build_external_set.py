@@ -71,12 +71,13 @@ def build(packages: list[str], pairs: int, snapshots_dir: Path) -> list[dict]:
             stale_as_of = (next_time + timedelta(days=1)).date()
             if fresh_as_of >= next_time.date() or stale_as_of <= next_time.date():
                 continue
-            for kind, as_of, current, support, status in (
-                ("fresh", fresh_as_of, base_version, "supports", "fresh"),
-                ("stale", stale_as_of, next_version, "contradicts", "stale"),
+            for kind, as_of, support, status in (
+                ("fresh", fresh_as_of, "supports", "fresh"),
+                ("stale", stale_as_of, "contradicts", "stale"),
             ):
                 case_id = f"ext_{package}_{index}_{kind}"[:80]
                 visible = [item for item in releases if item[1].date() <= as_of]
+                current = visible[-1][0]
                 text = _snapshot_text(package, visible)
                 snapshot = snapshots_dir / f"{case_id}.txt"
                 snapshot.write_text(text, encoding="utf-8")

@@ -53,20 +53,20 @@ Test set is not generated yet. When generated it must use a disjoint
 
 ## 3. Baselines
 
-Same claim and evidence package for B0–B2 and B5:
+Same claim and evidence package for B0–B3 and B5:
 
 ```text
 B0 always_fresh
 B1 recency_only      (evidence date inside 365 days)
 B2 citation_only     (evidence supports claim => FRESH)
+B3 llm_only          (same frozen evidence; temperature 0)
 B5 yais_full         (deterministic score_claim)
 ```
 
-Deferred until independent labels and model budget exist:
+B4 retrieves independently:
 
 ```text
-B3 llm_only
-B4 retrieval_only
+B4 retrieval_only    (Tavily search + relation classifier; separate report)
 ```
 
 B4 must be reported separately because its retrieval is not the same evidence

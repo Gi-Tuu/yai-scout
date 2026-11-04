@@ -20,11 +20,23 @@ def _f1(expected: list[str], predicted: list[str], label: str) -> float:
     return 2 * precision * recall / (precision + recall) if precision + recall else 0.0
 
 
-def metrics(expected: list[str], predicted: list[str]) -> dict[str, float]:
+def metrics(
+    expected: list[str], predicted: list[str], payload_rows: list[dict]
+) -> dict[str, float]:
     stale = [i for i, value in enumerate(expected) if value == "stale"]
     stale_hit = sum(1 for i in stale if predicted[i] == "stale")
     stable = [i for i, value in enumerate(expected) if value == "fresh"]
     false_stale = sum(1 for i in stable if predicted[i] == "stale")
+    value_rows = [
+        row
+        for row in payload_rows
+        if row["expected"] == "stale" and row.get("current_value") is not None
+    ]
+    value_hits = sum(
+        1
+        for row in value_rows
+        if row.get("current_value") == row.get("gold_current_value")
+    )
     return {
         "accuracy": sum(e == p for e, p in zip(expected, predicted, strict=False)) / len(expected),
         "macro_f1": sum(
@@ -39,13 +51,20 @@ def metrics(expected: list[str], predicted: list[str]) -> dict[str, float]:
         "abstention_rate": sum(
             value in {"insufficient", "unknown"} for value in predicted
         ) / len(predicted),
+        "current_value_accuracy": value_hits / len(value_rows) if value_rows else 0.0,
+        "current_value_cases": float(len(value_rows)),
         "stale_cases": float(len(stale)),
         "fresh_cases": float(len(stable)),
     }
 
 
 def bootstrap(
-    expected: list[str], predicted: list[str], *, rounds: int = 2000, seed: int = 7
+    expected: list[str],
+    predicted: list[str],
+    payload_rows: list[dict],
+    *,
+    rounds: int = 2000,
+    seed: int = 7,
 ) -> dict[str, tuple[float, float]]:
     rng = random.Random(seed)
     samples: dict[str, list[float]] = {"accuracy": [], "stale_recall": []}
@@ -53,7 +72,7 @@ def bootstrap(
         indices = [rng.randrange(len(expected)) for _ in expected]
         e = [expected[i] for i in indices]
         p = [predicted[i] for i in indices]
-        result = metrics(e, p)
+        result = metrics(e, p, [payload_rows[i] for i in indices])
         samples["accuracy"].append(result["accuracy"])
         samples["stale_recall"].append(result["stale_recall"])
     result: dict[str, tuple[float, float]] = {}
@@ -66,9 +85,12 @@ def bootstrap(
 def score(payload: dict) -> dict:
     expected = [row["expected"] for row in payload["predictions"]]
     predicted = [row["predicted"] for row in payload["predictions"]]
-    result = metrics(expected, predicted)
+    result = metrics(expected, predicted, payload["predictions"])
     result["bootstrap_95ci"] = {
-        key: list(value) for key, value in bootstrap(expected, predicted).items()
+        key: list(value)
+        for key, value in bootstrap(
+            expected, predicted, payload["predictions"]
+        ).items()
     }
     result["confusion"] = {
         f"{gold}->{pred}": count
