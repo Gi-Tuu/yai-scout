@@ -39,6 +39,11 @@ class Database:
                 self.conn.rollback()
                 raise
 
+    @contextmanager
+    def ddl(self) -> Iterator[sqlite3.Connection]:
+        with self.lock:
+            yield self.conn
+
     def close(self) -> None:
         with self.lock:
             self.conn.close()

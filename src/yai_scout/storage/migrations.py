@@ -17,7 +17,36 @@ from .db import Repository
 
 class Migrations(Repository):
     def apply(self) -> None:
-        self._apply_migrations()
+        self._backup_before_v10_if_needed()
+        with self.db.atomic():
+            self._apply_migrations()
+
+    def _backup_before_v10_if_needed(self) -> None:
+        applied = {
+            int(row["version"])
+            for row in self._conn.execute("SELECT version FROM schema_version")
+        }
+        if 10 in applied:
+            return
+        count = int(self._conn.execute("SELECT COUNT(*) FROM bench_session").fetchone()[0])
+        if not count or self.path == ":memory:":
+            return
+        stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        backup = Path(self.path).with_name(
+            f"{Path(self.path).name}.pre-v10.{stamp}.{uuid.uuid4().hex[:8]}.bak"
+        )
+        try:
+            source = sqlite3.connect(self.path)
+            try:
+                destination = sqlite3.connect(backup)
+                try:
+                    source.backup(destination)
+                finally:
+                    destination.close()
+            finally:
+                source.close()
+        except sqlite3.Error as exc:
+            raise RuntimeError(f"cannot create pre-migration backup at {backup}") from exc
 
     @staticmethod
     def _normalize_manifest_json(raw: str) -> str:
@@ -229,23 +258,6 @@ class Migrations(Repository):
         )
 
     def _normalize_bench_session_state(self) -> None:
-        count = int(self._conn.execute("SELECT COUNT(*) FROM bench_session").fetchone()[0])
-        if not count:
-            return
-        if self.path != ":memory:":
-            stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-            backup = Path(self.path).with_name(
-                f"{Path(self.path).name}.pre-v10.{stamp}.{uuid.uuid4().hex[:8]}.bak"
-            )
-            try:
-                self._conn.commit()
-                destination = sqlite3.connect(backup)
-                try:
-                    self._conn.backup(destination)
-                finally:
-                    destination.close()
-            except sqlite3.Error as exc:
-                raise RuntimeError(f"cannot create pre-migration backup at {backup}") from exc
         rows = self._conn.execute(
             "SELECT id, config_json, manifest_json FROM bench_session"
         ).fetchall()

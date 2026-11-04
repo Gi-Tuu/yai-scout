@@ -150,10 +150,10 @@ CREATE INDEX IF NOT EXISTS idx_snapshot_url ON snapshot(url, fetched_at);
 
 
 def initialize(db: Database) -> None:
-    with db.lock:
+    with db.ddl():
         if db.path != ":memory:":
             db.conn.execute("PRAGMA journal_mode=WAL")
         db.conn.executescript(SCHEMA)
-        Migrations(db).apply()
-        db.conn.commit()
+    Migrations(db).apply()
+    with db.ddl():
         db.conn.execute("PRAGMA foreign_keys=ON")

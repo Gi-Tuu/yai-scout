@@ -16,6 +16,15 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.5.2] - 2026-11-04
+
+### Changed
+
+- Schema initialization uses `Database.ddl()`; migrations run in one
+  `Database.atomic()` scope.
+- Pre-v10 backup uses a separate source connection, so it captures committed
+  pre-migration state without committing the migration transaction.
+
 ## [0.5.1] - 2026-11-04
 
 ### Changed
