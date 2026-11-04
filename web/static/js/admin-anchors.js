@@ -48,7 +48,7 @@ function renderAnchors(items) {
     <td>T${anchor.source_tier}</td>
     <td><a style="color:var(--accent)" href="${esc(safeUrl(anchor.url))}" target="_blank" rel="noopener noreferrer">${esc(anchor.url)}</a></td>
     <td class="mono">${esc(anchor.supersedes || "—")}</td>
-    <td>${anchor.status === "active" && anchor.supersedes ? `<button class="danger" onclick="rollback('${esc(anchor.id)}')">Rollback</button>` : ""}</td>
+    <td>${anchor.status === "active" && anchor.supersedes ? `<button class="danger" data-rollback="${esc(anchor.id)}">Rollback</button>` : ""}</td>
   </tr>`).join("");
 }
 
@@ -59,7 +59,7 @@ function renderCandidates(items) {
     <td class="mono">${esc(candidate.old_value)} → ${esc(candidate.new_value)}</td>
     <td>${candidate.confidence}</td>
     <td class="muted">${esc(candidate.gate_reason)}</td>
-    <td>${candidate.accuracy_status === "pending" ? `<button onclick="approve('${esc(candidate.id)}')">Approve</button><button class="ghost" onclick="reject('${esc(candidate.id)}')">Reject</button>` : ""}</td>
+    <td>${candidate.accuracy_status === "pending" ? `<button data-approve="${esc(candidate.id)}">Approve</button><button class="ghost" data-reject="${esc(candidate.id)}">Reject</button>` : ""}</td>
   </tr>`).join("");
 }
 
