@@ -1,0 +1,26 @@
+{
+  "version": "external-v1",
+  "split_frozen": "dev",
+  "primary": {
+    "baseline": "citation_only",
+    "thresholds": {
+      "macro_f1_delta": 0.1,
+      "stale_recall_delta": 0.1,
+      "delta_ci_lower_gt_zero": true,
+      "false_fresh_max": 0.1,
+      "stable_false_stale_max": 0.05
+    }
+  },
+  "secondary": [
+    "llm_only",
+    "recency_only",
+    "retrieval_only",
+    "always_fresh"
+  ],
+  "test_status": {
+    "candidate_cases": 182,
+    "independent_labels": false,
+    "kappa": null,
+    "test_results": null
+  }
+}

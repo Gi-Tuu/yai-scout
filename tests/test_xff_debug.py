@@ -15,6 +15,7 @@ def _app(token: str) -> TestClient:
             openai_api_key="",
             tavily_api_key="",
             xff_debug_token=token,
+            trust_proxy_headers=True,
         ),
         store=Store(":memory:"),
     )

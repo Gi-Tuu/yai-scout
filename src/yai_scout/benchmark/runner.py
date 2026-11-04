@@ -119,11 +119,13 @@ class BenchmarkRunner:
         effective_freshness = (
             self.detect_freshness if detect_freshness is None else detect_freshness
         )
-        chosen_agents = list(dict.fromkeys(
-            agent_id for agent_id in (agent_ids or []) if agent_id in self.adapters
-        ))
-        if agent_ids and not chosen_agents:
-            raise ValueError(f"unknown agent ids: {agent_ids}")
+        requested_agents = list(dict.fromkeys(agent_ids or []))
+        unknown_agents = [
+            agent_id for agent_id in requested_agents if agent_id not in self.adapters
+        ]
+        if unknown_agents:
+            raise ValueError(f"unknown agent ids: {unknown_agents}")
+        chosen_agents = requested_agents
         if not chosen_agents:
             chosen_agents = [
                 spec.id

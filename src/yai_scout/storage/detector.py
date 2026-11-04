@@ -40,7 +40,7 @@ class DetectorRepository(Repository):
         query = "SELECT payload_json FROM detector_report"
         vals: list[Any] = []
         if owner_id is not None:
-            query += " WHERE owner_id = ? OR owner_id = ''"
+            query += " WHERE owner_id = ?"
             vals.append(owner_id)
         query += " ORDER BY created_at DESC LIMIT ?"
         vals.append(limit)

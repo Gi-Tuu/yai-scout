@@ -16,6 +16,7 @@ from ..config import Settings
 from ..domain.models import ResearchTask, RunEvent
 from ..pipeline.director import TERMINAL_EVENTS, ResearchDirector
 from ..store import Store
+from .streams import StreamLimiter
 
 
 class CreateResearchRequest(BaseModel):
@@ -39,6 +40,7 @@ def register_research_routes(
     can_access: Callable[[str, Request], bool],
     validated_as_of: Callable[[str | None], str],
     is_admin: Callable[[Request], bool],
+    stream_limiter: StreamLimiter,
 ) -> None:
     @app.post("/api/research", status_code=202)
     async def create_research(
@@ -119,37 +121,46 @@ def register_research_routes(
         )
         if header and header.isdigit():
             cursor = int(header)
+        if not stream_limiter.acquire(task_id):
+            raise HTTPException(
+                status_code=429,
+                detail="too many active event streams",
+                headers={"Retry-After": "10"},
+            )
 
         async def stream() -> AsyncIterator[str]:
             nonlocal cursor
             idle = 0.0
-            while True:
-                if await request.is_disconnected():
-                    return
-                events = await asyncio.to_thread(
-                    store.list_events, task_id, cursor, 200
-                )
-                for event in events:
-                    cursor = event.seq
-                    yield _sse(event)
-                    if event.type in TERMINAL_EVENTS:
+            try:
+                while True:
+                    if await request.is_disconnected():
                         return
-                await asyncio.sleep(0.25)
-                idle += 0.25
-                if idle >= 15:
-                    idle = 0.0
-                    yield ": ping\n\n"
-                    task = await asyncio.to_thread(store.get_task, task_id)
-                    if task is not None and task.status.value in {
-                        "delivered",
-                        "failed",
-                        "cancelled",
-                    }:
-                        yield (
-                            "event: stream_closed\n"
-                            f"data: {json.dumps({'status': task.status.value})}\n\n"
-                        )
-                        return
+                    events = await asyncio.to_thread(
+                        store.list_events, task_id, cursor, 200
+                    )
+                    for event in events:
+                        cursor = event.seq
+                        yield _sse(event)
+                        if event.type in TERMINAL_EVENTS:
+                            return
+                    await asyncio.sleep(0.25)
+                    idle += 0.25
+                    if idle >= 15:
+                        idle = 0.0
+                        yield ": ping\n\n"
+                        task = await asyncio.to_thread(store.get_task, task_id)
+                        if task is not None and task.status.value in {
+                            "delivered",
+                            "failed",
+                            "cancelled",
+                        }:
+                            yield (
+                                "event: stream_closed\n"
+                                f"data: {json.dumps({'status': task.status.value})}\n\n"
+                            )
+                            return
+            finally:
+                stream_limiter.release(task_id)
 
         return StreamingResponse(
             stream(),

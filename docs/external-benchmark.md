@@ -48,8 +48,8 @@ source_families=5 PyPI projects
 
 No YAI Agent Core cases. No author-created snapshots.
 
-Test set is not generated yet. When generated it must use a disjoint
-`source_family` group and be sealed before labels are opened.
+Test candidate: 182 cases, mechanically labelled, sealed and git-ignored.
+Independent test: not available; blocked on two annotators and kappa >= 0.7.
 
 ## 3. Baselines
 
@@ -96,18 +96,23 @@ per-family table
 cost and latency (separate)
 ```
 
-## 5. Frozen thresholds for the future test split
+## 5. Comparisons
 
-These thresholds are fixed now, before any test labels are produced:
+### Primary (pre-registered)
 
 ```text
 yais_full vs citation_only:
   STALE recall absolute improvement >= 0.10
   macro-F1 absolute improvement >= 0.10
-  bootstrap 95% CI lower bound > 0
+  paired bootstrap 95% CI lower bound > 0
   false-fresh rate <= 0.10
   stable false-stale <= 0.05
 ```
+
+### Secondary (exploratory)
+
+yais_full vs llm_only, recency_only, retrieval_only, always_fresh.
+These are controls, not additional pre-registered +0.10 thresholds.
 
 If the test split does not meet these, publish a negative result. Do not change
 thresholds after seeing test results.

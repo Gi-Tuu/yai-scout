@@ -69,12 +69,18 @@ def register_admin_routes(
     async def admin_debug_request(request: Request) -> dict[str, Any]:
         """One-off XFF/proxy inspection; disabled unless XFF_DEBUG_TOKEN is set."""
         _require_xff_debug(request, cfg)
-        headers = {key.lower(): value for key, value in request.headers.items()}
+        sensitive = {"authorization", "cookie", "set-cookie", "x-xff-debug"}
+        headers = {
+            key.lower(): ("<redacted>" if key.lower() in sensitive else value)
+            for key, value in request.headers.items()
+        }
         remote = request.client.host if request.client else "unknown"
         return {
             "client_host": remote,
             "client_port": request.client.port if request.client else None,
-            "resolved_client_key": UsageLimiter.client_key(headers, remote),
+            "resolved_client_key": UsageLimiter.client_key(
+                headers, remote, trust_proxy=cfg.trust_proxy_headers
+            ),
             "x_forwarded_for": headers.get("x-forwarded-for", ""),
             "x_forwarded_for_chain": [
                 item.strip() for item in headers.get("x-forwarded-for", "").split(",")
@@ -249,6 +255,11 @@ def register_admin_routes(
             status="approved",
             decided_by="admin",
         )
+        if updated.accuracy_status == "pending":
+            raise HTTPException(
+                status_code=409,
+                detail="candidate was already decided by another request",
+            )
         return updated.model_dump(mode="json")
 
     @app.post("/admin/anchors/candidates/{candidate_id}/reject")

@@ -37,23 +37,33 @@ llm_only       sha256:0f77b072a938a5045bdeb47614fc7acedd4ea7a129ff8eb2ef8f22fa13
 retrieval_only sha256:c6d45e962efdfcd7072975bf0fee6050eb554dda5e952c47a49c79ff0f30e527
 ```
 
-## Negative result
+## Primary comparison (pre-registered, dev only)
 
-The full system does **not** meet the pre-registered advantage over LLM-only on
-this dev slice:
+| method | macro-F1 | STALE recall | false-fresh |
+|---|---:|---:|---:|
+| yais_full | 1.000 | 1.000 | 0.000 |
+| citation_only | 0.500 | 0.000 | 0.000 |
+
+```text
+delta macro-F1 = +0.500
+delta STALE recall = +1.000
+paired bootstrap CI lower bounds = 0.500 / 1.000
+threshold_met = true
+```
+
+The +0.10 primary threshold is met on this dev slice.  
+This is dev-only mechanical PyPI data, not independent test evidence.
+
+## Secondary comparison (exploratory)
 
 ```text
 yais_full vs llm_only
-  accuracy delta   = 0.018
-  macro-F1 delta   = 0.018
-  required         >= 0.10
+macro-F1 delta = +0.018
+STALE recall delta = 0.000
 ```
 
-The pre-registered threshold is **not met**. Do not claim that the deterministic
-rules are better than an LLM judge on this data.
-
-The full system also beats citation-only and recency-only, but this is a dev set
-with clean official evidence; it is not a sealed external test.
+This is not the pre-registered primary threshold and does not show a +0.10
+advantage. The result is retained because it is an honest secondary control.
 
 ## What this shows
 

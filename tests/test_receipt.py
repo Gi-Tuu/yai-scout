@@ -77,11 +77,18 @@ def test_receipt_endpoint_returns_versioned_json():
     store = Store(":memory:")
     store.save_detector_report(_report())
     app = create_app(
-        settings=Settings(db_path=":memory:", demo_limits_enabled=False),
+        settings=Settings(
+            db_path=":memory:",
+            demo_limits_enabled=False,
+            admin_token="secret",
+        ),
         store=store,
     )
     with TestClient(app) as client:
-        response = client.get("/freshness/reports/det_1/receipt")
+        response = client.get(
+            "/freshness/reports/det_1/receipt",
+            headers={"Authorization": "Bearer secret"},
+        )
     store.close()
     assert response.status_code == 200
     assert response.json()["receipt_version"] == RECEIPT_VERSION

@@ -45,9 +45,20 @@ def register_benchmark_routes(
     async def benchmark_tasks() -> dict[str, Any]:
         version, tasks = load_dataset()
         public = [task for task in tasks if not task.hidden]
+        # Public clients only need routing/selection metadata. Gold answers,
+        # expected claims, reference evidence and notes stay private.
+        public_rows = [
+            {
+                "id": task.id,
+                "question": task.question,
+                "category": task.category.value,
+                "as_of": task.as_of,
+            }
+            for task in public
+        ]
         return {
             "dataset_version": version,
-            "tasks": [task.model_dump(mode="json") for task in public],
+            "tasks": public_rows,
             "hidden_count": sum(1 for task in tasks if task.hidden),
             "hidden_status": "compromised",
         }

@@ -26,8 +26,12 @@ class Database:
     @contextmanager
     def write(self) -> Iterator[sqlite3.Connection]:
         with self.lock:
-            yield self.conn
-            self.conn.commit()
+            try:
+                yield self.conn
+                self.conn.commit()
+            except Exception:
+                self.conn.rollback()
+                raise
 
     @contextmanager
     def atomic(self) -> Iterator[sqlite3.Connection]:

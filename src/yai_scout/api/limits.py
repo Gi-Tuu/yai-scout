@@ -97,13 +97,17 @@ class UsageLimiter:
             }
 
     @staticmethod
-    def client_key(headers: dict[str, str], fallback: str) -> str:
+    def client_key(
+        headers: dict[str, str], fallback: str, *, trust_proxy: bool = True
+    ) -> str:
         """Resolve the client IP behind the Render/Cloudflare proxy.
 
         Cloudflare supplies authoritative client-IP headers. Using the last
         X-Forwarded-For hop alone is wrong here: the chain ends in an internal
         Render address, so every client would share the same rate-limit bucket.
         """
+        if not trust_proxy:
+            return fallback or "unknown"
         lowered = {key.lower(): value for key, value in headers.items()}
         for name in ("cf-connecting-ip", "true-client-ip"):
             value = str(lowered.get(name, "")).strip()

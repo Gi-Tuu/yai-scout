@@ -37,6 +37,7 @@ from .freshness_routes import register_freshness_routes
 from .limits import UsageLimiter
 from .pages import register_pages
 from .research_routes import register_research_routes
+from .streams import StreamLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -122,12 +123,18 @@ def create_app(
             "research": cfg.daily_research_limit,
         },
     )
+    stream_limiter = StreamLimiter(
+        max_total=cfg.max_sse_streams,
+        max_per_key=cfg.max_sse_streams_per_task,
+    )
 
     def guard_cost(request: Request, bucket: str) -> None:
         if not cfg.demo_limits_enabled:
             return
         client = UsageLimiter.client_key(
-            dict(request.headers), request.client.host if request.client else "unknown"
+            dict(request.headers),
+            request.client.host if request.client else "unknown",
+            trust_proxy=cfg.trust_proxy_headers,
         )
         allowed, retry = limiter.check(bucket, client)
         if not allowed:
@@ -167,8 +174,9 @@ def create_app(
         ) == f"Bearer {cfg.admin_token}"
 
     def can_access(owner_id: str, request: Request) -> bool:
-        # Legacy/demo rows have owner_id="" and remain public.
-        return not owner_id or owner_id == session_id(request) or is_admin(request)
+        # Legacy ownerless rows are admin-only; a session must never implicitly
+        # inherit old data just because ownership was introduced later.
+        return bool(owner_id) and owner_id == session_id(request) or is_admin(request)
 
     benchmark_enabled = cfg.scout_mode in {"all", "benchmark"}
     freshness_enabled = cfg.scout_mode in {"all", "freshness"}
@@ -269,6 +277,7 @@ def create_app(
         can_access=can_access,
         validated_as_of=validated_as_of,
         is_admin=is_admin,
+        stream_limiter=stream_limiter,
     )
 
     register_freshness_routes(
@@ -309,7 +318,23 @@ def create_app(
     return app
 
 
-app = create_app()
+_APP: FastAPI | None = None
+
+
+def get_app() -> FastAPI:
+    """Lazily create the process app; importing this module must stay side-effect free."""
+    global _APP
+    if _APP is None:
+        _APP = create_app()
+    return _APP
+
+
+def __getattr__(name: str) -> Any:
+    # Uvicorn/ASGI servers use ``yai_scout.api.app:app``; tests and scripts import
+    # ``create_app`` without opening the default database.
+    if name == "app":
+        return get_app()
+    raise AttributeError(name)
 
 
 

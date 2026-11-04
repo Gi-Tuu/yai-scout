@@ -16,6 +16,28 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.3] - 2026-11-05
+
+### Fixed
+
+- Public benchmark task API no longer exposes gold values, expected claims or
+  reference evidence.
+- Unknown benchmark agent IDs are rejected instead of silently dropped.
+- Candidate approval returns 409 when another request already decided it.
+- Legacy ownerless rows are admin-only; session lists no longer leak them.
+- SSE streams are capped per task and globally.
+- Importing `api.app` no longer creates the default app/database.
+- `Database.write()` rolls back on exceptions.
+- Proxy headers are ignored unless `TRUST_PROXY_HEADERS` is enabled.
+- Debug endpoint redacts authorization/cookie headers.
+
+### External benchmark
+
+- Added `protocol.json` with `citation_only` as the frozen primary baseline.
+- Added paired bootstrap delta comparison (`compare_external_eval.py`).
+- Corrected docs so `llm_only` is secondary/exploratory.
+- Test candidate remains mechanical, sealed and not independent.
+
 ## [0.7.2] - 2026-11-05
 
 ### Added

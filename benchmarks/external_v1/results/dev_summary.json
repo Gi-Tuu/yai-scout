@@ -1,0 +1,40 @@
+{
+  "protocol_hash": "sha256:781c2a2422d7a325051e54dcd8e0243ea672fe87c7aa2eca449400c9a9b92d8a",
+  "split": "dev",
+  "primary": {
+    "baseline": "citation_only",
+    "macro_f1_delta": 0.5,
+    "stale_recall_delta": 1.0,
+    "false_fresh_delta": 0.0,
+    "full_false_fresh": 0.0,
+    "full_stable_false_stale": 0.0,
+    "delta_ci_lower": {
+      "macro_f1": 0.5,
+      "stale_recall": 1.0
+    },
+    "threshold_met": true
+  },
+  "secondary": {
+    "llm_only": {
+      "macro_f1_delta": 0.017863,
+      "stale_recall_delta": 0.0,
+      "note": "exploratory; not the pre-registered primary comparison"
+    },
+    "recency_only": {
+      "macro_f1_delta": 0.666667,
+      "stale_recall_delta": 1.0,
+      "note": "exploratory; not the pre-registered primary comparison"
+    },
+    "retrieval_only": {
+      "macro_f1_delta": 1.0,
+      "stale_recall_delta": 1.0,
+      "note": "exploratory; not the pre-registered primary comparison"
+    },
+    "always_fresh": {
+      "macro_f1_delta": 0.666667,
+      "stale_recall_delta": 1.0,
+      "note": "exploratory; not the pre-registered primary comparison"
+    }
+  },
+  "result_hash": "sha256:bde6043bab6e6815972ff1437d4bd412d92956ce0fadd2dc13fd80fe20052063"
+}

@@ -21,6 +21,6 @@ independent annotators; see `docs/external-benchmark.md`.
 No author project is included. Each snapshot is the source of truth used by
 all baselines.
 
-The dev run includes a negative result: `yais_full` does not meet the
-pre-registered +0.10 advantage over `llm_only`; see
-`docs/external-benchmark-results.md`.
+The dev run meets the pre-registered primary comparison vs `citation_only`.
+It does not show a +0.10 advantage over the secondary `llm_only` control.
+Dev-only; not independent test evidence.

@@ -296,6 +296,8 @@ def apply_candidate(
         status=status,
         decided_by=decided_by,
     )
+    # Return the pending object when another transaction won; HTTP callers
+    # turn this into 409 instead of reporting a false success.
     return updated or candidate
 
 

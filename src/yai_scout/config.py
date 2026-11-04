@@ -22,11 +22,12 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "YAI Scout"
-    app_version: str = "0.7.2"
+    app_version: str = "0.7.3"
     # all | benchmark | freshness —— 用于独立部署/独立入口
     scout_mode: str = "all"
     snapshots_seed: str = "benchmarks/snapshots.json"
     admin_token: str = ""
+    trust_proxy_headers: bool = False
     # Optional one-off diagnostic token for XFF/proxy header inspection.
     # Empty disables the diagnostic endpoint.
     xff_debug_token: str = ""
@@ -51,6 +52,8 @@ class Settings(BaseSettings):
     daily_anchor_limit: int = 30
     daily_research_limit: int = 5
     max_active_research_tasks: int = 2
+    max_sse_streams: int = 20
+    max_sse_streams_per_task: int = 2
     research_enabled: bool = True
     # 公开 Demo 默认禁止匿名创建全局 Anchor；需要时显式打开或使用 ADMIN_TOKEN。
     public_anchor_writes: bool = False
