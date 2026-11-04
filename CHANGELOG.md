@@ -16,6 +16,17 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.6.0] - 2026-11-04
+
+### Changed
+
+- Split `verify.py` into orchestration (`verify.py`, `verify_steps.py`) and pure
+  relation modules (`relation/`), plus `query.py`, `evidence.py` and
+  `llm_relation.py`.
+- `_relation`, `_to_evidence`, `_llm_relation` and `build_query` remain
+  compatible proxies.
+- Added direct relation classifier tests.
+
 ## [0.5.2] - 2026-11-04
 
 ### Changed
