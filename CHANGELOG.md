@@ -16,6 +16,19 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.4.4] - 2026-11-04
+
+### Fixed
+
+- `scripts/eval_freshness.py --calibrate` now sorts weight candidates by
+  accuracy and MAE without comparing dictionaries.
+
+### Added
+
+- `scripts/perf_smoke.py` and `docs/performance-smoke.md` for deterministic
+  scorer P50/P95/P99 measurements. This is a local microbenchmark, not a
+  long-run HTTP/DB load test.
+
 ## [0.4.3] - 2026-11-04
 
 ### Fixed

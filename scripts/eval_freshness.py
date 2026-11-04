@@ -93,7 +93,7 @@ def calibrate() -> None:
             weights = {"relation": relation, "recency": recency, "authority": authority}
             accuracy, mae, _ = evaluate(weights)
             best.append((accuracy, -mae, weights))
-    best.sort(reverse=True)
+    best.sort(key=lambda item: (item[0], item[1]), reverse=True)
     print("top weights (accuracy, -MAE, weights):")
     for accuracy, neg_mae, weights in best[:5]:
         print(f"  acc={accuracy:.3f} mae={-neg_mae:.2f} {weights}")
