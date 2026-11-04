@@ -16,6 +16,15 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.3.7] - 2026-11-04
+
+### Fixed
+
+- Release-version relation now requires project identity overlap, preventing
+  another project's release URL from producing a false STALE verdict.
+- Benchmark prune audits are retained for a bounded number of days
+  (`--audit-keep-days`, default 30).
+
 ## [0.3.6] - 2026-11-04
 
 ### Fixed (deep audit)

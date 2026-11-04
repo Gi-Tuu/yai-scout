@@ -328,7 +328,11 @@ class ClaimVerifier:
             # it contradicts the claim. Version-list pages without a release
             # target stay ambiguous.
             release_version = _release_target_version(result)
-            if release_version and _CURRENT_CLAIM_RE.search(claim_text):
+            if (
+                release_version
+                and _CURRENT_CLAIM_RE.search(claim_text)
+                and _same_project(claim_text, result)
+            ):
                 claim_max = max(
                     (_version_tuple(version) for version in claim_versions),
                     default=(0, 0, 0),
@@ -489,3 +493,29 @@ def _release_target_version(result: SearchResult) -> str | None:
             if match:
                 return match.group(0).lstrip("vV").lower()
     return None
+
+
+_PROJECT_STOP = {
+    "http", "https", "www", "com", "org", "github", "gitlab", "releases",
+    "release", "tag", "tags", "latest", "current", "version", "api", "docs",
+    "documentation", "official", "download", "downloads", "source",
+}
+_PROJECT_TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_-]+|[\u4e00-\u9fff]{2,}")
+
+
+def _project_tokens(text: str) -> set[str]:
+    tokens: set[str] = set()
+    for match in _PROJECT_TOKEN_RE.findall(text.lower()):
+        for part in re.split(r"[-_.]", match):
+            if len(part) >= 2 and part not in _PROJECT_STOP and not part.isdigit():
+                tokens.add(part)
+    return tokens
+
+
+def _same_project(claim_text: str, result: SearchResult) -> bool:
+    """Do not turn another project's release into a contradiction."""
+    claim_project = _project_tokens(claim_text)
+    release_project = _project_tokens(f"{result.url} {result.title}")
+    if not claim_project or not release_project:
+        return True
+    return bool(claim_project & release_project)

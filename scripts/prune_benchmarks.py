@@ -20,6 +20,12 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="directory for pre-delete audit JSON (default: beside the DB)",
     )
+    parser.add_argument(
+        "--audit-keep-days",
+        type=int,
+        default=30,
+        help="delete audit JSON older than this many days",
+    )
     parser.add_argument("--json", action="store_true", help="machine-readable output")
     args = parser.parse_args(argv)
 
@@ -27,7 +33,10 @@ def main(argv: list[str] | None = None) -> int:
     store = Store(db_path)
     try:
         result = store.prune_benchmarks(
-            days=args.days, dry_run=args.dry_run, audit_dir=args.audit_dir
+            days=args.days,
+            dry_run=args.dry_run,
+            audit_dir=args.audit_dir,
+            audit_keep_days=args.audit_keep_days,
         )
     finally:
         store.close()

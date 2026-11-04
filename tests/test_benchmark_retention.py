@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import time
 from pathlib import Path
 
 from yai_scout.domain.models import AgentAnswer, BenchSession, TaskResult
@@ -148,4 +150,20 @@ def test_prune_audit_failure_aborts_delete(tmp_path: Path) -> None:
     else:
         raise AssertionError("audit failure should abort pruning")
     assert store.get_bench_session("old") is not None
+    store.close()
+
+
+def test_prune_cleans_old_audit_files(tmp_path: Path) -> None:
+    store = Store(tmp_path / "db3.sqlite3")
+    audit_dir = tmp_path / "audit"
+    audit_dir.mkdir()
+    old_audit = audit_dir / "prune_old.json"
+    old_audit.write_text("{}", encoding="utf-8")
+    old_time = time.time() - 90 * 24 * 3600
+    os.utime(old_audit, (old_time, old_time))
+    result = store.prune_benchmarks(
+        days=30, audit_dir=audit_dir, audit_keep_days=30
+    )
+    assert result["audit_removed"] == 1
+    assert not old_audit.exists()
     store.close()

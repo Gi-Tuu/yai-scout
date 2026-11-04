@@ -63,3 +63,18 @@ def test_newer_release_url_contradicts_current_claim():
         content="release v0.25.0",
     )
     assert ClaimVerifier._relation(claim, result) == "contradicts"
+
+
+def test_other_project_release_url_is_not_a_contradiction():
+    claim = Claim(
+        id="c",
+        text="YAI Agent Core 当前版本是 0.24.0",
+        type=ClaimType.VERSION,
+        numbers=["0.24.0"],
+    )
+    result = SearchResult(
+        title="v9.0.0",
+        url="https://github.com/other/project/releases/tag/v9.0.0",
+        content="release v9.0.0",
+    )
+    assert ClaimVerifier._relation(claim, result) == "mentions"
