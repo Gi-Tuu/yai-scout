@@ -38,8 +38,10 @@ def test_startup_prunes_when_retention_enabled(tmp_path: Path) -> None:
     store = Store(tmp_path / "retention.sqlite3")
     _old_session(store)
     app = create_app(settings=_settings(benchmark_retention_days=30), store=store)
-    with TestClient(app):
-        pass
+    with TestClient(app) as client:
+        health = client.get("/api/healthz").json()
+        assert health["retention"]["enabled"] is True
+        assert health["retention"]["result"]["sessions"] == 1
     conn = sqlite3.connect(tmp_path / "retention.sqlite3")
     try:
         assert conn.execute(
@@ -64,3 +66,19 @@ def test_startup_keeps_history_when_retention_disabled(tmp_path: Path) -> None:
         ).fetchone()[0] == 1
     finally:
         conn.close()
+
+
+def test_retention_failure_is_visible(monkeypatch, tmp_path: Path) -> None:
+    store = Store(tmp_path / "retention_failure.sqlite3")
+    _old_session(store)
+
+    def boom(*args: object, **kwargs: object) -> dict[str, object]:
+        raise RuntimeError("retention disk error")
+
+    monkeypatch.setattr(store, "prune_benchmarks", boom)  # type: ignore[arg-type]
+    app = create_app(settings=_settings(benchmark_retention_days=30), store=store)
+    with TestClient(app) as client:
+        retention = client.get("/api/healthz").json()["retention"]
+        assert retention["enabled"] is True
+        assert retention["result"] is None
+        assert "retention disk error" in retention["error"]

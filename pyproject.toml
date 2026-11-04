@@ -33,6 +33,7 @@ packages = ["src/yai_scout"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = ["browser: requires Playwright and a local browser"]
 filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.ruff]

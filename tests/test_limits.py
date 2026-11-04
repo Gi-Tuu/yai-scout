@@ -154,3 +154,20 @@ def test_research_active_task_cap():
         assert response.status_code == 429
         assert "active research" in response.json()["detail"]
 
+
+
+def test_empty_rate_limit_buckets_are_swept(monkeypatch) -> None:
+    from yai_scout.api import limits as limits_module
+
+    now = 1000.0
+    monkeypatch.setattr(limits_module.time, "monotonic", lambda: now)
+    limiter = limits_module.UsageLimiter(
+        per_minute=100,
+        daily={"detector": 100, "benchmark": 100, "anchor": 100, "research": 100},
+    )
+    assert limiter.check("detector", "client-a")[0] is True
+    assert limiter.usage()["buckets"] == 1
+
+    now = 1061.0
+    assert limiter.check("detector", "client-b")[0] is True
+    assert limiter.usage()["buckets"] == 1

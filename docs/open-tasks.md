@@ -1,6 +1,6 @@
 # Open Tasks
 
-> Snapshot: 2026-11-04 · release `v0.3.6` · 295 tests · Python 3.12 local verification
+> Snapshot: 2026-11-04 · release `v0.3.6` · 298 tests · Python 3.12 local verification
 
 ## DONE
 
@@ -25,7 +25,10 @@
 | Freshness verdict evaluation | 50 fixed claim/evidence cases (standard/adversarial/ambiguous); precision/recall/confusion |
 | Private verdict labeling bridge | accuracy-gate private cases → unlabeled verdict worksheet → local labels → evaluator |
 | Holdout v2 worksheet | 60 unlabeled cases from separate accuracy-gate worksheet; human status labels only |
-| Holdout v3 worksheet | 30 new unlabeled cases not derived from the public compromised 60-case key |
+| Holdout v3 worksheet | 60 balanced unlabeled cases (15 fresh/stale/conflicted/insufficient) not derived from the public compromised key |
+| Retention observability | startup result/error exposed in `/api/healthz` |
+| Rate-limit bucket sweep | stale per-client buckets removed after 60s |
+| Browser CI | Playwright admin rollback/approve smoke job |
 | Automatic benchmark retention | opt-in `BENCHMARK_RETENTION_DAYS`, startup prune, default off |
 | Benchmark retention | migration 9 unique cell index; explicit prune CLI with dry-run |
 
