@@ -107,6 +107,7 @@ def test_migration_10_strips_lifecycle_json(tmp_path: Path) -> None:
     loaded = store.get_bench_session("old")
     assert loaded is not None and loaded.status == "done"
     assert loaded.manifest is not None and loaded.manifest.status == "done"
+    assert db.with_name("legacy.sqlite3.pre-v10.bak").is_file()
     store.close()
 
 
@@ -120,4 +121,39 @@ def test_consistency_flags_legacy_lifecycle_json() -> None:
     store._conn.commit()
     issues = store.consistency_report()
     assert any(item["field"] == "status" for item in issues)
+    store.close()
+
+
+def test_invalid_config_fails_closed() -> None:
+    store = Store(":memory:")
+    store.create_bench_session(BenchSession(id="b1", status="running"))
+    store._conn.execute(
+        "UPDATE bench_session SET config_json = '{' WHERE id = 'b1'"
+    )
+    store._conn.commit()
+    try:
+        store.get_bench_session("b1")
+    except ValueError as exc:
+        assert "config_json" in str(exc)
+    else:
+        raise AssertionError("invalid config must not produce a synthetic session")
+    assert any(item["column"] == "invalid_json" for item in store.consistency_report())
+    store.close()
+
+
+def test_invalid_manifest_fails_closed() -> None:
+    store = Store(":memory:")
+    store.create_bench_session(BenchSession(
+        id="b1", status="running", manifest=_manifest(),
+    ))
+    store._conn.execute(
+        "UPDATE bench_session SET manifest_json = '{' WHERE id = 'b1'"
+    )
+    store._conn.commit()
+    try:
+        store.get_bench_session("b1")
+    except ValueError as exc:
+        assert "manifest_json" in str(exc)
+    else:
+        raise AssertionError("invalid manifest must not be silently dropped")
     store.close()

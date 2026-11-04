@@ -78,3 +78,18 @@ def test_other_project_release_url_is_not_a_contradiction():
         content="release v9.0.0",
     )
     assert ClaimVerifier._relation(claim, result) == "mentions"
+
+
+def test_generic_version_claim_does_not_borrow_other_project_release():
+    claim = Claim(
+        id="c",
+        text="当前版本是 0.24.0",
+        type=ClaimType.VERSION,
+        numbers=["0.24.0"],
+    )
+    result = SearchResult(
+        title="v9.0.0",
+        url="https://github.com/other/project/releases/tag/v9.0.0",
+        content="release v9.0.0",
+    )
+    assert ClaimVerifier._relation(claim, result) == "mentions"

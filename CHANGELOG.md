@@ -16,6 +16,18 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.4.1] - 2026-11-04
+
+### Fixed
+
+- Corrupt `bench_session.config_json` / `manifest_json` now fails closed instead
+  of returning a synthetic empty session.
+- Consistency checks validate manifest schema and report invalid JSON/schema.
+- Migration 10 creates a `.pre-v10.bak` SQLite backup before rewriting session
+  JSON.
+- Generic version claims without project identity no longer borrow another
+  project's release as a contradiction.
+
 ## [0.4.0] - 2026-11-04
 
 ### Changed

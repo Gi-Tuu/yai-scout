@@ -517,5 +517,5 @@ def _same_project(claim_text: str, result: SearchResult) -> bool:
     claim_project = _project_tokens(claim_text)
     release_project = _project_tokens(f"{result.url} {result.title}")
     if not claim_project or not release_project:
-        return True
+        return False
     return bool(claim_project & release_project)

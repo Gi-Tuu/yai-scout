@@ -508,8 +508,8 @@ class Store:
                         )
 
             for session_row in self._conn.execute(
-                "SELECT id, owner_id, status, config_json, manifest_json "
-                "FROM bench_session"
+                "SELECT id, owner_id, status, config_json, manifest_json, "
+                "finished_at, result_hash FROM bench_session"
             ):
                 try:
                     session_payload = json.loads(session_row["config_json"] or "{}")
@@ -570,6 +570,23 @@ class Store:
                                 "unexpected_lifecycle_json",
                                 str(manifest_payload.get(field)),
                             )
+                    try:
+                        ExperimentManifest.model_validate(
+                            {
+                                **manifest_payload,
+                                "status": session_row["status"],
+                                "finished_at": session_row["finished_at"],
+                                "result_hash": session_row["result_hash"],
+                            }
+                        )
+                    except ValueError:
+                        add(
+                            "bench_session",
+                            session_row["id"],
+                            "manifest_json",
+                            "invalid_schema",
+                            raw_manifest,
+                        )
 
             orphan_checks = (
                 ("source", "task_id", "research_task", "id"),
@@ -896,6 +913,25 @@ class Store:
         return json.dumps(payload, ensure_ascii=False)
 
     def _normalize_bench_session_state(self) -> None:
+        count = int(self._conn.execute(
+            "SELECT COUNT(*) FROM bench_session"
+        ).fetchone()[0])
+        if not count:
+            return
+        if self.path != ":memory:":
+            backup = Path(self.path).with_name(f"{Path(self.path).name}.pre-v10.bak")
+            if not backup.exists():
+                try:
+                    self._conn.commit()
+                    destination = sqlite3.connect(backup)
+                    try:
+                        self._conn.backup(destination)
+                    finally:
+                        destination.close()
+                except sqlite3.Error as exc:
+                    raise RuntimeError(
+                        f"cannot create pre-migration backup at {backup}"
+                    ) from exc
         rows = self._conn.execute(
             "SELECT id, config_json, manifest_json FROM bench_session"
         ).fetchall()
@@ -1027,10 +1063,10 @@ class Store:
             return None
         try:
             payload = json.loads(row["config_json"] or "{}")
-        except ValueError:
-            payload = {}
+        except ValueError as exc:
+            raise ValueError("bench_session config_json is invalid") from exc
         if not isinstance(payload, dict):
-            payload = {}
+            raise ValueError("bench_session config_json must be an object")
         payload.setdefault("id", row["id"])
         payload.setdefault("created_at", row["created_at"])
         payload.update(
@@ -1047,20 +1083,18 @@ class Store:
         if row["manifest_json"] and row["manifest_json"] != "{}":
             try:
                 manifest_payload = json.loads(row["manifest_json"])
-            except ValueError:
-                manifest_payload = {}
-            if isinstance(manifest_payload, dict):
-                manifest_payload.update(
-                    {
-                        "status": row["status"],
-                        "finished_at": row["finished_at"],
-                        "result_hash": row["result_hash"],
-                    }
-                )
-                try:
-                    manifest = ExperimentManifest.model_validate(manifest_payload)
-                except ValueError:
-                    manifest = None
+            except ValueError as exc:
+                raise ValueError("bench_session manifest_json is invalid") from exc
+            if not isinstance(manifest_payload, dict):
+                raise ValueError("bench_session manifest_json must be an object")
+            manifest_payload.update(
+                {
+                    "status": row["status"],
+                    "finished_at": row["finished_at"],
+                    "result_hash": row["result_hash"],
+                }
+            )
+            manifest = ExperimentManifest.model_validate(manifest_payload)
         payload["manifest"] = manifest
         return BenchSession.model_validate(payload)
 

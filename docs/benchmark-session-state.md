@@ -33,3 +33,12 @@ Migration 10:
 All lifecycle updates (`update_bench_session`, `mark_interrupted_work`) write the
 columns, not the JSON blobs. `consistency_report()` flags any lifecycle fields
 that reappear in JSON.
+
+
+## Failure and migration behavior
+
+- Invalid `config_json` or `manifest_json` raises instead of returning a
+  synthetic empty session.
+- `consistency_report()` validates manifest schema and flags unexpected
+  lifecycle JSON.
+- Migration 10 writes `<db>.pre-v10.bak` before rewriting session JSON.
