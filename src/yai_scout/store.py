@@ -1,21 +1,12 @@
-"""SQLite 存储层：任务 / 计划 / 来源 / 事件 / 成本。
-
-G0 用同步 sqlite3 + 进程内锁：写少读多、单机演示足够。
-后续并发上来后再把热点路径切到 asyncio.to_thread 或连接池。
-"""
+"""Storage facade: SQLite repositories with a stable public API."""
 
 from __future__ import annotations
 
-import json
 import sqlite3
 import threading
-import uuid
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from .claim_classification import resolve_claim_type
-from .claim_keys import claim_key_v2
 from .domain.models import (
     Anchor,
     AnchorCandidate,
@@ -24,1842 +15,273 @@ from .domain.models import (
     CostEntry,
     DetectorReport,
     EvidenceSnapshot,
-    ExperimentManifest,
     Plan,
     ResearchTask,
     RunEvent,
     SourceRecord,
     TaskResult,
     TaskStatus,
-    utcnow_iso,
 )
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS schema_version (
-    version INTEGER PRIMARY KEY,
-    applied_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS research_task (
-    id TEXT PRIMARY KEY,
-    question TEXT NOT NULL,
-    as_of TEXT NOT NULL,
-    status TEXT NOT NULL,
-    owner_id TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL,
-    finished_at TEXT,
-    error TEXT,
-    report_md TEXT,
-    stats_json TEXT NOT NULL DEFAULT '{}'
-);
-CREATE TABLE IF NOT EXISTS plan (
-    task_id TEXT PRIMARY KEY REFERENCES research_task(id) ON DELETE CASCADE,
-    payload_json TEXT NOT NULL,
-    created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS source (
-    id TEXT PRIMARY KEY,
-    task_id TEXT NOT NULL REFERENCES research_task(id) ON DELETE CASCADE,
-    url TEXT NOT NULL,
-    canonical_url TEXT NOT NULL,
-    domain TEXT NOT NULL,
-    title TEXT NOT NULL DEFAULT '',
-    published_at TEXT,
-    fetched_at TEXT NOT NULL,
-    content_hash TEXT NOT NULL DEFAULT '',
-    tier INTEGER NOT NULL DEFAULT 3,
-    tier_reason TEXT NOT NULL DEFAULT '',
-    score REAL NOT NULL DEFAULT 0,
-    snippet TEXT NOT NULL DEFAULT '',
-    UNIQUE (task_id, canonical_url)
-);
-CREATE INDEX IF NOT EXISTS idx_source_task ON source(task_id);
-CREATE TABLE IF NOT EXISTS run_event (
-    seq INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id TEXT NOT NULL REFERENCES research_task(id) ON DELETE CASCADE,
-    stage TEXT NOT NULL,
-    type TEXT NOT NULL,
-    payload_json TEXT NOT NULL DEFAULT '{}',
-    ts TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_event_task ON run_event(task_id, seq);
-CREATE TABLE IF NOT EXISTS cost_ledger (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id TEXT NOT NULL REFERENCES research_task(id) ON DELETE CASCADE,
-    provider TEXT NOT NULL,
-    unit TEXT NOT NULL,
-    amount REAL NOT NULL,
-    credits REAL NOT NULL DEFAULT 0,
-    usd_estimate REAL NOT NULL DEFAULT 0,
-    ts TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS detector_report (
-    id TEXT PRIMARY KEY,
-    owner_id TEXT NOT NULL DEFAULT '',
-    answer TEXT NOT NULL,
-    as_of TEXT NOT NULL,
-    payload_json TEXT NOT NULL,
-    created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS bench_session (
-    id TEXT PRIMARY KEY,
-    owner_id TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL,
-    config_json TEXT NOT NULL DEFAULT '{}',
-    manifest_json TEXT NOT NULL DEFAULT '{}',
-    result_hash TEXT,
-    supersedes TEXT,
-    created_at TEXT NOT NULL,
-    finished_at TEXT,
-    error TEXT
-);
-CREATE TABLE IF NOT EXISTS bench_result (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    session_id TEXT NOT NULL REFERENCES bench_session(id) ON DELETE CASCADE,
-    task_id TEXT NOT NULL,
-    agent_id TEXT NOT NULL,
-    payload_json TEXT NOT NULL,
-    score REAL NOT NULL DEFAULT 0
-);
-CREATE TABLE IF NOT EXISTS anchor (
-    id TEXT PRIMARY KEY,
-    claim_key TEXT NOT NULL,
-    claim_key_v2 TEXT NOT NULL DEFAULT '',
-    claim_key_version INTEGER NOT NULL DEFAULT 1,
-    url TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'active',
-    payload_json TEXT NOT NULL,
-    created_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_anchor_claim ON anchor(claim_key);
-CREATE TABLE IF NOT EXISTS anchor_candidate (
-    id TEXT PRIMARY KEY,
-    anchor_id TEXT NOT NULL REFERENCES anchor(id) ON DELETE RESTRICT,
-    status TEXT NOT NULL,
-    payload_json TEXT NOT NULL,
-    created_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_anchor_candidate_anchor ON anchor_candidate(anchor_id);
-CREATE INDEX IF NOT EXISTS idx_anchor_candidate_status ON anchor_candidate(status);
-CREATE TABLE IF NOT EXISTS anchor_observation (
-    id TEXT PRIMARY KEY,
-    anchor_id TEXT NOT NULL REFERENCES anchor(id) ON DELETE RESTRICT,
-    status TEXT NOT NULL,
-    content_changed INTEGER NOT NULL DEFAULT 0,
-    observed_hash TEXT NOT NULL DEFAULT '',
-    payload_json TEXT NOT NULL,
-    created_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_anchor_observation_anchor ON anchor_observation(anchor_id);
-CREATE TABLE IF NOT EXISTS anchor_audit (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    action TEXT NOT NULL,
-    anchor_id TEXT NOT NULL,
-    related_id TEXT NOT NULL DEFAULT '',
-    details_json TEXT NOT NULL DEFAULT '{}',
-    created_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_anchor_audit_anchor ON anchor_audit(anchor_id, id);
-CREATE TABLE IF NOT EXISTS snapshot (
-    id TEXT PRIMARY KEY,
-    url TEXT NOT NULL,
-    title TEXT NOT NULL DEFAULT '',
-    origin TEXT NOT NULL DEFAULT 'live',
-    content_hash TEXT NOT NULL DEFAULT '',
-    raw_path TEXT NOT NULL DEFAULT '',
-    text_path TEXT NOT NULL DEFAULT '',
-    published_at TEXT,
-    updated_at TEXT,
-    fetched_at TEXT NOT NULL,
-    tier INTEGER NOT NULL DEFAULT 3,
-    notes TEXT NOT NULL DEFAULT ''
-);
-CREATE INDEX IF NOT EXISTS idx_bench_result_session ON bench_result(session_id);
-CREATE INDEX IF NOT EXISTS idx_snapshot_url ON snapshot(url, fetched_at);
-"""
+from .storage.anchor_candidates import AnchorCandidateRepository
+from .storage.anchors import AnchorRepository
+from .storage.benchmark_prune import BenchmarkPruneRepository
+from .storage.benchmarks import BenchmarkRepository
+from .storage.consistency import ConsistencyChecker
+from .storage.db import Database
+from .storage.detector import DetectorRepository
+from .storage.maintenance import MaintenanceRepository
+from .storage.schema import initialize
+from .storage.snapshots import SnapshotRepository
+from .storage.tasks import TaskRepository
 
 
 class Store:
-    """进程内 SQLite 存储。所有方法线程安全（单写锁 + 自动提交）。"""
-
     def __init__(self, path: str | Path = ":memory:") -> None:
-        self.path = str(path)
-        if self.path != ":memory:":
-            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
-        self._lock = threading.RLock()
-        self._conn = sqlite3.connect(self.path, check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
-        with self._lock:
-            if self.path != ":memory:":
-                self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.executescript(SCHEMA)
-            self._apply_migrations()
-            self._conn.commit()
-            self._conn.execute("PRAGMA foreign_keys=ON")
+        self.db = Database(path)
+        initialize(self.db)
+        self._tasks = TaskRepository(self.db)
+        self._detector = DetectorRepository(self.db)
+        self._benchmarks = BenchmarkRepository(self.db)
+        self._prune = BenchmarkPruneRepository(self.db)
+        self._anchors = AnchorRepository(self.db)
+        self._candidates = AnchorCandidateRepository(self.db)
+        self._snapshots = SnapshotRepository(self.db)
+        self._consistency = ConsistencyChecker(self.db)
+        self._maintenance = MaintenanceRepository(self.db)
 
-    def _apply_migrations(self) -> None:
-        """Sequential, idempotent schema migrations with a recorded version."""
-        applied = {
-            int(row["version"])
-            for row in self._conn.execute("SELECT version FROM schema_version")
-        }
-        migrations = (
-            (1, self._ensure_bench_columns),
-            (2, self._ensure_task_columns),
-            (3, self._ensure_detector_columns),
-            (4, self._ensure_anchor_columns),
-            (5, self._ensure_bench_owner_column),
-            (6, self._sync_bench_config_json),
-            (7, self._ensure_claim_key_columns),
-            (8, self._refresh_claim_identity),
-            (9, self._ensure_bench_result_unique),
-            (10, self._normalize_bench_session_state),
-            (11, self._ensure_bench_status_trigger),
-        )
-        for version, migrate in migrations:
-            if version in applied:
-                continue
-            migrate()
-            self._conn.execute(
-                "INSERT INTO schema_version (version, applied_at) VALUES (?, ?)",
-                (version, utcnow_iso()),
-            )
+    @property
+    def path(self) -> str:
+        return self.db.path
 
-    def _ensure_bench_columns(self) -> None:
-        """向后兼容迁移：只加列，不重建表，不删除历史数据。"""
-        columns = {
-            row["name"] for row in self._conn.execute("PRAGMA table_info(bench_session)")
-        }
-        additions = {
-            "manifest_json": "TEXT NOT NULL DEFAULT '{}'",
-            "result_hash": "TEXT",
-            "supersedes": "TEXT",
-            "finished_at": "TEXT",
-            "error": "TEXT",
-        }
-        for name, decl in additions.items():
-            if name not in columns:
-                self._conn.execute(
-                    f"ALTER TABLE bench_session ADD COLUMN {name} {decl}"
-                )
+    @property
+    def _conn(self) -> sqlite3.Connection:
+        return self.db.conn
 
-    def _ensure_detector_columns(self) -> None:
-        columns = {
-            row["name"]
-            for row in self._conn.execute("PRAGMA table_info(detector_report)")
-        }
-        if "owner_id" not in columns:
-            self._conn.execute(
-                "ALTER TABLE detector_report ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''"
-            )
-        self._conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_detector_report_owner "
-            "ON detector_report(owner_id, created_at)"
-        )
-        self._conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_research_task_owner "
-            "ON research_task(owner_id, created_at)"
-        )
+    @property
+    def _lock(self) -> threading.RLock:
+        return self.db.lock
 
-    def _ensure_task_columns(self) -> None:
-        columns = {
-            row["name"] for row in self._conn.execute("PRAGMA table_info(research_task)")
-        }
-        if "owner_id" not in columns:
-            self._conn.execute(
-                "ALTER TABLE research_task ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''"
-            )
-
-    def _ensure_claim_key_columns(self) -> None:
-        columns = {
-            row["name"] for row in self._conn.execute("PRAGMA table_info(anchor)")
-        }
-        if "claim_key_v2" not in columns:
-            self._conn.execute(
-                "ALTER TABLE anchor ADD COLUMN claim_key_v2 TEXT NOT NULL DEFAULT ''"
-            )
-        if "claim_key_version" not in columns:
-            self._conn.execute(
-                "ALTER TABLE anchor ADD COLUMN claim_key_version INTEGER NOT NULL DEFAULT 1"
-            )
-        for row in self._conn.execute(
-            "SELECT id, claim_key_v2, claim_key_version, payload_json FROM anchor"
-        ):
-            try:
-                payload = Anchor.model_validate_json(row["payload_json"])
-            except ValueError:
-                continue
-            if not payload.claim_text:
-                continue
-            resolved = resolve_claim_type(payload.claim_text, payload.claim_type)
-            v2 = claim_key_v2(payload.claim_text, resolved)
-            version = 2
-            if (
-                row["claim_key_v2"] == v2
-                and int(row["claim_key_version"]) == version
-                and payload.claim_type is resolved
-            ):
-                continue
-            payload = payload.model_copy(
-                update={
-                    "claim_key_v2": v2,
-                    "claim_key_version": version,
-                    "claim_type": resolved,
-                }
-            )
-            self._conn.execute(
-                "UPDATE anchor SET claim_key_v2 = ?, claim_key_version = ?, payload_json = ? "
-                "WHERE id = ?",
-                (v2, version, payload.model_dump_json(), row["id"]),
-            )
-        self._conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_anchor_claim_v2 ON anchor(claim_key_v2)"
-        )
-
-    def _refresh_claim_identity(self) -> None:
-        """Recompute v2 identity with the canonical classifier.
-
-        Migration 7 could not know the shared claim type; migration 8 fixes
-        anchors created before the type was persisted in the payload.
-        """
-        rows = self._conn.execute(
-            "SELECT id, payload_json FROM anchor"
-        ).fetchall()
-        for row in rows:
-            try:
-                payload = Anchor.model_validate_json(row["payload_json"])
-            except ValueError:
-                continue
-            if not payload.claim_text:
-                continue
-            resolved = resolve_claim_type(payload.claim_text, payload.claim_type)
-            payload = payload.model_copy(
-                update={
-                    "claim_key_v2": claim_key_v2(payload.claim_text, resolved),
-                    "claim_key_version": 2,
-                    "claim_type": resolved,
-                }
-            )
-            self._conn.execute(
-                "UPDATE anchor SET claim_key_v2 = ?, claim_key_version = ?, "
-                "payload_json = ? WHERE id = ?",
-                (
-                    payload.claim_key_v2,
-                    payload.claim_key_version,
-                    payload.model_dump_json(),
-                    row["id"],
-                ),
-            )
-
-    def _ensure_bench_result_unique(self) -> None:
-        """Deduplicate legacy cells, then enforce one result per task/agent/session."""
-        self._conn.execute(
-            """DELETE FROM bench_result
-               WHERE id NOT IN (
-                   SELECT MIN(id) FROM bench_result
-                   GROUP BY session_id, task_id, agent_id
-               )"""
-        )
-        self._conn.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS uq_bench_result_cell "
-            "ON bench_result(session_id, task_id, agent_id)"
-        )
-
-    def _ensure_bench_owner_column(self) -> None:
-        columns = {
-            row["name"]
-            for row in self._conn.execute("PRAGMA table_info(bench_session)")
-        }
-        if "owner_id" not in columns:
-            self._conn.execute(
-                "ALTER TABLE bench_session ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''"
-            )
-        self._conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_bench_session_owner "
-            "ON bench_session(owner_id, created_at)"
-        )
-
-    def _sync_bench_config_json(self) -> None:
-        """Backfill bench_session.config_json from lifecycle columns."""
-        rows = self._conn.execute(
-            "SELECT id, status, finished_at, error, config_json FROM bench_session"
-        ).fetchall()
-        for row in rows:
-            try:
-                config = json.loads(row["config_json"] or "{}")
-            except ValueError:
-                continue
-            config["status"] = row["status"]
-            config["finished_at"] = row["finished_at"]
-            config["error"] = row["error"]
-            self._conn.execute(
-                "UPDATE bench_session SET config_json = ? WHERE id = ?",
-                (json.dumps(config, ensure_ascii=False), row["id"]),
-            )
-
-    def _ensure_anchor_columns(self) -> None:
-        columns = {
-            row["name"] for row in self._conn.execute("PRAGMA table_info(anchor)")
-        }
-        if "status" not in columns:
-            self._conn.execute(
-                "ALTER TABLE anchor ADD COLUMN status TEXT NOT NULL DEFAULT 'active'"
-            )
-        for row in self._conn.execute("SELECT id, payload_json FROM anchor"):
-            try:
-                status = str(json.loads(row["payload_json"]).get("status") or "active")
-            except (TypeError, ValueError):
-                status = "active"
-            self._conn.execute(
-                "UPDATE anchor SET status = ? WHERE id = ?", (status, row["id"])
-            )
-        self._conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_anchor_status "
-            "ON anchor(status, created_at)"
-        )
-
-    def consistency_report(self) -> list[dict[str, str]]:
-        """Read-only check: payload columns vs JSON payload, plus orphan rows."""
-        issues: list[dict[str, str]] = []
-
-        def add(table: str, row_id: str, field: str, column: str, payload: str) -> None:
-            issues.append(
-                {
-                    "table": table,
-                    "id": row_id,
-                    "field": field,
-                    "column": column,
-                    "payload": payload,
-                }
-            )
-
-        with self._lock:
-            for anchor_row in self._conn.execute("SELECT * FROM anchor"):
-                try:
-                    anchor_payload = Anchor.model_validate_json(anchor_row["payload_json"])
-                except ValueError:
-                    add(
-                        "anchor",
-                        anchor_row["id"],
-                        "payload",
-                        "invalid_json",
-                        anchor_row["payload_json"],
-                    )
-                    continue
-                for field in ("claim_key", "claim_key_v2", "claim_key_version", "url", "status"):
-                    if str(anchor_row[field]) != str(getattr(anchor_payload, field)):
-                        add(
-                            "anchor",
-                            anchor_row["id"],
-                            field,
-                            str(anchor_row[field]),
-                            str(getattr(anchor_payload, field)),
-                        )
-
-            for candidate_row in self._conn.execute("SELECT * FROM anchor_candidate"):
-                try:
-                    candidate_payload = AnchorCandidate.model_validate_json(
-                        candidate_row["payload_json"]
-                    )
-                except ValueError:
-                    add(
-                        "anchor_candidate",
-                        candidate_row["id"],
-                        "payload",
-                        "invalid_json",
-                        candidate_row["payload_json"],
-                    )
-                    continue
-                if str(candidate_row["anchor_id"]) != candidate_payload.anchor_id:
-                    add(
-                        "anchor_candidate",
-                        candidate_row["id"],
-                        "anchor_id",
-                        str(candidate_row["anchor_id"]),
-                        candidate_payload.anchor_id,
-                    )
-                if str(candidate_row["status"]) != candidate_payload.accuracy_status:
-                    add(
-                        "anchor_candidate",
-                        candidate_row["id"],
-                        "status",
-                        str(candidate_row["status"]),
-                        candidate_payload.accuracy_status,
-                    )
-
-            for report_row in self._conn.execute("SELECT * FROM detector_report"):
-                try:
-                    report_payload = json.loads(report_row["payload_json"])
-                except ValueError:
-                    add(
-                        "detector_report",
-                        report_row["id"],
-                        "payload",
-                        "invalid_json",
-                        report_row["payload_json"],
-                    )
-                    continue
-                for field in ("owner_id", "answer", "as_of"):
-                    if str(report_row[field]) != str(report_payload.get(field, "")):
-                        add(
-                            "detector_report",
-                            report_row["id"],
-                            field,
-                            str(report_row[field]),
-                            str(report_payload.get(field, "")),
-                        )
-
-            for session_row in self._conn.execute(
-                "SELECT id, owner_id, status, config_json, manifest_json, "
-                "finished_at, result_hash FROM bench_session"
-            ):
-                try:
-                    session_payload = json.loads(session_row["config_json"] or "{}")
-                except ValueError:
-                    add(
-                        "bench_session",
-                        session_row["id"],
-                        "config_json",
-                        "invalid_json",
-                        session_row["config_json"],
-                    )
-                    continue
-                if not isinstance(session_payload, dict):
-                    add(
-                        "bench_session",
-                        session_row["id"],
-                        "config_json",
-                        "invalid_schema",
-                        session_row["config_json"],
-                    )
-                    continue
-                if str(session_row["status"]) not in {"running", "done", "failed"}:
-                    add(
-                        "bench_session",
-                        session_row["id"],
-                        "status",
-                        "invalid_status",
-                        str(session_row["status"]),
-                    )
-                if str(session_row["owner_id"]) != str(
-                    session_payload.get("owner_id", "")
-                ):
-                    add(
-                        "bench_session",
-                        session_row["id"],
-                        "owner_id",
-                        str(session_row["owner_id"]),
-                        str(session_payload.get("owner_id", "")),
-                    )
-                for field in (
-                    "manifest",
-                    "status",
-                    "finished_at",
-                    "error",
-                    "result_hash",
-                    "supersedes",
-                ):
-                    if field in session_payload:
-                        add(
-                            "bench_session",
-                            session_row["id"],
-                            field,
-                            "unexpected_lifecycle_json",
-                            str(session_payload.get(field)),
-                        )
-                raw_manifest = session_row["manifest_json"]
-                if raw_manifest and raw_manifest != "{}":
-                    try:
-                        manifest_payload = json.loads(raw_manifest)
-                    except ValueError:
-                        add(
-                            "bench_session",
-                            session_row["id"],
-                            "manifest_json",
-                            "invalid_json",
-                            raw_manifest,
-                        )
-                        continue
-                    if not isinstance(manifest_payload, dict):
-                        add(
-                            "bench_session",
-                            session_row["id"],
-                            "manifest_json",
-                            "invalid_schema",
-                            raw_manifest,
-                        )
-                        continue
-                    for field in ("status", "finished_at", "result_hash"):
-                        if field in manifest_payload:
-                            add(
-                                "bench_session",
-                                session_row["id"],
-                                f"manifest.{field}",
-                                "unexpected_lifecycle_json",
-                                str(manifest_payload.get(field)),
-                            )
-                    try:
-                        ExperimentManifest.model_validate(
-                            {
-                                **manifest_payload,
-                                "status": session_row["status"],
-                                "finished_at": session_row["finished_at"],
-                                "result_hash": session_row["result_hash"],
-                            }
-                        )
-                    except ValueError:
-                        add(
-                            "bench_session",
-                            session_row["id"],
-                            "manifest_json",
-                            "invalid_schema",
-                            raw_manifest,
-                        )
-
-            orphan_checks = (
-                ("source", "task_id", "research_task", "id"),
-                ("plan", "task_id", "research_task", "id"),
-                ("run_event", "task_id", "research_task", "id"),
-                ("bench_result", "session_id", "bench_session", "id"),
-                ("anchor_candidate", "anchor_id", "anchor", "id"),
-                ("anchor_observation", "anchor_id", "anchor", "id"),
-                ("anchor_audit", "anchor_id", "anchor", "id"),
-            )
-            for table, column, parent, parent_id in orphan_checks:
-                rows = self._conn.execute(
-                    f"SELECT {column} FROM {table} "
-                    f"WHERE {column} NOT IN (SELECT {parent_id} FROM {parent})"
-                ).fetchall()
-                for orphan_row in rows:
-                    issues.append(
-                        {
-                            "table": table,
-                            "id": str(orphan_row[column]),
-                            "field": f"orphan_{column}",
-                            "column": "",
-                            "payload": "",
-                        }
-                    )
-        return issues
-
-    # ------------------------------------------------------------------ lifecycle
     def close(self) -> None:
-        with self._lock:
-            self._conn.close()
+        self.db.close()
 
     def ping(self) -> None:
-        """Raise when the SQLite connection cannot execute a trivial query."""
-        with self._lock:
-            self._conn.execute("SELECT 1").fetchone()
-
-    # ------------------------------------------------------------------ tasks
-    def create_task(self, task: ResearchTask) -> ResearchTask:
-        with self._lock:
-            self._conn.execute(
-                """INSERT INTO research_task
-                   (id, owner_id, question, as_of, status, created_at, stats_json)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    task.id,
-                    task.owner_id,
-                    task.question,
-                    task.as_of,
-                    str(task.status),
-                    task.created_at,
-                    json.dumps(task.stats, ensure_ascii=False),
-                ),
-            )
-            self._conn.commit()
-        return task
-
-    def get_task(self, task_id: str) -> ResearchTask | None:
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT * FROM research_task WHERE id = ?", (task_id,)
-            ).fetchone()
-        return _row_to_task(row) if row else None
-
-    def list_tasks(
-        self, limit: int = 20, *, owner_id: str | None = None
-    ) -> list[ResearchTask]:
-        query = "SELECT * FROM research_task"
-        vals: list[Any] = []
-        if owner_id is not None:
-            query += " WHERE owner_id = ? OR owner_id = ''"
-            vals.append(owner_id)
-        query += " ORDER BY created_at DESC LIMIT ?"
-        vals.append(limit)
-        with self._lock:
-            rows = self._conn.execute(query, vals).fetchall()
-        return [_row_to_task(r) for r in rows]
-
-    def update_task(
-        self,
-        task_id: str,
-        *,
-        status: TaskStatus | None = None,
-        finished_at: str | None = None,
-        error: str | None = None,
-        report_md: str | None = None,
-        stats: dict[str, Any] | None = None,
-    ) -> None:
-        sets: list[str] = []
-        vals: list[Any] = []
-        if status is not None:
-            sets.append("status = ?")
-            vals.append(str(status))
-        if finished_at is not None:
-            sets.append("finished_at = ?")
-            vals.append(finished_at)
-        if error is not None:
-            sets.append("error = ?")
-            vals.append(error)
-        if report_md is not None:
-            sets.append("report_md = ?")
-            vals.append(report_md)
-        if stats is not None:
-            sets.append("stats_json = ?")
-            vals.append(json.dumps(stats, ensure_ascii=False))
-        if not sets:
-            return
-        vals.append(task_id)
-        with self._lock:
-            self._conn.execute(f"UPDATE research_task SET {', '.join(sets)} WHERE id = ?", vals)
-            self._conn.commit()
-
-    def mark_interrupted_work(self) -> None:
-        """Mark tasks/sessions left running by a previous process as failed."""
-        error = "interrupted by process restart"
-        now = utcnow_iso()
-        with self._lock:
-            self._conn.execute(
-                """UPDATE research_task
-                   SET status = 'failed', finished_at = ?, error = ?
-                   WHERE status IN ('pending', 'running')""",
-                (now, error),
-            )
-            self._conn.execute(
-                "UPDATE bench_session SET status = 'failed', finished_at = ?, "
-                "error = ? WHERE status = 'running'",
-                (now, error),
-            )
-            self._conn.commit()
-
-    # ------------------------------------------------------------------ plan
-    def save_plan(self, task_id: str, plan: Plan) -> None:
-        with self._lock:
-            self._conn.execute(
-                """INSERT INTO plan (task_id, payload_json, created_at) VALUES (?, ?, ?)
-                   ON CONFLICT(task_id) DO UPDATE SET
-                   payload_json = excluded.payload_json, created_at = excluded.created_at""",
-                (task_id, plan.model_dump_json(), utcnow_iso()),
-            )
-            self._conn.commit()
-
-    def get_plan(self, task_id: str) -> Plan | None:
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT payload_json FROM plan WHERE task_id = ?", (task_id,)
-            ).fetchone()
-        return Plan.model_validate_json(row["payload_json"]) if row else None
-
-    # ------------------------------------------------------------------ sources
-    def add_source(self, source: SourceRecord) -> bool:
-        """插入来源；同一 task 下 canonical_url 重复则忽略。返回是否新增。"""
-        with self._lock:
-            cur = self._conn.execute(
-                """INSERT OR IGNORE INTO source
-                   (id, task_id, url, canonical_url, domain, title, published_at,
-                    fetched_at, content_hash, tier, tier_reason, score, snippet)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    source.id,
-                    source.task_id,
-                    source.url,
-                    source.canonical_url,
-                    source.domain,
-                    source.title,
-                    source.published_at,
-                    source.fetched_at,
-                    source.content_hash,
-                    source.tier,
-                    source.tier_reason,
-                    source.score,
-                    source.snippet,
-                ),
-            )
-            self._conn.commit()
-            return cur.rowcount > 0
-
-    def list_sources(self, task_id: str) -> list[SourceRecord]:
-        with self._lock:
-            rows = self._conn.execute(
-                "SELECT * FROM source WHERE task_id = ? ORDER BY tier ASC, score DESC",
-                (task_id,),
-            ).fetchall()
-        return [_row_to_source(r) for r in rows]
-
-    def count_sources(self, task_id: str) -> int:
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT COUNT(*) AS n FROM source WHERE task_id = ?", (task_id,)
-            ).fetchone()
-        return int(row["n"])
-
-    # ------------------------------------------------------------------ events
-    def append_event(self, event: RunEvent) -> RunEvent:
-        with self._lock:
-            cur = self._conn.execute(
-                """INSERT INTO run_event (task_id, stage, type, payload_json, ts)
-                   VALUES (?, ?, ?, ?, ?)""",
-                (
-                    event.task_id,
-                    str(event.stage),
-                    event.type,
-                    json.dumps(event.payload, ensure_ascii=False),
-                    event.ts,
-                ),
-            )
-            self._conn.commit()
-            seq = int(cur.lastrowid or 0)
-        return event.model_copy(update={"seq": seq})
-
-    def list_events(self, task_id: str, after_seq: int = 0, limit: int = 1000) -> list[RunEvent]:
-        with self._lock:
-            rows = self._conn.execute(
-                """SELECT * FROM run_event WHERE task_id = ? AND seq > ?
-                   ORDER BY seq ASC LIMIT ?""",
-                (task_id, after_seq, limit),
-            ).fetchall()
-        return [_row_to_event(r) for r in rows]
-
-    # ------------------------------------------------------------------ cost
-    def add_cost(self, entry: CostEntry) -> CostEntry:
-        with self._lock:
-            cur = self._conn.execute(
-                """INSERT INTO cost_ledger
-                   (task_id, provider, unit, amount, credits, usd_estimate, ts)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    entry.task_id,
-                    entry.provider,
-                    entry.unit,
-                    entry.amount,
-                    entry.credits,
-                    entry.usd_estimate,
-                    entry.ts,
-                ),
-            )
-            self._conn.commit()
-            return entry.model_copy(update={"id": int(cur.lastrowid or 0)})
-
-    def cost_sum(self, task_id: str) -> tuple[float, float]:
-        with self._lock:
-            row = self._conn.execute(
-                """SELECT COALESCE(SUM(credits), 0) AS credits,
-                          COALESCE(SUM(usd_estimate), 0) AS usd
-                   FROM cost_ledger WHERE task_id = ?""",
-                (task_id,),
-            ).fetchone()
-        return float(row["credits"]), float(row["usd"])
-
-    # ------------------------------------------------------------------ detector
-    def save_detector_report(self, report: DetectorReport) -> DetectorReport:
-        with self._lock:
-            self._conn.execute(
-                """INSERT INTO detector_report
-                   (id, owner_id, answer, as_of, payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?)
-                   ON CONFLICT(id) DO UPDATE SET
-                     owner_id = excluded.owner_id,
-                     answer = excluded.answer,
-                     as_of = excluded.as_of,
-                     payload_json = excluded.payload_json""",
-                (
-                    report.id,
-                    report.owner_id,
-                    report.answer,
-                    report.as_of,
-                    report.model_dump_json(),
-                    report.created_at,
-                ),
-            )
-            self._conn.commit()
-        return report
-
-    def list_detector_reports(
-        self, limit: int = 20, *, owner_id: str | None = None
-    ) -> list[DetectorReport]:
-        query = "SELECT payload_json FROM detector_report"
-        vals: list[Any] = []
-        if owner_id is not None:
-            query += " WHERE owner_id = ? OR owner_id = ''"
-            vals.append(owner_id)
-        query += " ORDER BY created_at DESC LIMIT ?"
-        vals.append(limit)
-        with self._lock:
-            rows = self._conn.execute(query, vals).fetchall()
-        return [_parse_detector_report(row["payload_json"]) for row in rows]
-
-    def get_detector_report(self, report_id: str) -> DetectorReport | None:
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT payload_json FROM detector_report WHERE id = ?", (report_id,)
-            ).fetchone()
-        return _parse_detector_report(row["payload_json"]) if row else None
-
-    # ------------------------------------------------------------------ benchmark
-    @staticmethod
-    def _bench_config_payload(session: BenchSession) -> str:
-        return session.model_dump_json(
-            exclude={
-                "manifest",
-                "status",
-                "finished_at",
-                "error",
-                "result_hash",
-                "supersedes",
-            }
-        )
-
-    @staticmethod
-    def _normalize_manifest_payload(manifest: ExperimentManifest) -> str:
-        return manifest.model_dump_json(
-            exclude={"status", "finished_at", "result_hash"}
-        )
-
-    @staticmethod
-    def _normalize_manifest_json(raw: str) -> str:
-        try:
-            payload = json.loads(raw or "{}")
-        except ValueError:
-            return raw
-        if not isinstance(payload, dict):
-            return raw
-        for field in ("status", "finished_at", "result_hash"):
-            payload.pop(field, None)
-        return json.dumps(payload, ensure_ascii=False)
-
-    def _ensure_bench_status_trigger(self) -> None:
-        self._conn.executescript(
-            """
-            CREATE TRIGGER IF NOT EXISTS trg_bench_session_status_insert
-            BEFORE INSERT ON bench_session
-            WHEN NEW.status NOT IN ('running', 'done', 'failed')
-            BEGIN
-                SELECT RAISE(ABORT, 'invalid bench_session status');
-            END;
-            CREATE TRIGGER IF NOT EXISTS trg_bench_session_status_update
-            BEFORE UPDATE OF status ON bench_session
-            WHEN NEW.status NOT IN ('running', 'done', 'failed')
-            BEGIN
-                SELECT RAISE(ABORT, 'invalid bench_session status');
-            END;
-            """
-        )
-
-    def _normalize_bench_session_state(self) -> None:
-        count = int(self._conn.execute(
-            "SELECT COUNT(*) FROM bench_session"
-        ).fetchone()[0])
-        if not count:
-            return
-        if self.path != ":memory:":
-            stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-            backup = Path(self.path).with_name(
-                f"{Path(self.path).name}.pre-v10.{stamp}.{uuid.uuid4().hex[:8]}.bak"
-            )
-            try:
-                self._conn.commit()
-                destination = sqlite3.connect(backup)
-                try:
-                    self._conn.backup(destination)
-                finally:
-                    destination.close()
-            except sqlite3.Error as exc:
-                raise RuntimeError(
-                    f"cannot create pre-migration backup at {backup}"
-                ) from exc
-        rows = self._conn.execute(
-            "SELECT id, config_json, manifest_json FROM bench_session"
-        ).fetchall()
-        for row in rows:
-            config_json = row["config_json"]
-            try:
-                config = json.loads(config_json or "{}")
-            except ValueError:
-                config = None
-            nested_manifest: object = None
-            if isinstance(config, dict):
-                nested_manifest = config.get("manifest")
-                for field in (
-                    "manifest",
-                    "status",
-                    "finished_at",
-                    "error",
-                    "result_hash",
-                    "supersedes",
-                ):
-                    config.pop(field, None)
-                config_json = json.dumps(config, ensure_ascii=False)
-            manifest_json = self._normalize_manifest_json(row["manifest_json"])
-            if (
-                manifest_json in {"", "{}"}
-                and isinstance(nested_manifest, dict)
-            ):
-                manifest_json = self._normalize_manifest_json(
-                    json.dumps(nested_manifest, ensure_ascii=False)
-                )
-            self._conn.execute(
-                "UPDATE bench_session SET config_json = ?, manifest_json = ? "
-                "WHERE id = ?",
-                (config_json, manifest_json, row["id"]),
-            )
-
-    def create_bench_session(self, session: BenchSession) -> BenchSession:
-        with self._lock:
-            self._conn.execute(
-                """INSERT INTO bench_session
-                   (id, owner_id, status, config_json, manifest_json, result_hash,
-                    supersedes, created_at, finished_at, error)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    session.id,
-                    session.owner_id,
-                    session.status,
-                    self._bench_config_payload(session),
-                    (
-                        self._normalize_manifest_payload(session.manifest)
-                        if session.manifest
-                        else "{}"
-                    ),
-                    session.result_hash,
-                    session.supersedes,
-                    session.created_at,
-                    session.finished_at,
-                    session.error,
-                ),
-            )
-            self._conn.commit()
-        return session
-
-    def update_bench_session(
-        self,
-        session_id: str,
-        *,
-        status: str | None = None,
-        finished_at: str | None = None,
-        error: str | None = None,
-        result_hash: str | None = None,
-        manifest_json: str | None = None,
-    ) -> None:
-        """生命周期更新；完成后不可变。配置 hash 不允许被改写。"""
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT status, result_hash, manifest_json, config_json "
-                "FROM bench_session WHERE id = ?",
-                (session_id,),
-            ).fetchone()
-            if row is None:
-                raise KeyError(f"bench session not found: {session_id}")
-            if status is not None and status not in {"running", "done", "failed"}:
-                raise ValueError("invalid bench session status")
-            if str(row["status"]) in {"done", "failed"}:
-                raise ValueError("bench session is immutable after completion")
-            if result_hash is not None and row["result_hash"] is not None:
-                if row["result_hash"] != result_hash:
-                    raise ValueError("result_hash already set and differs")
-                result_hash = None
-            if manifest_json is not None:
-                stored = json.loads(row["manifest_json"] or "{}")
-                incoming = json.loads(manifest_json or "{}")
-                if stored.get("config_hash") != incoming.get("config_hash"):
-                    raise ValueError("manifest config_hash is immutable")
-                manifest_json = self._normalize_manifest_json(manifest_json)
-            sets: list[str] = []
-            vals: list[Any] = []
-            if status is not None:
-                sets.append("status = ?")
-                vals.append(status)
-            if finished_at is not None:
-                sets.append("finished_at = ?")
-                vals.append(finished_at)
-            if error is not None:
-                sets.append("error = ?")
-                vals.append(error)
-            if result_hash is not None:
-                sets.append("result_hash = ?")
-                vals.append(result_hash)
-            if manifest_json is not None:
-                sets.append("manifest_json = ?")
-                vals.append(manifest_json)
-            if not sets:
-                return
-            vals.append(session_id)
-            self._conn.execute(
-                f"UPDATE bench_session SET {', '.join(sets)} WHERE id = ?", vals
-            )
-            self._conn.commit()
-
-    def get_bench_session(self, session_id: str) -> BenchSession | None:
-        with self._lock:
-            row = self._conn.execute(
-                """SELECT id, owner_id, created_at, config_json, manifest_json,
-                          result_hash, supersedes, status, finished_at, error
-                   FROM bench_session WHERE id = ?""",
-                (session_id,),
-            ).fetchone()
-        if row is None:
-            return None
-        try:
-            payload = json.loads(row["config_json"] or "{}")
-        except ValueError as exc:
-            raise ValueError("bench_session config_json is invalid") from exc
-        if not isinstance(payload, dict):
-            raise ValueError("bench_session config_json must be an object")
-        payload.setdefault("id", row["id"])
-        payload.setdefault("created_at", row["created_at"])
-        payload.update(
-            {
-                "owner_id": row["owner_id"],
-                "status": row["status"],
-                "finished_at": row["finished_at"],
-                "error": row["error"],
-                "result_hash": row["result_hash"],
-                "supersedes": row["supersedes"],
-            }
-        )
-        manifest = None
-        if row["manifest_json"] and row["manifest_json"] != "{}":
-            try:
-                manifest_payload = json.loads(row["manifest_json"])
-            except ValueError as exc:
-                raise ValueError("bench_session manifest_json is invalid") from exc
-            if not isinstance(manifest_payload, dict):
-                raise ValueError("bench_session manifest_json must be an object")
-            manifest_payload.update(
-                {
-                    "status": row["status"],
-                    "finished_at": row["finished_at"],
-                    "result_hash": row["result_hash"],
-                }
-            )
-            manifest = ExperimentManifest.model_validate(manifest_payload)
-        payload["manifest"] = manifest
-        return BenchSession.model_validate(payload)
+        self.db.ping()
 
     def add_bench_result(self, session_id: str, result: TaskResult) -> None:
-        with self._lock:
-            self._conn.execute(
-                """INSERT INTO bench_result (session_id, task_id, agent_id, payload_json, score)
-                   VALUES (?, ?, ?, ?, ?)""",
-                (
-                    session_id,
-                    result.task_id,
-                    result.agent_id,
-                    result.model_dump_json(),
-                    result.score,
-                ),
-            )
-            self._conn.commit()
+        return self._benchmarks.add_bench_result(session_id=session_id, result=result)
 
-    def prune_benchmarks(
-        self,
-        *,
-        days: int = 30,
-        dry_run: bool = False,
-        audit_dir: str | Path | None = None,
-        audit_keep_days: int = 30,
-    ) -> dict[str, int | str | bool]:
-        """Delete terminal benchmark sessions older than ``days``.
+    def add_cost(self, entry: CostEntry) -> CostEntry:
+        return self._tasks.add_cost(entry=entry)
 
-        Before deletion, the affected sessions and results are written to an
-        audit JSON file. If the audit write fails, deletion is aborted. Running
-        sessions are never touched.
-        """
-        if days < 0:
-            raise ValueError("days must be >= 0")
-        if audit_keep_days < 0:
-            raise ValueError("audit_keep_days must be >= 0")
-        cutoff = datetime.now(UTC) - timedelta(days=days)
-        cutoff_iso = cutoff.isoformat(timespec="seconds").replace("+00:00", "Z")
+    def add_source(self, source: SourceRecord) -> bool:
+        return self._tasks.add_source(source=source)
 
-        def parse_timestamp(value: object) -> datetime | None:
-            if not value:
-                return None
-            try:
-                parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-            except ValueError:
-                return None
-            return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
-
-        with self._lock:
-            rows = self._conn.execute(
-                "SELECT id, finished_at, created_at FROM bench_session "
-                "WHERE status IN ('done', 'failed')"
-            ).fetchall()
-            ids: list[str] = []
-            skipped = 0
-            for row in rows:
-                timestamp = parse_timestamp(row["finished_at"] or row["created_at"])
-                if timestamp is None:
-                    skipped += 1
-                    continue
-                if timestamp < cutoff:
-                    ids.append(str(row["id"]))
-            result_count = 0
-            audit_file = ""
-            audit_removed = 0
-            target_dir = self._audit_target_dir(audit_dir)
-            if ids:
-                placeholders = ",".join("?" for _ in ids)
-                session_rows = self._conn.execute(
-                    "SELECT id, status, config_json, manifest_json, created_at, "
-                    "finished_at, error FROM bench_session "
-                    f"WHERE id IN ({placeholders})",
-                    tuple(ids),
-                ).fetchall()
-                result_rows = self._conn.execute(
-                    "SELECT session_id, task_id, agent_id, payload_json, score "
-                    f"FROM bench_result WHERE session_id IN ({placeholders})",
-                    tuple(ids),
-                ).fetchall()
-                result_count = len(result_rows)
-                if not dry_run:
-                    audit_path = self._write_prune_audit(
-                        session_rows, result_rows, cutoff_iso, audit_dir
-                    )
-                    if audit_path is not None:
-                        audit_file = audit_path.name
-                    self._conn.execute(
-                        f"DELETE FROM bench_session WHERE id IN ({placeholders})",
-                        tuple(ids),
-                    )
-                    self._conn.commit()
-            if not dry_run:
-                audit_removed = self._cleanup_prune_audits(
-                    target_dir, audit_keep_days
-                )
-        return {
-            "sessions": len(ids),
-            "results": result_count,
-            "skipped": skipped,
-            "cutoff": cutoff_iso,
-            "dry_run": dry_run,
-            "audit_file": audit_file,
-            "audit_removed": audit_removed,
-        }
-
-    def _audit_target_dir(self, audit_dir: str | Path | None) -> Path | None:
-        if self.path == ":memory:" and audit_dir is None:
-            return None
-        if audit_dir is None:
-            return Path(self.path).parent / "benchmark_prune_audit"
-        return Path(audit_dir)
-
-    def _cleanup_prune_audits(self, target_dir: Path | None, keep_days: int) -> int:
-        if target_dir is None or not target_dir.is_dir():
-            return 0
-        cutoff = datetime.now(UTC) - timedelta(days=keep_days)
-        removed = 0
-        for path in target_dir.glob("prune_*.json"):
-            try:
-                modified = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
-            except OSError:
-                continue
-            if modified < cutoff:
-                try:
-                    path.unlink()
-                except OSError:
-                    continue
-                removed += 1
-        return removed
-
-    def _write_prune_audit(
-        self,
-        session_rows: list[sqlite3.Row],
-        result_rows: list[sqlite3.Row],
-        cutoff: str,
-        audit_dir: str | Path | None,
-    ) -> Path | None:
-        target = self._audit_target_dir(audit_dir)
-        if target is None:
-            return None
-        target_dir = target
-        target_dir.mkdir(parents=True, exist_ok=True)
-        path = target_dir / (
-            f"prune_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}_"
-            f"{uuid.uuid4().hex[:8]}.json"
-        )
-        payload = {
-            "created_at": utcnow_iso(),
-            "cutoff": cutoff,
-            "sessions": [dict(row) for row in session_rows],
-            "results": [dict(row) for row in result_rows],
-        }
-        temporary = path.with_suffix(".tmp")
-        temporary.write_text(
-            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
-        temporary.replace(path)
-        return path
-
-    def list_bench_results(self, session_id: str) -> list[TaskResult]:
-        with self._lock:
-            rows = self._conn.execute(
-                """SELECT payload_json FROM bench_result WHERE session_id = ?
-                   ORDER BY id ASC""",
-                (session_id,),
-            ).fetchall()
-        return [TaskResult.model_validate_json(r["payload_json"]) for r in rows]
-
-    # ------------------------------------------------------------------ anchors
-    def save_anchor(self, anchor: Anchor) -> Anchor:
-        with self._lock:
-            self._conn.execute(
-                """INSERT INTO anchor
-                   (id, claim_key, claim_key_v2, claim_key_version, url, status,
-                    payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    anchor.id,
-                    anchor.claim_key,
-                    anchor.claim_key_v2,
-                    anchor.claim_key_version,
-                    anchor.url,
-                    anchor.status,
-                    anchor.model_dump_json(),
-                    anchor.last_verified_at,
-                ),
-            )
-            self._conn.commit()
-        return anchor
-
-    def list_anchors(
-        self, claim_key: str | None = None, *, active_only: bool = True, limit: int = 200
-    ) -> list[Anchor]:
-        query = "SELECT payload_json FROM anchor"
-        clauses: list[str] = []
-        vals: list[Any] = []
-        if claim_key is not None:
-            clauses.append("claim_key = ?")
-            vals.append(claim_key)
-        if active_only:
-            clauses.append("status = 'active'")
-        if clauses:
-            query += " WHERE " + " AND ".join(clauses)
-        query += " ORDER BY created_at DESC LIMIT ?"
-        vals.append(limit)
-        with self._lock:
-            rows = self._conn.execute(query, vals).fetchall()
-        return [Anchor.model_validate_json(row["payload_json"]) for row in rows]
-
-    def get_anchor(self, anchor_id: str) -> Anchor | None:
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT payload_json FROM anchor WHERE id = ?", (anchor_id,)
-            ).fetchone()
-        return Anchor.model_validate_json(row["payload_json"]) if row else None
-
-    def save_anchor_observation(self, observation: AnchorObservation) -> AnchorObservation:
-        with self._lock:
-            self._conn.execute(
-                """INSERT INTO anchor_observation
-                   (id, anchor_id, status, content_changed, observed_hash, payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    observation.id,
-                    observation.anchor_id,
-                    observation.status,
-                    int(observation.content_changed),
-                    observation.observed_hash,
-                    observation.model_dump_json(),
-                    observation.observed_at,
-                ),
-            )
-            self._conn.commit()
-        return observation
-
-    def list_anchor_observations(
-        self, anchor_id: str | None = None, limit: int = 100
-    ) -> list[AnchorObservation]:
-        query = "SELECT payload_json FROM anchor_observation"
-        vals: list[Any] = []
-        if anchor_id is not None:
-            query += " WHERE anchor_id = ?"
-            vals.append(anchor_id)
-        query += " ORDER BY created_at DESC LIMIT ?"
-        vals.append(limit)
-        with self._lock:
-            rows = self._conn.execute(query, vals).fetchall()
-        return [AnchorObservation.model_validate_json(row["payload_json"]) for row in rows]
-
-    def save_anchor_candidate(self, candidate: AnchorCandidate) -> AnchorCandidate:
-        with self._lock:
-            self._conn.execute(
-                """INSERT INTO anchor_candidate (id, anchor_id, status, payload_json, created_at)
-                   VALUES (?, ?, ?, ?, ?)""",
-                (
-                    candidate.id,
-                    candidate.anchor_id,
-                    candidate.accuracy_status,
-                    candidate.model_dump_json(),
-                    candidate.created_at,
-                ),
-            )
-            self._conn.commit()
-        return candidate
-
-    def update_anchor_candidate(self, candidate: AnchorCandidate) -> AnchorCandidate:
-        with self._lock:
-            self._conn.execute(
-                "UPDATE anchor_candidate SET status = ?, payload_json = ? WHERE id = ?",
-                (candidate.accuracy_status, candidate.model_dump_json(), candidate.id),
-            )
-            self._conn.commit()
-        return candidate
+    def append_event(self, event: RunEvent) -> RunEvent:
+        return self._tasks.append_event(event=event)
 
     def apply_candidate_transaction(
-        self,
-        candidate_id: str,
-        new_anchor: Anchor,
-        *,
-        status: str,
-        decided_by: str,
+        self, candidate_id: str, new_anchor: Anchor, status: str, decided_by: str
     ) -> AnchorCandidate | None:
-        """Atomically claim a pending candidate, insert its replacement, supersede the old anchor.
+        return self._candidates.apply_candidate_transaction(
+            candidate_id=candidate_id, new_anchor=new_anchor, status=status, decided_by=decided_by
+        )
 
-        The candidate status check makes concurrent approvals single-winner.
-        """
-        with self._lock:
-            candidate_row = self._conn.execute(
-                "SELECT payload_json FROM anchor_candidate WHERE id = ?",
-                (candidate_id,),
-            ).fetchone()
-            if candidate_row is None:
-                return None
-            candidate = AnchorCandidate.model_validate_json(
-                candidate_row["payload_json"]
-            )
-            if candidate.accuracy_status != "pending":
-                return None
-            anchor_row = self._conn.execute(
-                "SELECT payload_json FROM anchor WHERE id = ?",
-                (new_anchor.supersedes,),
-            ).fetchone()
-            if anchor_row is None:
-                return None
-            old_anchor = Anchor.model_validate_json(anchor_row["payload_json"])
-            if old_anchor.status != "active":
-                return None
-            superseded = old_anchor.model_copy(
-                update={"status": "superseded", "superseded_by": new_anchor.id}
-            )
-            updated = candidate.model_copy(
-                update={
-                    "accuracy_status": status,
-                    "decided_at": utcnow_iso(),
-                    "decided_by": decided_by,
-                    "applied_anchor_id": new_anchor.id,
-                }
-            )
-            try:
-                self._conn.execute(
-                    """INSERT INTO anchor
-                       (id, claim_key, claim_key_v2, claim_key_version, url,
-                        status, payload_json, created_at)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (
-                        new_anchor.id,
-                        new_anchor.claim_key,
-                        new_anchor.claim_key_v2,
-                        new_anchor.claim_key_version,
-                        new_anchor.url,
-                        new_anchor.status,
-                        new_anchor.model_dump_json(),
-                        new_anchor.last_verified_at,
-                    ),
-                )
-                self._conn.execute(
-                    "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
-                    (
-                        superseded.model_dump_json(),
-                        superseded.status,
-                        old_anchor.id,
-                    ),
-                )
-                self._conn.execute(
-                    "UPDATE anchor_candidate SET status = ?, payload_json = ? WHERE id = ?",
-                    (updated.accuracy_status, updated.model_dump_json(), candidate_id),
-                )
-                self._conn.commit()
-            except Exception:
-                self._conn.rollback()
-                raise
-        return updated
+    def consistency_report(
+        self,
+    ) -> list[dict[str, str]]:
+        return self._consistency.consistency_report()
 
-    def get_anchor_candidate(self, candidate_id: str) -> AnchorCandidate | None:
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT payload_json FROM anchor_candidate WHERE id = ?", (candidate_id,)
-            ).fetchone()
-        return AnchorCandidate.model_validate_json(row["payload_json"]) if row else None
+    def cost_sum(self, task_id: str) -> tuple[float, float]:
+        return self._tasks.cost_sum(task_id=task_id)
 
-    def list_anchor_candidates(
-        self, status: str | None = None, limit: int = 100
-    ) -> list[AnchorCandidate]:
-        query = "SELECT payload_json FROM anchor_candidate"
-        vals: list[Any] = []
-        if status:
-            query += " WHERE status = ?"
-            vals.append(status)
-        query += " ORDER BY created_at DESC LIMIT ?"
-        vals.append(limit)
-        with self._lock:
-            rows = self._conn.execute(query, vals).fetchall()
-        return [AnchorCandidate.model_validate_json(row["payload_json"]) for row in rows]
+    def count_sources(self, task_id: str) -> int:
+        return self._tasks.count_sources(task_id=task_id)
+
+    def create_bench_session(self, session: BenchSession) -> BenchSession:
+        return self._benchmarks.create_bench_session(session=session)
+
+    def create_task(self, task: ResearchTask) -> ResearchTask:
+        return self._tasks.create_task(task=task)
 
     def find_anchor_candidate(
         self,
         anchor_id: str,
         normalized_new: str,
         gate_decision: str,
-        *,
         statuses: tuple[str, ...] = ("pending", "rejected"),
     ) -> AnchorCandidate | None:
-        placeholders = ",".join("?" for _ in statuses)
-        query = (
-            "SELECT payload_json FROM anchor_candidate "
-            f"WHERE anchor_id = ? AND status IN ({placeholders}) "
-            "ORDER BY created_at DESC"
+        return self._candidates.find_anchor_candidate(
+            anchor_id=anchor_id,
+            normalized_new=normalized_new,
+            gate_decision=gate_decision,
+            statuses=statuses,
         )
-        with self._lock:
-            rows = self._conn.execute(
-                query, (anchor_id, *statuses)
-            ).fetchall()
-        for row in rows:
-            candidate = AnchorCandidate.model_validate_json(row["payload_json"])
-            if (
-                candidate.normalized_new == normalized_new
-                and candidate.gate_decision == gate_decision
-            ):
-                return candidate
-        return None
+
+    def get_anchor(self, anchor_id: str) -> Anchor | None:
+        return self._anchors.get_anchor(anchor_id=anchor_id)
+
+    def get_anchor_candidate(self, candidate_id: str) -> AnchorCandidate | None:
+        return self._candidates.get_anchor_candidate(candidate_id=candidate_id)
+
+    def get_bench_session(self, session_id: str) -> BenchSession | None:
+        return self._benchmarks.get_bench_session(session_id=session_id)
+
+    def get_detector_report(self, report_id: str) -> DetectorReport | None:
+        return self._detector.get_detector_report(report_id=report_id)
+
+    def get_plan(self, task_id: str) -> Plan | None:
+        return self._tasks.get_plan(task_id=task_id)
+
+    def get_snapshot(self, snapshot_id: str) -> EvidenceSnapshot | None:
+        return self._snapshots.get_snapshot(snapshot_id=snapshot_id)
+
+    def get_task(self, task_id: str) -> ResearchTask | None:
+        return self._tasks.get_task(task_id=task_id)
+
+    def list_anchor_audit(self, limit: int = 100) -> list[dict[str, Any]]:
+        return self._anchors.list_anchor_audit(limit=limit)
+
+    def list_anchor_candidates(
+        self, status: str | None = None, limit: int = 100
+    ) -> list[AnchorCandidate]:
+        return self._candidates.list_anchor_candidates(status=status, limit=limit)
+
+    def list_anchor_observations(
+        self, anchor_id: str | None = None, limit: int = 100
+    ) -> list[AnchorObservation]:
+        return self._anchors.list_anchor_observations(anchor_id=anchor_id, limit=limit)
+
+    def list_anchors(
+        self, claim_key: str | None = None, active_only: bool = True, limit: int = 200
+    ) -> list[Anchor]:
+        return self._anchors.list_anchors(claim_key=claim_key, active_only=active_only, limit=limit)
+
+    def list_bench_results(self, session_id: str) -> list[TaskResult]:
+        return self._benchmarks.list_bench_results(session_id=session_id)
+
+    def list_detector_reports(
+        self, limit: int = 20, owner_id: str | None = None
+    ) -> list[DetectorReport]:
+        return self._detector.list_detector_reports(limit=limit, owner_id=owner_id)
+
+    def list_events(self, task_id: str, after_seq: int = 0, limit: int = 1000) -> list[RunEvent]:
+        return self._tasks.list_events(task_id=task_id, after_seq=after_seq, limit=limit)
+
+    def list_snapshots(self, limit: int = 50) -> list[EvidenceSnapshot]:
+        return self._snapshots.list_snapshots(limit=limit)
+
+    def list_snapshots_for_url(self, url: str, limit: int = 500) -> list[EvidenceSnapshot]:
+        return self._snapshots.list_snapshots_for_url(url=url, limit=limit)
+
+    def list_snapshots_for_url_page(
+        self, url: str, offset: int = 0, limit: int = 500
+    ) -> list[EvidenceSnapshot]:
+        return self._snapshots.list_snapshots_for_url_page(url=url, offset=offset, limit=limit)
+
+    def list_snapshots_page(self, offset: int = 0, limit: int = 500) -> list[EvidenceSnapshot]:
+        return self._snapshots.list_snapshots_page(offset=offset, limit=limit)
+
+    def list_sources(self, task_id: str) -> list[SourceRecord]:
+        return self._tasks.list_sources(task_id=task_id)
+
+    def list_tasks(self, limit: int = 20, owner_id: str | None = None) -> list[ResearchTask]:
+        return self._tasks.list_tasks(limit=limit, owner_id=owner_id)
 
     def mark_candidates_rolled_back(self, applied_anchor_id: str) -> int:
-        count = 0
-        for candidate in self.list_anchor_candidates(limit=1000):
-            if (
-                candidate.applied_anchor_id == applied_anchor_id
-                and candidate.accuracy_status in {"approved", "auto_applied"}
-            ):
-                updated = candidate.model_copy(
-                    update={
-                        "accuracy_status": "rolled_back",
-                        "decided_at": utcnow_iso(),
-                        "decided_by": "rollback",
-                    }
-                )
-                self.update_anchor_candidate(updated)
-                count += 1
-        return count
+        return self._candidates.mark_candidates_rolled_back(applied_anchor_id=applied_anchor_id)
+
+    def mark_interrupted_work(
+        self,
+    ) -> None:
+        return self._maintenance.mark_interrupted_work()
+
+    def prune_benchmarks(
+        self,
+        days: int = 30,
+        dry_run: bool = False,
+        audit_dir: str | Path | None = None,
+        audit_keep_days: int = 30,
+    ) -> dict[str, int | str | bool]:
+        return self._prune.prune_benchmarks(
+            days=days, dry_run=dry_run, audit_dir=audit_dir, audit_keep_days=audit_keep_days
+        )
+
+    def rollback_anchor(self, anchor_id: str) -> tuple[Anchor, Anchor] | None:
+        return self._anchors.rollback_anchor(anchor_id=anchor_id)
+
+    def save_anchor(self, anchor: Anchor) -> Anchor:
+        return self._anchors.save_anchor(anchor=anchor)
 
     def save_anchor_audit(
         self,
         action: str,
         anchor_id: str,
-        *,
         related_id: str = "",
         details: dict[str, Any] | None = None,
     ) -> int:
-        with self._lock:
-            cursor = self._conn.execute(
-                """INSERT INTO anchor_audit
-                   (action, anchor_id, related_id, details_json, created_at)
-                   VALUES (?, ?, ?, ?, ?)""",
-                (
-                    action,
-                    anchor_id,
-                    related_id,
-                    json.dumps(details or {}, ensure_ascii=False),
-                    utcnow_iso(),
-                ),
-            )
-            self._conn.commit()
-        return int(cursor.lastrowid or 0)
-
-    def list_anchor_audit(self, limit: int = 100) -> list[dict[str, Any]]:
-        with self._lock:
-            rows = self._conn.execute(
-                """SELECT id, action, anchor_id, related_id, details_json, created_at
-                   FROM anchor_audit ORDER BY id DESC LIMIT ?""",
-                (limit,),
-            ).fetchall()
-        result = []
-        for row in rows:
-            result.append(
-                {
-                    "id": row["id"],
-                    "action": row["action"],
-                    "anchor_id": row["anchor_id"],
-                    "related_id": row["related_id"],
-                    "details": json.loads(row["details_json"] or "{}"),
-                    "created_at": row["created_at"],
-                }
-            )
-        return result
-
-    def update_anchor(self, anchor: Anchor) -> Anchor:
-        with self._lock:
-            self._conn.execute(
-                "UPDATE anchor SET payload_json = ?, status = ?, claim_key_v2 = ?, "
-            "claim_key_version = ? WHERE id = ?",
-                (
-                    anchor.model_dump_json(),
-                    anchor.status,
-                    anchor.claim_key_v2,
-                    anchor.claim_key_version,
-                    anchor.id,
-                ),
-            )
-            self._conn.commit()
-        return anchor
-
-    def rollback_anchor(self, anchor_id: str) -> tuple[Anchor, Anchor] | None:
-        new_anchor = self.get_anchor(anchor_id)
-        if new_anchor is None or not new_anchor.supersedes:
-            return None
-        old_anchor = self.get_anchor(new_anchor.supersedes)
-        if old_anchor is None:
-            return None
-        rolled_back = new_anchor.model_copy(update={"status": "rolled_back"})
-        restored = old_anchor.model_copy(
-            update={"status": "active", "superseded_by": None}
+        return self._anchors.save_anchor_audit(
+            action=action, anchor_id=anchor_id, related_id=related_id, details=details
         )
-        with self._lock:
-            try:
-                self._conn.execute(
-                    "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
-                    (rolled_back.model_dump_json(), rolled_back.status, rolled_back.id),
-                )
-                self._conn.execute(
-                    "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
-                    (restored.model_dump_json(), restored.status, restored.id),
-                )
-                self._conn.commit()
-            except Exception:
-                self._conn.rollback()
-                raise
-        return restored, rolled_back
+
+    def save_anchor_candidate(self, candidate: AnchorCandidate) -> AnchorCandidate:
+        return self._candidates.save_anchor_candidate(candidate=candidate)
+
+    def save_anchor_observation(self, observation: AnchorObservation) -> AnchorObservation:
+        return self._anchors.save_anchor_observation(observation=observation)
 
     def save_anchor_replacement(self, old_id: str, new_anchor: Anchor) -> bool:
-        """Atomically insert replacement and mark the old anchor superseded."""
-        with self._lock:
-            try:
-                row = self._conn.execute(
-                    "SELECT payload_json FROM anchor WHERE id = ?", (old_id,)
-                ).fetchone()
-                if row is None:
-                    return False
-                old = Anchor.model_validate_json(row["payload_json"])
-                superseded = old.model_copy(
-                    update={"status": "superseded", "superseded_by": new_anchor.id}
-                )
-                self._conn.execute(
-                    """INSERT INTO anchor
-                       (id, claim_key, claim_key_v2, claim_key_version, url, status,
-                        payload_json, created_at)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (
-                        new_anchor.id,
-                        new_anchor.claim_key,
-                        new_anchor.claim_key_v2,
-                        new_anchor.claim_key_version,
-                        new_anchor.url,
-                        new_anchor.status,
-                        new_anchor.model_dump_json(),
-                        new_anchor.last_verified_at,
-                    ),
-                )
-                self._conn.execute(
-                    "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
-                    (superseded.model_dump_json(), superseded.status, old_id),
-                )
-                self._conn.commit()
-            except Exception:
-                self._conn.rollback()
-                raise
-        return True
+        return self._anchors.save_anchor_replacement(old_id=old_id, new_anchor=new_anchor)
+
+    def save_detector_report(self, report: DetectorReport) -> DetectorReport:
+        return self._detector.save_detector_report(report=report)
+
+    def save_plan(self, task_id: str, plan: Plan) -> None:
+        return self._tasks.save_plan(task_id=task_id, plan=plan)
+
+    def save_snapshot(self, snapshot: EvidenceSnapshot) -> EvidenceSnapshot:
+        return self._snapshots.save_snapshot(snapshot=snapshot)
 
     def supersede_anchor(self, old_id: str, new_id: str) -> None:
-        anchor = self.get_anchor(old_id)
-        if anchor is None:
-            return
-        updated = anchor.model_copy(update={"status": "superseded", "superseded_by": new_id})
-        with self._lock:
-            self._conn.execute(
-                "UPDATE anchor SET payload_json = ?, status = ? WHERE id = ?",
-                (updated.model_dump_json(), updated.status, old_id),
-            )
-            self._conn.commit()
+        return self._anchors.supersede_anchor(old_id=old_id, new_id=new_id)
 
-    # ------------------------------------------------------------------ snapshots
-    def save_snapshot(self, snapshot: EvidenceSnapshot) -> EvidenceSnapshot:
-        with self._lock:
-            self._conn.execute(
-                """INSERT INTO snapshot
-                   (id, url, title, origin, content_hash, raw_path, text_path,
-                    published_at, updated_at, fetched_at, tier, notes)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                   ON CONFLICT(id) DO UPDATE SET
-                     content_hash = excluded.content_hash,
-                     text_path = excluded.text_path,
-                     fetched_at = excluded.fetched_at""",
-                (
-                    snapshot.id,
-                    snapshot.url,
-                    snapshot.title,
-                    snapshot.origin,
-                    snapshot.content_hash,
-                    snapshot.raw_path,
-                    snapshot.text_path,
-                    snapshot.published_at,
-                    snapshot.updated_at,
-                    snapshot.fetched_at,
-                    snapshot.tier,
-                    snapshot.notes,
-                ),
-            )
-            self._conn.commit()
-        return snapshot
+    def update_anchor(self, anchor: Anchor) -> Anchor:
+        return self._anchors.update_anchor(anchor=anchor)
 
-    def list_snapshots_page(
-        self, offset: int = 0, limit: int = 500
-    ) -> list[EvidenceSnapshot]:
-        with self._lock:
-            rows = self._conn.execute(
-                "SELECT * FROM snapshot ORDER BY fetched_at DESC LIMIT ? OFFSET ?",
-                (max(1, limit), max(0, offset)),
-            ).fetchall()
-        return [_row_to_snapshot(row) for row in rows]
+    def update_anchor_candidate(self, candidate: AnchorCandidate) -> AnchorCandidate:
+        return self._candidates.update_anchor_candidate(candidate=candidate)
 
-    def list_snapshots_for_url(
-        self, url: str, limit: int = 500
-    ) -> list[EvidenceSnapshot]:
-        return self.list_snapshots_for_url_page(url, offset=0, limit=limit)
+    def update_bench_session(
+        self,
+        session_id: str,
+        status: str | None = None,
+        finished_at: str | None = None,
+        error: str | None = None,
+        result_hash: str | None = None,
+        manifest_json: str | None = None,
+    ) -> None:
+        return self._benchmarks.update_bench_session(
+            session_id=session_id,
+            status=status,
+            finished_at=finished_at,
+            error=error,
+            result_hash=result_hash,
+            manifest_json=manifest_json,
+        )
 
-    def list_snapshots_for_url_page(
-        self, url: str, offset: int = 0, limit: int = 500
-    ) -> list[EvidenceSnapshot]:
-        with self._lock:
-            rows = self._conn.execute(
-                """SELECT * FROM snapshot WHERE url = ?
-                   ORDER BY fetched_at DESC LIMIT ? OFFSET ?""",
-                (url, max(1, limit), max(0, offset)),
-            ).fetchall()
-        return [_row_to_snapshot(row) for row in rows]
-
-    def get_snapshot(self, snapshot_id: str) -> EvidenceSnapshot | None:
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT * FROM snapshot WHERE id = ?", (snapshot_id,)
-            ).fetchone()
-        if row is None:
-            return None
-        return _row_to_snapshot(row)
-
-    def list_snapshots(self, limit: int = 50) -> list[EvidenceSnapshot]:
-        with self._lock:
-            rows = self._conn.execute(
-                "SELECT * FROM snapshot ORDER BY fetched_at DESC LIMIT ?", (limit,)
-            ).fetchall()
-        return [_row_to_snapshot(row) for row in rows]
-
-
-# ---------------------------------------------------------------------- row mappers
-def _row_to_task(row: sqlite3.Row) -> ResearchTask:
-    return ResearchTask(
-        id=row["id"],
-        owner_id=row["owner_id"] or "",
-        question=row["question"],
-        as_of=row["as_of"],
-        status=TaskStatus(row["status"]),
-        created_at=row["created_at"],
-        finished_at=row["finished_at"],
-        error=row["error"],
-        report_md=row["report_md"],
-        stats=json.loads(row["stats_json"] or "{}"),
-    )
-
-
-def _row_to_source(row: sqlite3.Row) -> SourceRecord:
-    return SourceRecord(
-        id=row["id"],
-        task_id=row["task_id"],
-        url=row["url"],
-        canonical_url=row["canonical_url"],
-        domain=row["domain"],
-        title=row["title"],
-        published_at=row["published_at"],
-        fetched_at=row["fetched_at"],
-        content_hash=row["content_hash"],
-        tier=row["tier"],
-        tier_reason=row["tier_reason"],
-        score=row["score"],
-        snippet=row["snippet"],
-    )
-
-
-def _row_to_event(row: sqlite3.Row) -> RunEvent:
-    return RunEvent(
-        seq=row["seq"],
-        task_id=row["task_id"],
-        stage=row["stage"],
-        type=row["type"],
-        payload=json.loads(row["payload_json"] or "{}"),
-        ts=row["ts"],
-    )
-
-
-def _row_to_snapshot(row: sqlite3.Row) -> EvidenceSnapshot:
-    return EvidenceSnapshot(
-        id=row["id"],
-        url=row["url"],
-        title=row["title"],
-        origin=row["origin"],
-        content_hash=row["content_hash"],
-        raw_path=row["raw_path"],
-        text_path=row["text_path"],
-        published_at=row["published_at"],
-        updated_at=row["updated_at"],
-        fetched_at=row["fetched_at"],
-        tier=row["tier"],
-        notes=row["notes"],
-    )
-
-
-def _parse_detector_report(payload: str) -> DetectorReport:
-    """兼容旧报告：uncertain/unverifiable → insufficient。"""
-    data = json.loads(payload)
-    for verdict in data.get("verdicts", []):
-        status = str(verdict.get("status") or "")
-        if status in {"uncertain", "unverifiable"}:
-            verdict["status"] = "insufficient"
-    return DetectorReport.model_validate(data)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def update_task(
+        self,
+        task_id: str,
+        status: TaskStatus | None = None,
+        finished_at: str | None = None,
+        error: str | None = None,
+        report_md: str | None = None,
+        stats: dict[str, Any] | None = None,
+    ) -> None:
+        return self._tasks.update_task(
+            task_id=task_id,
+            status=status,
+            finished_at=finished_at,
+            error=error,
+            report_md=report_md,
+            stats=stats,
+        )

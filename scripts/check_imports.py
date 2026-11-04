@@ -6,11 +6,16 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "src" / "yai_scout"
-LAYERS = {"api", "benchmark", "detector", "domain", "pipeline", "retrieval", "sources"}
+LAYERS = {
+    "api", "benchmark", "detector", "domain", "pipeline", "retrieval",
+    "sources", "storage", "store",
+}
 RULES: dict[str, set[str]] = {
     "domain": set(),
+    "storage": {"domain"},
+    "store": {"domain", "storage"},
     "retrieval": {"domain"},
-    "sources": {"domain", "retrieval"},
+    "sources": {"domain", "retrieval", "store"},
     "detector": {"domain", "retrieval", "sources", "store", "llm"},
     "pipeline": {"domain", "retrieval", "sources", "store", "llm"},
     "benchmark": {"domain", "retrieval", "detector", "pipeline", "store", "llm"},
@@ -23,7 +28,7 @@ def _layer(path: Path) -> str | None:
         relative = path.relative_to(ROOT)
     except ValueError:
         return None
-    return relative.parts[0] if relative.parts else None
+    return relative.parts[0].removesuffix(".py") if relative.parts else None
 
 
 def _targets(tree: ast.AST, current: str) -> set[str]:

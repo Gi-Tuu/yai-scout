@@ -16,6 +16,22 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.5.0] - 2026-11-04
+
+### Changed
+
+- Split the 1865-line `store.py` into a `Store` facade plus `storage/`
+  repositories, migrations, schema, row mappers, consistency and maintenance.
+  Public `Store` method signatures and storage semantics are unchanged.
+- Added a dependency boundary for `storage`: it may depend on `domain` and
+  storage internals only.
+
+### Tests
+
+- Added an AST boundary test preventing `storage` from importing `store` or
+  upper layers.
+- Full suite remains green.
+
 ## [0.4.5] - 2026-11-04
 
 ### Added
