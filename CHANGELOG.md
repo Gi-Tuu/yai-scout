@@ -16,6 +16,13 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.6.1] - 2026-11-04
+
+### Tests
+
+- Added an AST boundary test ensuring `detector/relation` does not import
+  `verify`, `store` or `api`.
+
 ## [0.6.0] - 2026-11-04
 
 ### Changed
