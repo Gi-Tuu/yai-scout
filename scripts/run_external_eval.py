@@ -42,8 +42,25 @@ Use stale only when the source states a different current value. Do not use
 outside knowledge."""
 
 
-def _rows(path: Path) -> list[dict]:
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+def _rows(path: Path, labels: Path | None = None) -> list[dict]:
+    rows = [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line
+    ]
+    if labels is None:
+        return rows
+    label_map = {
+        row["id"]: row
+        for row in (
+            json.loads(line)
+            for line in labels.read_text(encoding="utf-8").splitlines()
+            if line
+        )
+    }
+    for row in rows:
+        row.update(label_map.get(row["id"], {}))
+    return rows
 
 
 def _latest_value(row: dict) -> str | None:
@@ -97,8 +114,8 @@ def predict(row: dict, method: str) -> dict:
     evidence = _evidence(row, claim)
     base = {
         "id": row["id"],
-        "expected": row["gold_status"],
-        "gold_current_value": row["gold_current_value"],
+        "expected": row.get("gold_status"),
+        "gold_current_value": row.get("gold_current_value"),
         "current_value": _latest_value(row),
     }
     if method == "always_fresh":
@@ -130,8 +147,8 @@ async def predict_llm(row: dict, client: LLMClient) -> dict:
     snapshot = (EXTERNAL / row["evidence"][0]["snapshot_path"]).read_text(encoding="utf-8")
     base = {
         "id": row["id"],
-        "expected": row["gold_status"],
-        "gold_current_value": row["gold_current_value"],
+        "expected": row.get("gold_status"),
+        "gold_current_value": row.get("gold_current_value"),
         "current_value": _latest_value(row),
     }
     payload = await client.chat_json(
@@ -155,8 +172,8 @@ async def predict_retrieval(row: dict, client: TavilyClient) -> dict:
     )
     base = {
         "id": row["id"],
-        "expected": row["gold_status"],
-        "gold_current_value": row["gold_current_value"],
+        "expected": row.get("gold_status"),
+        "gold_current_value": row.get("gold_current_value"),
         "current_value": None,
         "credits": credits,
     }
@@ -172,7 +189,7 @@ async def predict_retrieval(row: dict, client: TavilyClient) -> dict:
 
 
 async def main_async(args: argparse.Namespace) -> int:
-    rows = _rows(Path(args.data))
+    rows = _rows(Path(args.data), Path(args.labels) if args.labels else None)
     if args.method == "llm_only":
         settings = Settings()
         connection = settings.llm_connection()
@@ -221,6 +238,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", default=str(EXTERNAL / "dev.jsonl"))
     parser.add_argument("--method", required=True, choices=METHODS)
+    parser.add_argument("--labels", default="")
     parser.add_argument("--out", default="")
     args = parser.parse_args(argv)
     return asyncio.run(main_async(args))

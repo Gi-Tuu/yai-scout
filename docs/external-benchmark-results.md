@@ -83,3 +83,27 @@ Test remains blocked on two independent annotators and kappa >= 0.7.
 .\.venv\Scripts\python.exe scripts\score_external_eval.py `
   --input benchmarks\external_v1\results\dev_llm_only.json
 ```
+
+## Sealed mechanical test candidate
+
+A 182-case test candidate set now exists:
+
+`	ext
+benchmarks/external_v1/test.jsonl          no gold labels
+benchmarks/external_v1/sealed/labels_test.jsonl  git-ignored
+`
+
+This is **not** an independent test: labels are mechanically derived from PyPI
+timestamps, and no two independent annotators have produced a kappa. It is a
+holdout candidate only.
+
+Mechanical result:
+
+`	ext
+yais_full accuracy = 1.000
+test hash           = 8f11b56348699c90c3986788d77dbdfa535c998ea381b875489b3f5aed73875e
+labels hash         = 0c0d827d7016b73528918c687efd0165ebf5ee4fb1635d7329f5fc2f343eeec2
+`
+
+Do not cite this as external test evidence.
+\n
