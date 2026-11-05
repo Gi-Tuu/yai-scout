@@ -16,6 +16,16 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.13] - 2026-11-05
+
+### Fixed
+
+- Version evidence now groups GitHub release URLs by owner/repo rather than by
+  host; different repositories on github.com are not merged.
+- Same-timestamp support/contradict evidence is retained together, making
+  CONFLICTED independent of input order.
+- Non-GitHub version evidence uses the full URL as a conservative source key.
+
 ## [0.7.12] - 2026-11-05
 
 ### Fixed

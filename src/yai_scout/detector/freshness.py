@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
+from urllib.parse import urlsplit
 
 from ..domain.models import (
     Claim,
@@ -129,21 +130,34 @@ def score_claim(
             # the evidence, not the fetch date.
             eligible.append((item, state))
 
-    # Version evidence: keep the newest release per source, not one global
-    # newest page. Cross-source conflicts remain visible.
+    # Version evidence: keep the newest release per comparable source. GitHub
+    # repos are keyed by owner/repo, not by host; other pages are keyed by URL,
+    # so unrelated pages on a shared domain do not erase a conflict.
     if claim.type is ClaimType.VERSION and eligible:
-        newest_by_source: dict[str, tuple[datetime | None, EvidenceRef, str]] = {}
+        newest_by_source: dict[
+            str, tuple[datetime | None, list[tuple[EvidenceRef, str]]]
+        ] = {}
         for item, state in eligible:
             if item.relation not in {"supports", "contradicts"}:
                 continue
-            key = item.domain or item.url
+            key = _version_source_key(item)
             when = evidence_published(item)
             current = newest_by_source.get(key)
-            if current is None or when is not None and (current[0] is None or when > current[0]):
-                newest_by_source[key] = (when, item, state)
+            if current is None:
+                newest_by_source[key] = (when, [(item, state)])
+            elif when is None:
+                if current[0] is None:
+                    current[1].append((item, state))
+            elif current[0] is None or when > current[0]:
+                newest_by_source[key] = (when, [(item, state)])
+            elif when == current[0]:
+                current[1].append((item, state))
         eligible = [
-            (item, state) for _when, item, state in newest_by_source.values()
+            entry
+            for _when, entries in newest_by_source.values()
+            for entry in entries
         ]
+
 
     effective = [
         item
@@ -247,6 +261,20 @@ def score_claim(
         },
         evidence=usable_items[:5],
     )
+
+
+def _version_source_key(item: EvidenceRef) -> str:
+    """A conservative identity for comparable version-release evidence."""
+    parsed = urlsplit(item.url)
+    host = (parsed.hostname or "").lower()
+    if host in {"github.com", "www.github.com"}:
+        parts = [part for part in parsed.path.split("/") if part]
+        if len(parts) >= 2:
+            return (
+                f"github:{parts[0].lower()}/"
+                f"{parts[1].removesuffix('.git').lower()}"
+            )
+    return f"url:{item.url}"
 
 
 def _is_stable_release_claim(claim: Claim) -> bool:

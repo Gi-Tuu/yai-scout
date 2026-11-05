@@ -65,6 +65,14 @@
 
 > 规则 4 与规则 2 的优先级：先检查"是否存在 auth contradict → STALE"；若同时有 auth support，升级为 CONFLICTED（更诚实）。
 
+### 4.1 版本证据的来源分组（2026-11-05）
+
+- GitHub release URL 以 `owner/repo` 作为来源键，而不是只按 `github.com`；
+- 非 GitHub 页面按完整 URL 作为保守来源键；
+- 同一来源保留最新时间；同一时间保留所有 support/contradict，结果不依赖输入顺序；
+- 不同来源的权威冲突保留，输出 `CONFLICTED`，不能被较新来源整体覆盖；
+- 无法证明同主体、同产品、同发布序列时，不做跨来源替换。
+
 ## 5. Freshness Score（连续分，仅用于排序/展示）
 
 ```text
