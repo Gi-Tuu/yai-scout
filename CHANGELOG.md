@@ -16,6 +16,17 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.12] - 2026-11-05
+
+### Fixed
+
+- Live requests without `as_of` freeze the actual UTC request timestamp instead
+  of using a date that includes future same-day evidence.
+- Replay search and anchor retrieval use the same end-of-day UTC semantics for
+  date-only `as_of` as scoring.
+- Version evidence selects the newest release per source; cross-source
+  authoritative support/contradiction is retained and can yield CONFLICTED.
+
 ## [0.7.11] - 2026-11-05
 
 ### Fixed

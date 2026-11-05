@@ -30,11 +30,15 @@ LIVE_TIMEOUT_S = 15.0
 def _parse(value: str | None) -> datetime | None:
     if not value:
         return None
+    raw = value.strip()
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
     except ValueError:
         return None
-    return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
+    parsed = parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
+    if len(raw) == 10:
+        return parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return parsed
 
 
 def host_allowed(url: str, allowlist: set[str]) -> bool:

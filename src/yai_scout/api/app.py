@@ -146,7 +146,7 @@ def create_app(
 
     def validated_as_of(value: str | None) -> str:
         if not value:
-            return datetime.now(UTC).date().isoformat()
+            return datetime.now(UTC).isoformat(timespec="seconds")
         try:
             datetime.fromisoformat(value.replace("Z", "+00:00"))
         except ValueError as exc:

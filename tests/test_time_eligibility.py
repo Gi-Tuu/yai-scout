@@ -99,3 +99,19 @@ async def test_official_history_snapshot_still_replays(tmp_path: Path) -> None:
     results, _ = await searcher.search("zeta alpha", max_results=4)
     assert results
     store.close()
+
+
+async def test_replay_date_includes_same_day_after_midnight(tmp_path: Path) -> None:
+    store = Store(":memory:")
+    save_snapshot(
+        store,
+        url="https://example.com/official",
+        text="zeta alpha release",
+        origin="official_history",
+        snapshots_dir=tmp_path,
+        published_at="2026-11-05T12:00:00Z",
+    )
+    searcher = SnapshotSearcher(store, target_time="2026-11-05")
+    results, _ = await searcher.search("zeta alpha", max_results=4)
+    assert results
+    store.close()

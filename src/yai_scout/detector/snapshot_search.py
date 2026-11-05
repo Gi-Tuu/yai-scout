@@ -48,11 +48,15 @@ def _tokens(text: str) -> set[str]:
 def _parse_time(value: str | None) -> datetime | None:
     if not value:
         return None
+    raw = value.strip()
     try:
-        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
     except ValueError:
         return None
-    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
+    dt = dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
+    if len(raw) == 10:
+        return dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return dt
 
 
 class SnapshotSearcher:

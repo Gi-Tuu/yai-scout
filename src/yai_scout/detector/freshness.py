@@ -129,22 +129,21 @@ def score_claim(
             # the evidence, not the fetch date.
             eligible.append((item, state))
 
-    # 版本类 claim：只比较"最新一次发布"，但无判定力的 mentions 不能把
-    # 仍在窗口内的权威 support/contradict 淘汰掉。
+    # Version evidence: keep the newest release per source, not one global
+    # newest page. Cross-source conflicts remain visible.
     if claim.type is ClaimType.VERSION and eligible:
-        dated = [
-            (evidence_published(item), item, state)
-            for item, state in eligible
-            if item.relation in {"supports", "contradicts"}
+        newest_by_source: dict[str, tuple[datetime | None, EvidenceRef, str]] = {}
+        for item, state in eligible:
+            if item.relation not in {"supports", "contradicts"}:
+                continue
+            key = item.domain or item.url
+            when = evidence_published(item)
+            current = newest_by_source.get(key)
+            if current is None or when is not None and (current[0] is None or when > current[0]):
+                newest_by_source[key] = (when, item, state)
+        eligible = [
+            (item, state) for _when, item, state in newest_by_source.values()
         ]
-        known = [when for when, _, _ in dated if when is not None]
-        if known:
-            newest = max(known)
-            eligible = [
-                (item, state)
-                for when, item, state in dated
-                if when is not None and when == newest
-            ]
 
     effective = [
         item

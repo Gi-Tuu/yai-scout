@@ -81,5 +81,6 @@ def test_live_mode_uses_current_date_when_as_of_absent():
         )
         assert response.status_code == 200
         report = response.json()
-        assert report["as_of"] == datetime.now(UTC).date().isoformat()
+        assert report["as_of"].startswith(datetime.now(UTC).date().isoformat())
+        assert "T" in report["as_of"]
     store.close()
