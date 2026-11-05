@@ -270,10 +270,12 @@ def _version_source_key(item: EvidenceRef) -> str:
     if host in {"github.com", "www.github.com"}:
         parts = [part for part in parsed.path.split("/") if part]
         if len(parts) >= 2:
-            return (
-                f"github:{parts[0].lower()}/"
-                f"{parts[1].removesuffix('.git').lower()}"
-            )
+            repo = f"{parts[0].lower()}/{parts[1].removesuffix('.git').lower()}"
+            # Only release pages are a comparable release sequence. Issues,
+            # discussions and README pages stay URL-keyed and cannot displace
+            # a release-page contradiction merely because the repo matches.
+            if len(parts) >= 3 and parts[2] == "releases":
+                return f"github-release:{repo}"
     return f"url:{item.url}"
 
 

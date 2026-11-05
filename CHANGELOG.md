@@ -16,6 +16,14 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.14] - 2026-11-05
+
+### Fixed
+
+- Only GitHub release pages are grouped by owner/repo. Issues, discussions and
+  README pages are URL-keyed, so a same-repo issue cannot replace a release-page
+  contradiction.
+
 ## [0.7.13] - 2026-11-05
 
 ### Fixed
