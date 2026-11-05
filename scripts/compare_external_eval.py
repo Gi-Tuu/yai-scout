@@ -86,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--protocol", required=True)
     parser.add_argument("--results", required=True)
     parser.add_argument("--split", default="dev")
+    parser.add_argument("--status", default="")
     parser.add_argument("--out", default="")
     args = parser.parse_args(argv)
     protocol_path = Path(args.protocol)
@@ -126,6 +127,12 @@ def main(argv: list[str] | None = None) -> int:
         "protocol_hash": "sha256:"
         + hashlib.sha256(protocol_path.read_bytes()).hexdigest(),
         "split": args.split,
+        "label_status": args.status or protocol.get("test_status", {}).get(
+            "label_status", "unknown"
+        ),
+        "independent_labels": bool(
+            protocol.get("test_status", {}).get("independent_labels", False)
+        ),
         "primary": {
             "baseline": primary["baseline"],
             **delta,

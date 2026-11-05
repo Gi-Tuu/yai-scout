@@ -112,7 +112,7 @@ flowchart LR
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
 | Benchmark | 40 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
 | Verdict evaluation | claim-level Freshness status suite; no Tavily/LLM; precision/recall/confusion |
-| Quality gates | 349 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Quality gates | 352 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Honest limits
 
@@ -130,7 +130,7 @@ Bugs and questions: <https://github.com/Gi-Tuu/yai-scout/issues>
 ## Documentation
 
 - [Bifrost integration](docs/bifrost-integration.md) · [Bifrost verification](docs/bifrost-verification.md)
-- [Benchmark reliability](docs/benchmark-reliability.md) · [Benchmark retention](docs/benchmark-retention.md) · [Benchmark session state](docs/benchmark-session-state.md) · [Performance smoke](docs/performance-smoke.md) · [Staging load test](docs/staging-load-test.md) · [Storage layout](docs/storage-layout.md) · [Verify/relation layout](docs/verify-relation-layout.md) · [External benchmark](docs/external-benchmark.md) · [Freshness verdict evaluation](docs/freshness-verdict-eval.md)
+- [Benchmark reliability](docs/benchmark-reliability.md) · [Benchmark retention](docs/benchmark-retention.md) · [Benchmark session state](docs/benchmark-session-state.md) · [Performance smoke](docs/performance-smoke.md) · [Staging load test](docs/staging-load-test.md) · [Storage layout](docs/storage-layout.md) · [Verify/relation layout](docs/verify-relation-layout.md) · [External benchmark](docs/external-benchmark.md) · [External v2](docs/external-benchmark-v2.md) · [Freshness verdict evaluation](docs/freshness-verdict-eval.md)
 - [Claim key versioning](docs/claim-key-versioning.md)
 - [Full-page fetch](docs/full-page-fetch.md)
 - [Freshness scoring](docs/spec-freshness-scoring.md) · [Temporal replay](docs/spec-temporal-replay.md)

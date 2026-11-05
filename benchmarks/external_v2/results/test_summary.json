@@ -1,0 +1,32 @@
+{
+  "protocol_hash": "sha256:c597af3e091ec8513f32dd8c3cab51c563499c51eabac21ae96bd2c3e45e0bf9",
+  "split": "test",
+  "label_status": "mechanical_holdout",
+  "independent_labels": false,
+  "primary": {
+    "baseline": "citation_only",
+    "macro_f1_delta": 0.5,
+    "stale_recall_delta": 1.0,
+    "false_fresh_delta": 0.0,
+    "full_false_fresh": 0.0,
+    "full_stable_false_stale": 0.0,
+    "delta_ci_lower": {
+      "macro_f1": 0.5,
+      "stale_recall": 1.0
+    },
+    "threshold_met": true
+  },
+  "secondary": {
+    "recency_only": {
+      "macro_f1_delta": 0.666667,
+      "stale_recall_delta": 1.0,
+      "note": "exploratory; not the pre-registered primary comparison"
+    },
+    "always_fresh": {
+      "macro_f1_delta": 0.666667,
+      "stale_recall_delta": 1.0,
+      "note": "exploratory; not the pre-registered primary comparison"
+    }
+  },
+  "result_hash": "sha256:36f32f3f1d1e22d6d1ad2a2ddbc4299f3e85ec80e01b697e7435892688fac78b"
+}

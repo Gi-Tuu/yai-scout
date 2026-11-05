@@ -78,7 +78,7 @@ advantage. The result is retained because it is an honest secondary control.
 
 ```text
 No independent human test labels
-No sealed test split
+No independent test split
 No kappa
 No general accuracy / leaderboard claim
 ```
@@ -94,13 +94,13 @@ Test remains blocked on two independent annotators and kappa >= 0.7.
   --input benchmarks\external_v1\results\dev_llm_only.json
 ```
 
-## Sealed mechanical test candidate
+## Mechanical holdout candidate
 
 A 182-case test candidate set now exists:
 
 `	ext
 benchmarks/external_v1/test.jsonl          no gold labels
-benchmarks/external_v1/sealed/labels_test.jsonl  git-ignored
+benchmarks/external_v1/mechanical_holdout/labels_test.jsonl  git-ignored
 `
 
 This is **not** an independent test: labels are mechanically derived from PyPI

@@ -1,0 +1,42 @@
+{
+  "version": "external-v2",
+  "status": "L1_mechanical_holdout",
+  "data_reference": "benchmarks/external_v1",
+  "primary": {
+    "baseline": "citation_only",
+    "thresholds": {
+      "macro_f1_delta": 0.1,
+      "stale_recall_delta": 0.1,
+      "delta_ci_lower_gt_zero": true,
+      "false_fresh_max": 0.1,
+      "stable_false_stale_max": 0.05
+    }
+  },
+  "secondary": [
+    "llm_only",
+    "recency_only",
+    "retrieval_only",
+    "always_fresh"
+  ],
+  "ablations": [
+    "full_minus_authority_gate",
+    "full_minus_temporal_window",
+    "full_minus_relation_rules",
+    "full_minus_anchors",
+    "full_minus_llm_relation"
+  ],
+  "labeling": {
+    "annotators": 2,
+    "kappa_min": 0.7,
+    "adjudication": true,
+    "blind_to_system": true,
+    "status": "not_started"
+  },
+  "test_status": {
+    "label_status": "mechanical_holdout",
+    "independent_labels": false,
+    "labelers": [],
+    "kappa": null,
+    "test_results": null
+  }
+}

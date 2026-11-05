@@ -15,7 +15,7 @@ Build:
 .\.venv\Scripts\python.exe scripts\build_external_set.py --pairs 8
 ```
 
-This is a **dev** set, not the sealed test set. Test labels require two
+This is a **dev** set, not an independent test set. Test labels require two
 independent annotators; see `docs/external-benchmark.md`.
 
 No author project is included. Each snapshot is the source of truth used by

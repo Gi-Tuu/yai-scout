@@ -50,5 +50,5 @@ adjudication_disagreements.json
 backups/
 
 
-# Sealed external test labels
-benchmarks/external_v1/sealed/
+# Mechanical holdout labels (not independent test)
+benchmarks/external_v1/mechanical_holdout/

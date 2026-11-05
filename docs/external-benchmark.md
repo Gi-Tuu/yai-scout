@@ -48,7 +48,7 @@ source_families=5 PyPI projects
 
 No YAI Agent Core cases. No author-created snapshots.
 
-Test candidate: 182 cases, mechanically labelled, sealed and git-ignored.
+Test candidate: 182 cases, mechanically labelled, in a git-ignored mechanical holdout.
 Independent test: not available; blocked on two annotators and kappa >= 0.7.
 
 ## 3. Baselines
@@ -125,7 +125,7 @@ Test labels require:
 - codebook in this document;
 - independent labeling, then adjudication;
 - Cohen's kappa or Krippendorff's alpha >= 0.7;
-- labels sealed and hash recorded before the blind run.
+- labels kept out of the public repo and hash recorded before any blind run.
 
 This repository currently has **dev-only** mechanical labels, not independent
 human test labels.

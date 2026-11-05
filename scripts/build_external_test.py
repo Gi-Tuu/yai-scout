@@ -1,7 +1,8 @@
-"""Build mechanically-labelled test candidates and seal labels locally.
+"""Build the mechanically-labelled holdout candidate.
 
 The test claim/evidence files are public. Gold labels are written to an ignored
-`sealed/` directory and must not be opened until a blind run is finished.
+`mechanical_holdout/` directory. These labels are not independent human labels
+and must not be described as a blind external test.
 """
 from __future__ import annotations
 
@@ -49,9 +50,9 @@ def main() -> int:
         "\n".join(json.dumps(row, ensure_ascii=False) for row in test_rows) + "\n",
         encoding="utf-8",
     )
-    sealed = OUT / "sealed"
-    sealed.mkdir(parents=True, exist_ok=True)
-    labels_path = sealed / "labels_test.jsonl"
+    holdout = OUT / "mechanical_holdout"
+    holdout.mkdir(parents=True, exist_ok=True)
+    labels_path = holdout / "labels_test.jsonl"
     labels_path.write_text(
         "\n".join(json.dumps(row, ensure_ascii=False) for row in label_rows) + "\n",
         encoding="utf-8",
@@ -63,7 +64,12 @@ def main() -> int:
         "source_families": sorted({row["source_family"] for row in test_rows}),
         "test_hash": hashlib.sha256(test_path.read_bytes()).hexdigest(),
         "labels_hash": hashlib.sha256(labels_path.read_bytes()).hexdigest(),
-        "labels_location": "sealed/labels_test.jsonl (git-ignored)",
+        "labels_location": "mechanical_holdout/labels_test.jsonl (git-ignored)",
+        "labels_status": "mechanical_holdout",
+        "independent_labels": False,
+        "labelers": [],
+        "kappa": None,
+        "test_results": None,
     }
     (OUT / "test_manifest.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

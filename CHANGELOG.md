@@ -16,6 +16,18 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.5] - 2026-11-05
+
+### External benchmark
+
+- Added `external-v2` protocol and L1 mechanical-holdout tooling.
+- Renamed the old sealed directory to `mechanical_holdout` and stopped calling
+  it a blind/independent test.
+- Added `check_external_labels.py` for independent labeler A/B validation and
+  kappa.
+- Added L1 test-summary with paired primary comparison.
+- No independent L2 labels or kappa are claimed.
+
 ## [0.7.4] - 2026-11-05
 
 ### Fixed
