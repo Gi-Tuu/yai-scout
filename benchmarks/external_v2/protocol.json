@@ -39,6 +39,7 @@
     "kappa": null,
     "test_results": null,
     "mechanical_holdout_results": "results/test_summary.json",
-    "ablation_results": "results/ablation_summary.json"
+    "ablation_results": "results/ablation_summary.json",
+    "mixed_smoke_results": "results/mixed_summary.json"
   }
 }

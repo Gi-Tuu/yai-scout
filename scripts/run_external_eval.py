@@ -63,18 +63,20 @@ def _rows(path: Path, labels: Path | None = None) -> list[dict]:
     return rows
 
 
-def _latest_value(row: dict) -> str | None:
+def _latest_value(row: dict, root: Path = EXTERNAL) -> str | None:
     if not row.get("evidence"):
         return None
-    text = (EXTERNAL / row["evidence"][0]["snapshot_path"]).read_text(encoding="utf-8")
+    text = (root / row["evidence"][0]["snapshot_path"]).read_text(encoding="utf-8")
     match = LATEST_RE.search(text)
     return match.group(1) if match else None
 
 
-def _evidence(row: dict, claim: Claim) -> list[EvidenceRef]:
+def _evidence(
+    row: dict, claim: Claim, root: Path = EXTERNAL
+) -> list[EvidenceRef]:
     evidence: list[EvidenceRef] = []
     for item in row["evidence"]:
-        snapshot = (EXTERNAL / item["snapshot_path"]).read_text(encoding="utf-8")
+        snapshot = (root / item["snapshot_path"]).read_text(encoding="utf-8")
         result = SearchResult(
             title=f"{row['source_family']} release history",
             url=item["url"],
@@ -82,7 +84,7 @@ def _evidence(row: dict, claim: Claim) -> list[EvidenceRef]:
             published_date=item.get("published_at"),
         )
         tier, _ = classify_source(item["url"])
-        if "pypi.org" in item["url"]:
+        if "pypi.org" in item["url"] or "github.com" in item["url"]:
             tier = 1
         evidence.append(
             EvidenceRef(
@@ -104,21 +106,23 @@ def _claim(row: dict) -> Claim:
         text=row["claim_text"],
         type=ClaimType(row["claim_type"]),
         target_time=row["as_of"],
-        temporal_sensitivity=TemporalSensitivity.SENSITIVE,
+        temporal_sensitivity=TemporalSensitivity(
+            row.get("temporal_sensitivity", "sensitive")
+        ),
     )
 
 
-def predict(row: dict, method: str) -> dict:
+def predict(row: dict, method: str, root: Path = EXTERNAL) -> dict:
     as_of = as_of_datetime(row["as_of"])
     claim = _claim(row)
-    evidence = _evidence(row, claim)
+    evidence = _evidence(row, claim, root)
     base = {
         "id": row["id"],
         "expected": row.get("gold_status"),
         "source_family": row.get("source_family", ""),
         "claim_type": row.get("claim_type", ""),
         "gold_current_value": row.get("gold_current_value"),
-        "current_value": _latest_value(row),
+        "current_value": _latest_value(row, root),
     }
     if method == "always_fresh":
         return {**base, "predicted": "fresh"}
@@ -144,16 +148,16 @@ def predict(row: dict, method: str) -> dict:
     }
 
 
-async def predict_llm(row: dict, client: LLMClient) -> dict:
+async def predict_llm(row: dict, client: LLMClient, root: Path = EXTERNAL) -> dict:
     claim = _claim(row)
-    snapshot = (EXTERNAL / row["evidence"][0]["snapshot_path"]).read_text(encoding="utf-8")
+    snapshot = (root / row["evidence"][0]["snapshot_path"]).read_text(encoding="utf-8")
     base = {
         "id": row["id"],
         "expected": row.get("gold_status"),
         "source_family": row.get("source_family", ""),
         "claim_type": row.get("claim_type", ""),
         "gold_current_value": row.get("gold_current_value"),
-        "current_value": _latest_value(row),
+        "current_value": _latest_value(row, root),
     }
     payload = await client.chat_json(
         LLM_SYSTEM,
@@ -195,6 +199,7 @@ async def predict_retrieval(row: dict, client: TavilyClient) -> dict:
 
 
 async def main_async(args: argparse.Namespace) -> int:
+    data_root = Path(args.data).parent
     rows = _rows(Path(args.data), Path(args.labels) if args.labels else None)
     if args.method == "llm_only":
         settings = Settings()
@@ -207,7 +212,7 @@ async def main_async(args: argparse.Namespace) -> int:
             timeout=60.0,
         )
         try:
-            predictions = [await predict_llm(row, client) for row in rows]
+            predictions = [await predict_llm(row, client, data_root) for row in rows]
         finally:
             await client.aclose()
     elif args.method == "retrieval_only":
@@ -225,7 +230,7 @@ async def main_async(args: argparse.Namespace) -> int:
         finally:
             await client.aclose()
     else:
-        predictions = [predict(row, args.method) for row in rows]
+        predictions = [predict(row, args.method, data_root) for row in rows]
     payload = {
         "method": args.method,
         "split": Path(args.data).stem,

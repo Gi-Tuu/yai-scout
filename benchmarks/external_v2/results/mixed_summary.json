@@ -1,0 +1,206 @@
+{
+  "version": "external-v2",
+  "split": "test",
+  "status": "mechanical_mixed_smoke",
+  "cases": 11,
+  "independent_labels": false,
+  "methods": {
+    "citation_only": {
+      "accuracy": 0.2727272727272727,
+      "macro_f1": 0.13636363636363635,
+      "stale_recall": 0.0,
+      "false_fresh_rate": 0.0,
+      "abstention_rate": 0.7272727272727273,
+      "confusion": {
+        "conflicted->fresh": 3,
+        "unknown->insufficient": 3,
+        "insufficient->insufficient": 3,
+        "fresh->insufficient": 2
+      },
+      "per_status": {
+        "conflicted": {
+          "support": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "fresh": {
+          "support": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "insufficient": {
+          "support": 3,
+          "precision": 0.375,
+          "recall": 1.0,
+          "f1": 0.5455
+        },
+        "unknown": {
+          "support": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "per_source_family": {
+        "mixed:anyio": {
+          "cases": 1.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "mixed:jinja2": {
+          "cases": 1.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "mixed:rich": {
+          "cases": 1.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "official:docs.python.org": {
+          "cases": 1.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "official:www.rfc-editor.org": {
+          "cases": 1.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "semantic:rich": {
+          "cases": 1.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "semantic:starlette": {
+          "cases": 1.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "semantic:typer": {
+          "cases": 1.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "semantic:unverifiable": {
+          "cases": 3.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        }
+      },
+      "per_claim_type": {
+        "other": {
+          "cases": 5.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "version": {
+          "cases": 6.0,
+          "accuracy": 0.5,
+          "macro_f1": 0.5
+        }
+      }
+    },
+    "yais_full": {
+      "accuracy": 0.5454545454545454,
+      "macro_f1": 0.38636363636363635,
+      "stale_recall": 0.0,
+      "false_fresh_rate": 0.0,
+      "abstention_rate": 0.7272727272727273,
+      "confusion": {
+        "conflicted->conflicted": 3,
+        "unknown->insufficient": 3,
+        "insufficient->insufficient": 3,
+        "fresh->insufficient": 2
+      },
+      "per_status": {
+        "conflicted": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "fresh": {
+          "support": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "insufficient": {
+          "support": 3,
+          "precision": 0.375,
+          "recall": 1.0,
+          "f1": 0.5455
+        },
+        "unknown": {
+          "support": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "per_source_family": {
+        "mixed:anyio": {
+          "cases": 1.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "mixed:jinja2": {
+          "cases": 1.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "mixed:rich": {
+          "cases": 1.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "official:docs.python.org": {
+          "cases": 1.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "official:www.rfc-editor.org": {
+          "cases": 1.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "semantic:rich": {
+          "cases": 1.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "semantic:starlette": {
+          "cases": 1.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "semantic:typer": {
+          "cases": 1.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "semantic:unverifiable": {
+          "cases": 3.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        }
+      },
+      "per_claim_type": {
+        "other": {
+          "cases": 5.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "version": {
+          "cases": 6.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        }
+      }
+    }
+  },
+  "result_hash": "sha256:cd74cfe1fad53ac13c8dfcbae5adf10f2c5c35eb72c2035c3b9669a93961ee14"
+}

@@ -16,6 +16,15 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.7] - 2026-11-05
+
+### External benchmark
+
+- Added an 11-case cross-source mechanical smoke set: PyPI/GitHub conflict,
+  no-evidence insufficient, semantic unknown and official stable controls.
+- Added mixed manifest/summary and builder.
+- Documents the smoke as a gap detector, not L2/L3 evidence.
+
 ## [0.7.6] - 2026-11-05
 
 ### External benchmark

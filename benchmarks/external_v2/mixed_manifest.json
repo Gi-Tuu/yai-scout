@@ -1,0 +1,16 @@
+{
+  "version": "external-v2",
+  "split": "test",
+  "status": "mechanical_mixed_smoke",
+  "cases": 11,
+  "status_counts": {
+    "conflicted": 3,
+    "unknown": 3,
+    "insufficient": 3,
+    "fresh": 2
+  },
+  "mixed_hash": "86b7fb467446acf556f0a6427774d9d4f599fd0cd03c957318c2c12f1f1335f2",
+  "labels_hash": "bed116b24954d7a05e96371f505b646d8bbbe40b3e1c77c7a4bb9fbe7a054ce6",
+  "labels_location": "mechanical_holdout/mixed_labels.jsonl (git-ignored)",
+  "independent_labels": false
+}

@@ -52,3 +52,6 @@ backups/
 
 # Mechanical holdout labels (not independent test)
 benchmarks/external_v1/mechanical_holdout/
+
+# External V2 mechanical holdout labels
+benchmarks/external_v2/mechanical_holdout/
