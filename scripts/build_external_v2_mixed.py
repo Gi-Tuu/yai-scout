@@ -163,13 +163,13 @@ async def build() -> None:
                             "url": f"https://pypi.org/project/{package}/#history",
                             "published_at": date.isoformat(),
                             "content_hash": "sha256:" + hashlib.sha256(text_p.encode()).hexdigest(),
-                            "snapshot_path": str(p_path.relative_to(OUT)),
+                            "snapshot_path": p_path.relative_to(OUT).as_posix(),
                         },
                         {
                             "url": f"https://github.com/{repo}/releases",
                             "published_at": date.isoformat(),
                             "content_hash": "sha256:" + hashlib.sha256(text_g.encode()).hexdigest(),
-                            "snapshot_path": str(g_path.relative_to(OUT)),
+                            "snapshot_path": g_path.relative_to(OUT).as_posix(),
                         },
                     ]
                     _add(

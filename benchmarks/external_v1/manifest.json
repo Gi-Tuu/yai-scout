@@ -9,7 +9,7 @@
     "pypi:pytest",
     "pypi:requests"
   ],
-  "dev_hash": "a78c8ba51764528eece4ecadc00839283776e69458bdb5fa98cfc1f8eb2948d3",
+  "dev_hash": "6125f373fb2abbddf5ba5d0dd6b61a51476fc395da47a98244b923c87ee86a66",
   "snapshot_hash": "2d0d6dd21a46197bff314e47651d6860b2533955ebf704b688d8ffc00f3466c7",
   "generated_at": "2026-11-04T16:31:11.842291+00:00",
   "source": "PyPI JSON API"

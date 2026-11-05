@@ -16,6 +16,14 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.10] - 2026-11-05
+
+### Fixed
+
+- External benchmark snapshot paths are normalized to POSIX separators in
+  committed JSONL and builders. This fixes Linux CI/fresh-checkout ablation runs
+  that previously treated Windows backslashes as literal filename characters.
+
 ## [0.7.9] - 2026-11-05
 
 ### Fixed

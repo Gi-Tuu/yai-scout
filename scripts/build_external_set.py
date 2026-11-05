@@ -97,9 +97,9 @@ def build(packages: list[str], pairs: int, snapshots_dir: Path) -> list[dict]:
                         "content_hash": "sha256:" + hashlib.sha256(
                             text.encode("utf-8")
                         ).hexdigest(),
-                        "snapshot_path": str(
-                            snapshot.relative_to(ROOT / "benchmarks" / "external_v1")
-                        ),
+                        "snapshot_path": snapshot.relative_to(
+                            ROOT / "benchmarks" / "external_v1"
+                        ).as_posix(),
                     }],
                     "notes": f"official PyPI timestamps; as_of={as_of.isoformat()}",
                 })
