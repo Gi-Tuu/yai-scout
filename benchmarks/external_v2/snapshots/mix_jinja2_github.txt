@@ -1,0 +1,6 @@
+Package: jinja2
+Latest version: 2.10.3
+Version history:
+2.10.1 | 2019-04-06
+2.10.2 | 2019-10-04
+2.10.3 | 2019-10-04

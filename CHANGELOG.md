@@ -16,6 +16,13 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.9] - 2026-11-05
+
+### Fixed
+
+- Committed external-v2 mixed snapshot files (previously ignored by the global
+  `snapshots/` rule), so CI and fresh checkouts can run mixed ablations.
+
 ## [0.7.8] - 2026-11-05
 
 ### Fixed
