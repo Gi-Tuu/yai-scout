@@ -20,9 +20,11 @@ VARIANTS = (
 )
 
 
-def predict(row: dict, variant: str) -> dict:
+def predict(row: dict, variant: str, root: Path | None = None) -> dict:
     claim = _claim(row)
-    evidence: list[EvidenceRef] = _evidence(row, claim)
+    evidence: list[EvidenceRef] = _evidence(
+        row, claim, root or Path("benchmarks/external_v1")
+    )
     applicable = True
     if variant == "full_minus_relation_rules":
         evidence = [item.model_copy(update={"relation": "mentions"}) for item in evidence]
@@ -44,7 +46,7 @@ def predict(row: dict, variant: str) -> dict:
         "expected": row.get("gold_status"),
         "source_family": row.get("source_family", ""),
         "claim_type": row.get("claim_type", ""),
-        "current_value": _latest_value(row),
+        "current_value": _latest_value(row, root or Path("benchmarks/external_v1")),
         "gold_current_value": row.get("gold_current_value"),
         "predicted": verdict.status.value,
         "score": verdict.score,
@@ -60,7 +62,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", default="")
     args = parser.parse_args(argv)
     rows = _rows(Path(args.data), Path(args.labels) if args.labels else None)
-    predictions = [predict(row, args.variant) for row in rows]
+    data_root = Path(args.data).parent
+    predictions = [predict(row, args.variant, data_root) for row in rows]
     payload = {
         "method": args.variant,
         "split": Path(args.data).stem,

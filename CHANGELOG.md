@@ -16,6 +16,21 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.8] - 2026-11-05
+
+### Fixed
+
+- Ablation harness derives its evidence root from the data file, so it works on
+  external-v2 mixed data.
+- Mixed builder now writes `mixed_manifest.json` and no longer emits hardcoded
+  stable-page publication dates.
+- Public benchmark agents response hides the configured HTTP adapter endpoint;
+  admin still sees it.
+- SSE response releases its stream slot via background task; limiter release is
+  idempotent.
+- Benchmark detector concurrency gate is shared across sessions on the same
+  event loop.
+
 ## [0.7.7] - 2026-11-05
 
 ### External benchmark

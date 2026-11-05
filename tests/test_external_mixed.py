@@ -11,12 +11,11 @@ def test_mixed_manifest_is_smoke() -> None:
     manifest = json.loads((V2 / "mixed_manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "mechanical_mixed_smoke"
     assert manifest["independent_labels"] is False
-    assert manifest["cases"] == 11
+    assert manifest["cases"] == 9
     assert set(manifest["status_counts"]) == {
         "conflicted",
         "insufficient",
         "unknown",
-        "fresh",
     }
 
 

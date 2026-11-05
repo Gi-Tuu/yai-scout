@@ -11,6 +11,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from starlette.background import BackgroundTask
 
 from ..config import Settings
 from ..domain.models import ResearchTask, RunEvent
@@ -162,8 +163,13 @@ def register_research_routes(
             finally:
                 stream_limiter.release(task_id)
 
-        return StreamingResponse(
-            stream(),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-        )
+        try:
+            return StreamingResponse(
+                stream(),
+                media_type="text/event-stream",
+                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+                background=BackgroundTask(stream_limiter.release, task_id),
+            )
+        except Exception:
+            stream_limiter.release(task_id)
+            raise

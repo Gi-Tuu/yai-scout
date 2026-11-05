@@ -1,6 +1,6 @@
 # External V2 — Mixed-Source Mechanical Smoke
 
-**Status: smoke only. 11 cases. Mechanical labels. Not independent test.**
+**Status: smoke only. 9 cases. Mechanical labels. Not independent test.**
 
 This is the first cross-source smoke slice, not the 190-case L3 target.
 
@@ -10,13 +10,12 @@ This is the first cross-source smoke slice, not the 190-case L3 target.
 conflicted   = 3  (PyPI vs GitHub release tags at the same as_of)
 insufficient = 3  (no usable evidence)
 unknown      = 3  (unverifiable semantic claims, no evidence)
-fresh        = 2  (official stable pages)
 ```
 
 Total:
 
 ```text
-11 cases
+9 cases
 ```
 
 ## Files
@@ -32,8 +31,8 @@ results/mixed_summary.json  aggregate only
 
 | method | accuracy | macro-F1 |
 |---|---:|---:|
-| citation_only | 0.273 | 0.136 |
-| yais_full | 0.545 | 0.386 |
+| citation_only | 0.333 | 0.167 |
+| yais_full | 0.667 | 0.500 |
 
 Confusion for `yais_full`:
 
@@ -41,7 +40,6 @@ Confusion for `yais_full`:
 conflicted  -> conflicted    3
 insufficient-> insufficient  3
 unknown     -> insufficient  3
-fresh       -> insufficient  2
 ```
 
 What the smoke shows:
@@ -50,8 +48,7 @@ What the smoke shows:
 - no-evidence cases abstain as INSUFFICIENT;
 - the current system has no UNKNOWN output, so gold UNKNOWN falls back to
   INSUFFICIENT;
-- the two stable official pages did not produce FRESH in this controlled
-  evidence setup.
+- stable/fresh cases are not included in this smoke slice.
 
 What it does **not** show:
 

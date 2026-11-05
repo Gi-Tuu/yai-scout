@@ -2,20 +2,19 @@
   "version": "external-v2",
   "split": "test",
   "status": "mechanical_mixed_smoke",
-  "cases": 11,
+  "cases": 9,
   "independent_labels": false,
   "methods": {
     "citation_only": {
-      "accuracy": 0.2727272727272727,
-      "macro_f1": 0.13636363636363635,
+      "accuracy": 0.3333333333333333,
+      "macro_f1": 0.2222222222222222,
       "stale_recall": 0.0,
       "false_fresh_rate": 0.0,
-      "abstention_rate": 0.7272727272727273,
+      "abstention_rate": 0.6666666666666666,
       "confusion": {
         "conflicted->fresh": 3,
         "unknown->insufficient": 3,
-        "insufficient->insufficient": 3,
-        "fresh->insufficient": 2
+        "insufficient->insufficient": 3
       },
       "per_status": {
         "conflicted": {
@@ -24,17 +23,11 @@
           "recall": 0.0,
           "f1": 0.0
         },
-        "fresh": {
-          "support": 2,
-          "precision": 0.0,
-          "recall": 0.0,
-          "f1": 0.0
-        },
         "insufficient": {
           "support": 3,
-          "precision": 0.375,
+          "precision": 0.5,
           "recall": 1.0,
-          "f1": 0.5455
+          "f1": 0.6667
         },
         "unknown": {
           "support": 3,
@@ -55,16 +48,6 @@
           "macro_f1": 0.0
         },
         "mixed:rich": {
-          "cases": 1.0,
-          "accuracy": 0.0,
-          "macro_f1": 0.0
-        },
-        "official:docs.python.org": {
-          "cases": 1.0,
-          "accuracy": 0.0,
-          "macro_f1": 0.0
-        },
-        "official:www.rfc-editor.org": {
           "cases": 1.0,
           "accuracy": 0.0,
           "macro_f1": 0.0
@@ -92,7 +75,7 @@
       },
       "per_claim_type": {
         "other": {
-          "cases": 5.0,
+          "cases": 3.0,
           "accuracy": 0.0,
           "macro_f1": 0.0
         },
@@ -104,16 +87,15 @@
       }
     },
     "yais_full": {
-      "accuracy": 0.5454545454545454,
-      "macro_f1": 0.38636363636363635,
+      "accuracy": 0.6666666666666666,
+      "macro_f1": 0.5555555555555555,
       "stale_recall": 0.0,
       "false_fresh_rate": 0.0,
-      "abstention_rate": 0.7272727272727273,
+      "abstention_rate": 0.6666666666666666,
       "confusion": {
         "conflicted->conflicted": 3,
         "unknown->insufficient": 3,
-        "insufficient->insufficient": 3,
-        "fresh->insufficient": 2
+        "insufficient->insufficient": 3
       },
       "per_status": {
         "conflicted": {
@@ -122,17 +104,11 @@
           "recall": 1.0,
           "f1": 1.0
         },
-        "fresh": {
-          "support": 2,
-          "precision": 0.0,
-          "recall": 0.0,
-          "f1": 0.0
-        },
         "insufficient": {
           "support": 3,
-          "precision": 0.375,
+          "precision": 0.5,
           "recall": 1.0,
-          "f1": 0.5455
+          "f1": 0.6667
         },
         "unknown": {
           "support": 3,
@@ -157,16 +133,6 @@
           "accuracy": 1.0,
           "macro_f1": 1.0
         },
-        "official:docs.python.org": {
-          "cases": 1.0,
-          "accuracy": 0.0,
-          "macro_f1": 0.0
-        },
-        "official:www.rfc-editor.org": {
-          "cases": 1.0,
-          "accuracy": 0.0,
-          "macro_f1": 0.0
-        },
         "semantic:rich": {
           "cases": 1.0,
           "accuracy": 1.0,
@@ -190,7 +156,7 @@
       },
       "per_claim_type": {
         "other": {
-          "cases": 5.0,
+          "cases": 3.0,
           "accuracy": 0.0,
           "macro_f1": 0.0
         },
@@ -202,5 +168,5 @@
       }
     }
   },
-  "result_hash": "sha256:cd74cfe1fad53ac13c8dfcbae5adf10f2c5c35eb72c2035c3b9669a93961ee14"
+  "result_hash": "sha256:7a21ec2c1cded43888465bc65b59dcca5bab8003c201d0cf3dbb38b16af0ebfc"
 }

@@ -65,16 +65,25 @@ def register_benchmark_routes(
 
     @app.get("/api/benchmark/agents")
     @app.get("/benchmark/agents")
-    async def benchmark_agents() -> dict[str, Any]:
+    async def benchmark_agents(request: Request) -> dict[str, Any]:
         specs = [spec.model_dump(mode="json") for spec in DEFAULT_AGENT_SPECS]
         if cfg.http_agent_url:
+            admin = is_admin(request)
             specs.append(
                 {
                     "id": "external_http",
                     "name": "External HTTP Agent",
                     "kind": "http",
-                    "description": f"scout-adapter/1.0 → {cfg.http_agent_url}",
-                    "config": {"endpoint": cfg.http_agent_url},
+                    "description": (
+                        f"scout-adapter/1.0 → {cfg.http_agent_url}"
+                        if admin
+                        else "scout-adapter/1.0 external agent"
+                    ),
+                    **(
+                        {"config": {"endpoint": cfg.http_agent_url}}
+                        if admin
+                        else {}
+                    ),
                 }
             )
         return {"agents": specs}

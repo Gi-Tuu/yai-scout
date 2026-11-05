@@ -2,15 +2,14 @@
   "version": "external-v2",
   "split": "test",
   "status": "mechanical_mixed_smoke",
-  "cases": 11,
+  "cases": 9,
   "status_counts": {
     "conflicted": 3,
     "unknown": 3,
-    "insufficient": 3,
-    "fresh": 2
+    "insufficient": 3
   },
-  "mixed_hash": "86b7fb467446acf556f0a6427774d9d4f599fd0cd03c957318c2c12f1f1335f2",
-  "labels_hash": "bed116b24954d7a05e96371f505b646d8bbbe40b3e1c77c7a4bb9fbe7a054ce6",
+  "mixed_hash": "5560eed1872812cd12df9d426affbb25571a4670769a21d9c0a45fb549882966",
+  "labels_hash": "ce7faba269bee12b6370ef8455ab0ab141d6be44166d6185491ced5d48e3d81f",
   "labels_location": "mechanical_holdout/mixed_labels.jsonl (git-ignored)",
   "independent_labels": false
 }

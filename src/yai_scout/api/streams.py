@@ -26,7 +26,9 @@ class StreamLimiter:
     def release(self, key: str) -> None:
         with self._lock:
             count = self._active.get(key, 0)
-            if count <= 1:
+            if count <= 0:
+                return
+            if count == 1:
                 self._active.pop(key, None)
             else:
                 self._active[key] = count - 1

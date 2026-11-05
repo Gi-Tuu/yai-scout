@@ -14,8 +14,6 @@ import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
-from yai_scout.sources.snapshot import fetch_text, html_to_text
-
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "benchmarks" / "external_v2"
 PACKAGES = ("rich", "typer", "starlette", "jinja2", "anyio")
@@ -131,50 +129,6 @@ def _add(
     })
 
 
-async def _stable_cases(cases: list[dict], labels: list[dict]) -> None:
-    facts = [
-        (
-            "https://docs.python.org/3.12/whatsnew/3.12.html",
-            "Python 3.12 于 2023 年发布",
-            "fresh",
-            "",
-        ),
-        (
-            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
-            "HTTP 404 表示 Not Found",
-            "fresh",
-            "",
-        ),
-        (
-            "https://www.rfc-editor.org/rfc/rfc9110",
-            "HTTP 404 表示 Not Found",
-            "fresh",
-            "",
-        ),
-    ]
-    for index, (url, claim, status, current) in enumerate(facts):
-        text = await fetch_text(url)
-        if not text:
-            continue
-        text = html_to_text(text)[:5000]
-        snapshot_id = f"mix_stable_{index}"
-        path = OUT / "snapshots" / f"{snapshot_id}.txt"
-        path.write_text(text, encoding="utf-8")
-        evidence = [{
-            "url": url,
-            "published_at": "2025-01-01",
-            "content_hash": "sha256:" + hashlib.sha256(text.encode()).hexdigest(),
-            "snapshot_path": str(path.relative_to(OUT)),
-        }]
-        _add(
-            cases, labels,
-            case_id=snapshot_id, family=f"official:{url.split('/')[2]}",
-            claim_text=claim, as_of="2026-11-01", gold=status,
-            current=current, support="supports", evidence=evidence,
-            claim_type="other", sensitivity="stable",
-        )
-
-
 async def build() -> None:
     (OUT / "snapshots").mkdir(parents=True, exist_ok=True)
     cases: list[dict] = []
@@ -246,7 +200,6 @@ async def build() -> None:
             claim_text=f"{package} 当前版本是 0.0.1", as_of="2026-11-01",
             gold="insufficient", current="", support="mentions", evidence=[],
         )
-    await _stable_cases(cases, labels)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "mixed.jsonl").write_text(
         "\n".join(json.dumps(row, ensure_ascii=False) for row in cases) + "\n",
@@ -254,8 +207,28 @@ async def build() -> None:
     )
     holdout = OUT / "mechanical_holdout"
     holdout.mkdir(parents=True, exist_ok=True)
-    (holdout / "mixed_labels.jsonl").write_text(
+    labels_path = holdout / "mixed_labels.jsonl"
+    labels_path.write_text(
         "\n".join(json.dumps(row, ensure_ascii=False) for row in labels) + "\n",
+        encoding="utf-8",
+    )
+    from collections import Counter
+
+    manifest = {
+        "version": "external-v2",
+        "split": "test",
+        "status": "mechanical_mixed_smoke",
+        "cases": len(cases),
+        "status_counts": dict(Counter(row["gold_status"] for row in labels)),
+        "mixed_hash": hashlib.sha256(
+            (OUT / "mixed.jsonl").read_bytes()
+        ).hexdigest(),
+        "labels_hash": hashlib.sha256(labels_path.read_bytes()).hexdigest(),
+        "labels_location": "mechanical_holdout/mixed_labels.jsonl (git-ignored)",
+        "independent_labels": False,
+    }
+    (OUT / "mixed_manifest.json").write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     print(f"mixed_cases={len(cases)} labels={len(labels)}")

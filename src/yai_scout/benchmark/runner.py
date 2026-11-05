@@ -103,6 +103,15 @@ class BenchmarkRunner:
         self.max_claims = max_claims
         self.timeout_s = timeout_s
         self._sessions: dict[str, asyncio.Task[None]] = {}
+        self._detector_gate: asyncio.Semaphore | None = None
+        self._detector_gate_loop: asyncio.AbstractEventLoop | None = None
+
+    def _detector_semaphore(self) -> asyncio.Semaphore:
+        loop = asyncio.get_running_loop()
+        if self._detector_gate is None or self._detector_gate_loop is not loop:
+            self._detector_gate = asyncio.Semaphore(self.detector_concurrency)
+            self._detector_gate_loop = loop
+        return self._detector_gate
 
     def start(
         self,
@@ -211,7 +220,7 @@ class BenchmarkRunner:
     ) -> None:
         started = time.monotonic()
         semaphore = asyncio.Semaphore(self.concurrency)
-        detector_gate = asyncio.Semaphore(self.detector_concurrency)
+        detector_gate = self._detector_semaphore()
 
         async def run_repeat(
             task: BenchmarkTask, agent_id: str, repeat: int
