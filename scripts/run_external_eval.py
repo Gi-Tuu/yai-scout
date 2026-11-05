@@ -115,6 +115,8 @@ def predict(row: dict, method: str) -> dict:
     base = {
         "id": row["id"],
         "expected": row.get("gold_status"),
+        "source_family": row.get("source_family", ""),
+        "claim_type": row.get("claim_type", ""),
         "gold_current_value": row.get("gold_current_value"),
         "current_value": _latest_value(row),
     }
@@ -148,6 +150,8 @@ async def predict_llm(row: dict, client: LLMClient) -> dict:
     base = {
         "id": row["id"],
         "expected": row.get("gold_status"),
+        "source_family": row.get("source_family", ""),
+        "claim_type": row.get("claim_type", ""),
         "gold_current_value": row.get("gold_current_value"),
         "current_value": _latest_value(row),
     }
@@ -173,6 +177,8 @@ async def predict_retrieval(row: dict, client: TavilyClient) -> dict:
     base = {
         "id": row["id"],
         "expected": row.get("gold_status"),
+        "source_family": row.get("source_family", ""),
+        "claim_type": row.get("claim_type", ""),
         "gold_current_value": row.get("gold_current_value"),
         "current_value": None,
         "credits": credits,

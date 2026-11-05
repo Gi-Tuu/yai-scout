@@ -37,6 +37,8 @@
     "independent_labels": false,
     "labelers": [],
     "kappa": null,
-    "test_results": null
+    "test_results": null,
+    "mechanical_holdout_results": "results/test_summary.json",
+    "ablation_results": "results/ablation_summary.json"
   }
 }

@@ -1,0 +1,520 @@
+{
+  "label_status": "mechanical_holdout",
+  "independent_labels": false,
+  "split": "test",
+  "version": "external-v2",
+  "variants": [
+    {
+      "variant": "full",
+      "applicable": true,
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "stale_recall": 1.0,
+      "false_fresh_rate": 0.0,
+      "abstention_rate": 0.0,
+      "per_status": {
+        "fresh": {
+          "support": 91,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "stale": {
+          "support": 91,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "per_source_family": {
+        "pypi:boto3": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:celery": {
+          "cases": 14.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:click": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:flask": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:httpx": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:matplotlib": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:pandas": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:pydantic": {
+          "cases": 14.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:scikit-learn": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:scipy": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:sqlalchemy": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:tornado": {
+          "cases": 10.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        }
+      }
+    },
+    {
+      "variant": "full_minus_authority_gate",
+      "applicable": true,
+      "accuracy": 0.0,
+      "macro_f1": 0.0,
+      "stale_recall": 0.0,
+      "false_fresh_rate": 0.0,
+      "abstention_rate": 1.0,
+      "per_status": {
+        "fresh": {
+          "support": 91,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "stale": {
+          "support": 91,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "per_source_family": {
+        "pypi:boto3": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:celery": {
+          "cases": 14.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:click": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:flask": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:httpx": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:matplotlib": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:pandas": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:pydantic": {
+          "cases": 14.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:scikit-learn": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:scipy": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:sqlalchemy": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:tornado": {
+          "cases": 10.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        }
+      }
+    },
+    {
+      "variant": "full_minus_temporal_window",
+      "applicable": true,
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "stale_recall": 1.0,
+      "false_fresh_rate": 0.0,
+      "abstention_rate": 0.0,
+      "per_status": {
+        "fresh": {
+          "support": 91,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "stale": {
+          "support": 91,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "per_source_family": {
+        "pypi:boto3": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:celery": {
+          "cases": 14.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:click": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:flask": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:httpx": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:matplotlib": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:pandas": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:pydantic": {
+          "cases": 14.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:scikit-learn": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:scipy": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:sqlalchemy": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:tornado": {
+          "cases": 10.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        }
+      }
+    },
+    {
+      "variant": "full_minus_relation_rules",
+      "applicable": true,
+      "accuracy": 0.0,
+      "macro_f1": 0.0,
+      "stale_recall": 0.0,
+      "false_fresh_rate": 0.0,
+      "abstention_rate": 1.0,
+      "per_status": {
+        "fresh": {
+          "support": 91,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "stale": {
+          "support": 91,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "per_source_family": {
+        "pypi:boto3": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:celery": {
+          "cases": 14.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:click": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:flask": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:httpx": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:matplotlib": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:pandas": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:pydantic": {
+          "cases": 14.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:scikit-learn": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:scipy": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:sqlalchemy": {
+          "cases": 16.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        },
+        "pypi:tornado": {
+          "cases": 10.0,
+          "accuracy": 0.0,
+          "macro_f1": 0.0
+        }
+      }
+    },
+    {
+      "variant": "full_minus_anchors",
+      "applicable": false,
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "stale_recall": 1.0,
+      "false_fresh_rate": 0.0,
+      "abstention_rate": 0.0,
+      "per_status": {
+        "fresh": {
+          "support": 91,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "stale": {
+          "support": 91,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "per_source_family": {
+        "pypi:boto3": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:celery": {
+          "cases": 14.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:click": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:flask": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:httpx": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:matplotlib": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:pandas": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:pydantic": {
+          "cases": 14.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:scikit-learn": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:scipy": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:sqlalchemy": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:tornado": {
+          "cases": 10.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        }
+      }
+    },
+    {
+      "variant": "full_minus_llm_relation",
+      "applicable": false,
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "stale_recall": 1.0,
+      "false_fresh_rate": 0.0,
+      "abstention_rate": 0.0,
+      "per_status": {
+        "fresh": {
+          "support": 91,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "stale": {
+          "support": 91,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "per_source_family": {
+        "pypi:boto3": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:celery": {
+          "cases": 14.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:click": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:flask": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:httpx": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:matplotlib": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:pandas": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:pydantic": {
+          "cases": 14.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:scikit-learn": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:scipy": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:sqlalchemy": {
+          "cases": 16.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        },
+        "pypi:tornado": {
+          "cases": 10.0,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        }
+      }
+    }
+  ],
+  "cases": 182,
+  "result_hash": "sha256:95a68700498db92ae82933aab6b1d2d93becc7a32eea210275b6b7da7c2a4f3d"
+}

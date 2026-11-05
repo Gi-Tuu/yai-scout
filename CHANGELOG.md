@@ -16,6 +16,17 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.6] - 2026-11-05
+
+### External benchmark
+
+- Added deterministic ablation harness and ablation summary.
+- Added McNemar exact test to paired comparison.
+- Added per-status, per-source-family and per-claim-type scoring.
+- Added a labeler packet generator with no gold labels.
+- Added L1 test/ablation tests. All results remain mechanical holdout, not
+  independent test evidence.
+
 ## [0.7.5] - 2026-11-05
 
 ### External benchmark

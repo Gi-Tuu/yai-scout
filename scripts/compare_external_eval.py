@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import random
 from pathlib import Path
 
@@ -81,6 +82,36 @@ def _bootstrap_delta(
     }
 
 
+def _mcnemar(full_rows: list[dict], base_rows: list[dict]) -> dict[str, float | int]:
+    full_correct = 0
+    base_correct = 0
+    full_only = 0
+    base_only = 0
+    for full, base in zip(full_rows, base_rows, strict=False):
+        full_ok = full["expected"] == full["predicted"]
+        base_ok = base["expected"] == base["predicted"]
+        full_correct += int(full_ok)
+        base_correct += int(base_ok)
+        full_only += int(full_ok and not base_ok)
+        base_only += int(base_ok and not full_ok)
+    discordant = full_only + base_only
+    if discordant == 0:
+        p_value = 1.0
+    else:
+        tail = sum(
+            math.comb(discordant, index)
+            for index in range(min(full_only, base_only) + 1)
+        ) / (2**discordant)
+        p_value = min(1.0, 2 * tail)
+    return {
+        "full_correct": full_correct,
+        "baseline_correct": base_correct,
+        "full_only": full_only,
+        "baseline_only": base_only,
+        "p_value": round(p_value, 6),
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--protocol", required=True)
@@ -140,6 +171,9 @@ def main(argv: list[str] | None = None) -> int:
                 "macro_f1": round(ci["macro_f1"][0], 6),
                 "stale_recall": round(ci["stale_recall"][0], 6),
             },
+            "mcnemar": _mcnemar(
+                [a for a, _ in pairs], [b for _, b in pairs]
+            ),
             "threshold_met": threshold_met,
         },
         "secondary": secondary,

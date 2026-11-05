@@ -15,6 +15,7 @@ Data is reused from `benchmarks/external_v1`:
 ```text
 test.jsonl          182 public claim + evidence rows (no gold)
 mechanical_holdout/  git-ignored mechanical labels
+results/            test_summary + ablation_summary
 ```
 
 The v2 protocol is frozen for the primary comparison:

@@ -29,6 +29,7 @@ benchmarks/external_v2/protocol.json
 macro-F1 delta    = +0.500
 STALE recall delta= +1.000
 paired CI lower   = 0.500 / 1.000
+McNemar           = full_only=91, baseline_only=0, p=0.0
 threshold_met     = true
 ```
 
@@ -92,3 +93,22 @@ L2 remains blocked on two independent annotators and kappa >= 0.7.
 ```text
 sha256:36f32f3f1d1e22d6d1ad2a2ddbc4299f3e85ec80e01b697e7435892688fac78b
 ```
+
+## Ablation (mechanical, exploratory)
+
+| variant | accuracy | macro-F1 | STALE recall | applicable |
+|---|---:|---:|---:|---|
+| full | 1.000 | 1.000 | 1.000 | yes |
+| full_minus_authority_gate | 0.000 | 0.000 | 0.000 | yes |
+| full_minus_temporal_window | 1.000 | 1.000 | 1.000 | yes |
+| full_minus_relation_rules | 0.000 | 0.000 | 0.000 | yes |
+| full_minus_anchors | 1.000 | 1.000 | 1.000 | no-op |
+| full_minus_llm_relation | 1.000 | 1.000 | 1.000 | no-op |
+
+Removing the authority gate or relation rules collapses this clean PyPI slice.
+The temporal-window ablation has no effect because all evidence is within the
+window. Anchors and LLM relation are not used in controlled external evidence,
+so those two rows are explicitly no-op.
+
+This is an ablation on mechanical data, not independent test evidence.
+\n

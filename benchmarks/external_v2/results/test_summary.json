@@ -14,6 +14,13 @@
       "macro_f1": 0.5,
       "stale_recall": 1.0
     },
+    "mcnemar": {
+      "full_correct": 182,
+      "baseline_correct": 91,
+      "full_only": 91,
+      "baseline_only": 0,
+      "p_value": 0.0
+    },
     "threshold_met": true
   },
   "secondary": {
@@ -28,5 +35,5 @@
       "note": "exploratory; not the pre-registered primary comparison"
     }
   },
-  "result_hash": "sha256:36f32f3f1d1e22d6d1ad2a2ddbc4299f3e85ec80e01b697e7435892688fac78b"
+  "result_hash": "sha256:5fc22f91b24fe200d3ee65831770cadf8fed46094c057f7adad780416a08899f"
 }

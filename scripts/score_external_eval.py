@@ -20,6 +20,61 @@ def _f1(expected: list[str], predicted: list[str], label: str) -> float:
     return 2 * precision * recall / (precision + recall) if precision + recall else 0.0
 
 
+def per_status(
+    expected: list[str], predicted: list[str]
+) -> dict[str, dict[str, float | int]]:
+    result: dict[str, dict[str, float | int]] = {}
+    for label in sorted(set(expected)):
+        tp = sum(1 for e, p in zip(expected, predicted, strict=False) if e == p == label)
+        fp = sum(
+            1 for e, p in zip(expected, predicted, strict=False)
+            if e != label and p == label
+        )
+        fn = sum(
+            1 for e, p in zip(expected, predicted, strict=False)
+            if e == label and p != label
+        )
+        precision = tp / (tp + fp) if tp + fp else 0.0
+        recall = tp / (tp + fn) if tp + fn else 0.0
+        result[label] = {
+            "support": sum(1 for value in expected if value == label),
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+            "f1": round(
+                2 * precision * recall / (precision + recall)
+                if precision + recall
+                else 0.0,
+                4,
+            ),
+        }
+    return result
+
+
+def per_group(payload_rows: list[dict], key: str) -> dict[str, dict[str, float]]:
+    groups: dict[str, list[dict]] = {}
+    for row in payload_rows:
+        name = str(row.get(key) or "unknown")
+        groups.setdefault(name, []).append(row)
+    result: dict[str, dict[str, float]] = {}
+    for name, rows in sorted(groups.items()):
+        expected = [str(row["expected"]) for row in rows]
+        predicted = [str(row["predicted"]) for row in rows]
+        result[name] = {
+            "cases": float(len(rows)),
+            "accuracy": round(
+                sum(e == p for e, p in zip(expected, predicted, strict=False))
+                / len(rows),
+                4,
+            ),
+            "macro_f1": round(
+                sum(_f1(expected, predicted, label) for label in sorted(set(expected)))
+                / len(set(expected)),
+                4,
+            ),
+        }
+    return result
+
+
 def metrics(
     expected: list[str], predicted: list[str], payload_rows: list[dict]
 ) -> dict[str, float]:
@@ -96,6 +151,9 @@ def score(payload: dict) -> dict:
         f"{gold}->{pred}": count
         for (gold, pred), count in Counter(zip(expected, predicted, strict=False)).items()
     }
+    result["per_status"] = per_status(expected, predicted)
+    result["per_source_family"] = per_group(payload["predictions"], "source_family")
+    result["per_claim_type"] = per_group(payload["predictions"], "claim_type")
     result["cases"] = len(expected)
     result["method"] = payload["method"]
     result["split"] = payload["split"]
