@@ -259,6 +259,37 @@ def resolve_snapshot_path(store: Store, value: str) -> Path:
     return Path(store.path).parent.resolve() / path
 
 
+def snapshot_eligible(snapshot: EvidenceSnapshot, target: datetime) -> bool:
+    """Whether a snapshot can prove content at ``target``.
+
+    Official release history and Wayback captures carry a historical proof time.
+    Live/manual captures are only replay-eligible when both their capture and
+    any observed update happened no later than the target.
+    """
+    published = _parse_snapshot_time(snapshot.published_at)
+    updated = _parse_snapshot_time(snapshot.updated_at)
+    fetched = _parse_snapshot_time(snapshot.fetched_at)
+    if snapshot.origin in {"official_history", "wayback"}:
+        if published is None or published > target:
+            return False
+        return updated is None or updated <= target
+    if fetched is None or fetched > target:
+        return False
+    if updated is not None and updated > target:
+        return False
+    return published is None or published <= target
+
+
+def _parse_snapshot_time(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
+
+
 async def capture(
     store: Store,
     *,

@@ -13,7 +13,7 @@ from ..domain.models import (
 )
 from ..llm import LLMClient
 from ..retrieval.tavily import SearchResult
-from .freshness import as_of_datetime
+from .freshness import as_of_datetime, score_claim
 from .query import build_query
 from .relation.classify import classify_relation
 from .verify_steps import (
@@ -73,7 +73,23 @@ class ClaimVerifier:
         try:
             results, credits = await search(self, claim)
         except Exception as exc:  # noqa: BLE001 - evidence failure must abstain
-            return failure_verdict(claim, exc), 0.0, 0.0
+            if not fetched.results:
+                return failure_verdict(claim, exc), 0.0, 0.0
+            # Keep successfully fetched anchors even when web search fails.
+            evidence = build_evidence(self, claim, fetched.results, fetched)
+            verdict = score_claim(
+                claim, evidence, as_of=self.as_of, allow_future=False
+            )
+            verdict = verdict.model_copy(
+                update={
+                    "rationale": (
+                        f"检索失败：{type(exc).__name__}；仅使用已取回的 anchor 证据。"
+                        f"{verdict.rationale}"
+                    )
+                }
+            )
+            attach_anchor(verdict, anchors, fetched)
+            return verdict, 0.0, 0.0
         selected = await prepare_results(self, claim, results, fetched)
         evidence = build_evidence(self, claim, selected, fetched)
         verdict, llm_cost = await score(self, claim, evidence)

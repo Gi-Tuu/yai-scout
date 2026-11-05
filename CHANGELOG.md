@@ -16,6 +16,20 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.11] - 2026-11-05
+
+### Fixed
+
+- Date-only `as_of` now means end-of-day UTC, so same-day evidence is no longer
+  excluded as future.
+- Replay snapshot eligibility now respects origin: official history/Wayback use
+  publication time; live/manual captures require fetched/updated time no later
+  than the target.
+- Low-authority version mentions no longer displace older authoritative
+  supports/contradictions.
+- Search failure preserves successfully fetched anchor evidence.
+- External benchmark mixed count documentation is 9 cases.
+
 ## [0.7.10] - 2026-11-05
 
 ### Fixed

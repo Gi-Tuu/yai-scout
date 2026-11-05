@@ -63,11 +63,16 @@ def days_between(published: datetime | None, as_of: datetime) -> int | None:
 
 
 def as_of_datetime(value: str) -> datetime:
+    raw = value.strip()
     try:
-        dt = datetime.fromisoformat(value)
+        dt = datetime.fromisoformat(raw)
     except ValueError:
         dt = datetime(2026, 11, 1, tzinfo=UTC)
-    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
+    dt = dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
+    if len(raw) == 10:
+        # A date-only as_of means "through the end of that day", not midnight.
+        return dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return dt
 
 
 def _target_time(claim: Claim, fallback: datetime) -> datetime:
@@ -124,11 +129,13 @@ def score_claim(
             # the evidence, not the fetch date.
             eligible.append((item, state))
 
-    # 版本类 claim：只比较"最新一次发布"，旧版本不是矛盾证据。
+    # 版本类 claim：只比较"最新一次发布"，但无判定力的 mentions 不能把
+    # 仍在窗口内的权威 support/contradict 淘汰掉。
     if claim.type is ClaimType.VERSION and eligible:
         dated = [
             (evidence_published(item), item, state)
             for item, state in eligible
+            if item.relation in {"supports", "contradicts"}
         ]
         known = [when for when, _, _ in dated if when is not None]
         if known:

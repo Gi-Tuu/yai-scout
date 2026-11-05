@@ -56,7 +56,7 @@ def _store_with_anchor(tmp_path: Path) -> Store:
 
 def test_due_anchors_uses_sensitivity_ttl(tmp_path: Path):
     store = _store_with_anchor(tmp_path)
-    due = due_anchors(store, now=datetime(2026, 11, 1, tzinfo=UTC))
+    due = due_anchors(store, now=datetime(2026, 11, 6, tzinfo=UTC))
     assert [anchor.id for anchor in due] == ["anc_old"]
     store.close()
 
@@ -64,7 +64,7 @@ def test_due_anchors_uses_sensitivity_ttl(tmp_path: Path):
 async def test_revalidate_records_change_without_overwriting(tmp_path: Path):
     store = _store_with_anchor(tmp_path)
     observations = await revalidate_due(
-        store, now=datetime(2026, 11, 1, tzinfo=UTC)
+        store, now=datetime(2026, 11, 6, tzinfo=UTC)
     )
     assert observations[0].status == "changed"
     assert observations[0].content_changed is True
@@ -77,7 +77,7 @@ async def test_revalidate_records_change_without_overwriting(tmp_path: Path):
     assert candidates[0].accuracy_status == "pending"
     assert candidates[0].gate_decision == "review"
     assert candidates[0].new_value == "1000"
-    assert due_anchors(store, now=datetime(2026, 11, 1, tzinfo=UTC)) == []
+    assert due_anchors(store, now=datetime(2026, 11, 6, tzinfo=UTC)) == []
     store.close()
 
 
@@ -129,7 +129,7 @@ async def test_revalidation_discovers_independent_sources(tmp_path: Path):
     await revalidate_due(
         store,
         discovery=Discovery(),  # type: ignore[arg-type]
-        now=datetime(2026, 11, 1, tzinfo=UTC),
+        now=datetime(2026, 11, 6, tzinfo=UTC),
     )
     candidates = store.list_anchor_candidates()
     assert candidates
@@ -186,7 +186,7 @@ async def test_unreachable_anchor_is_not_marked_freshly_checked(tmp_path: Path):
     observations = await revalidate_due(
         store,
         fetcher=fetcher,
-        now=datetime(2026, 11, 1, tzinfo=UTC),
+        now=datetime(2026, 11, 6, tzinfo=UTC),
     )
     assert observations[0].status == "unreachable"
     anchor = store.list_anchors()[0]

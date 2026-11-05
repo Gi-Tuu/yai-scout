@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 
 from ..domain.models import EvidenceSnapshot
 from ..retrieval.tavily import SearchResult
-from ..sources.snapshot import resolve_snapshot_path
+from ..sources.snapshot import resolve_snapshot_path, snapshot_eligible
 from ..store import Store
 
 TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\.\-]{1,}|[\u4e00-\u9fff]{2,}|\d+(?:\.\d+)+")
@@ -76,8 +76,7 @@ class SnapshotSearcher:
                 if target is None:
                     yield snapshot
                     continue
-                published = _parse_time(snapshot.published_at)
-                if published is not None and published <= target:
+                if snapshot_eligible(snapshot, target):
                     yield snapshot
             offset += len(page)
 

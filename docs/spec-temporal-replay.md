@@ -137,3 +137,10 @@ archive.org 不可达时，用**官方 release 历史**作为真实历史证据�
 - 时区/发布日期歧义 → 统一 UTC，记录原始字符串；
 - 演示数据过时 → 赛前 11/12 重新校验快照可用性。
 
+## 2.1 时间资格实现补充（2026-11-05）
+
+- date-only `as_of`（`YYYY-MM-DD`）按 **当天结束 UTC** 解释，包含当天 12:00 等后续证据；精确 datetime 保持原语义。
+- `official_history` / `wayback` 快照必须满足 `published_at <= target`，且 `updated_at` 不晚于 target。
+- `live` / `manual` 快照必须满足 `fetched_at <= target`，且 `updated_at` 不晚于 target；旧 `published_at` 不能单独证明历史内容。
+- 无法证明历史内容的快照不进入 replay；宁可 INSUFFICIENT，不伪造历史。
+- 搜索失败但 anchor 已取回时，保留 anchor evidence 与失败原因；由证据门槛决定状态。

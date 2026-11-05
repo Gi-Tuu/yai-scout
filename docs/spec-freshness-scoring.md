@@ -31,7 +31,7 @@
 ### 2.2 target_time 与证据时间
 
 - `target_time`：该 claim 需要被验证的时点（默认题目 as_of；历史回放时为历史时点）。
-- `effective_date(e) = updated_at or published_at`（来源声明的内容时间）。
+- `effective_date(e) = updated_at or published_at`（来源声明的内容时间）；date-only target 按当天结束 UTC。
 - `age(e) = target_time - effective_date(e)`（按天，负数表示来源晚于目标时间——当前核验允许，历史回放不允许）。
 - **未来证据**：`effective_date(e) > target_time` 的证据不可用于当前判定（live 与 replay 一致）。
 - **证据时间资格**：`current`（在窗口内）可参与判定；`expired` 只允许支持 STABLE 事实；`unknown` 不得证明当前事实；`future` 一律排除。

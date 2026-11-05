@@ -37,7 +37,7 @@ test or independent validation.
 
 ## Mixed-source smoke
 
-See `docs/external-benchmark-v2-mixed.md` for the 11-case smoke set. It is
+See `docs/external-benchmark-v2-mixed.md` for the 9-case smoke set. It is
 not a 5-state target dataset and not independent evidence.
 
 ## L1 result

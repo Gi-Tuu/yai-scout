@@ -21,7 +21,7 @@ import httpx
 from ..domain.models import Anchor, EvidenceKind
 from ..retrieval.tavily import SearchResult
 from ..store import Store
-from .snapshot import html_to_text, resolve_snapshot_path
+from .snapshot import html_to_text, resolve_snapshot_path, snapshot_eligible
 
 LIVE_MAX_BYTES = 500_000
 LIVE_TIMEOUT_S = 15.0
@@ -82,8 +82,10 @@ async def replay_anchor_result(
         if not snapshots:
             break
         for snapshot in snapshots:
+            if not snapshot_eligible(snapshot, target):
+                continue
             published = _parse(snapshot.published_at)
-            if published is None or published > target:
+            if published is None:
                 continue
             candidates.append((published, snapshot))
         offset += len(snapshots)
