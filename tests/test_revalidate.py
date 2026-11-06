@@ -39,6 +39,10 @@ def _store_with_anchor(tmp_path: Path) -> Store:
         snapshots_dir=tmp_path,
         published_at="2026-01-01T00:00:00Z",
     )
+    # Keep this fixture independent of the wall clock: live/manual snapshots
+    # are replay-eligible only when captured before the test's target time.
+    snapshot.fetched_at = "2026-11-01T00:00:00Z"
+    store.save_snapshot(snapshot)
     anchor = Anchor(
         id="anc_old",
         claim_key="price #",
