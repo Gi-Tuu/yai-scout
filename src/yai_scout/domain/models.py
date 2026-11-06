@@ -396,6 +396,7 @@ class TaskResult(BaseModel):
     success_rate: float = 1.0
     faults: list[str] = Field(default_factory=list)
     trace: list[dict[str, Any]] = Field(default_factory=list)
+    samples: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ExperimentManifest(BaseModel):

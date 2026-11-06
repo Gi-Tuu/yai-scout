@@ -9,5 +9,6 @@ def test_classify_tiers():
     assert classify_source("https://www.whitehouse.gov/briefing/")[0] == 1
     assert classify_source("https://arxiv.org/abs/2401.00001")[0] == 1
     assert classify_source("https://www.reuters.com/tech/")[0] == 2
+    assert classify_source("https://pypi.org/project/pandas/#history")[0] == 2
     assert classify_source("https://www.reddit.com/r/x")[0] == 4
     assert classify_source("https://random-blog.example/page")[0] == 3

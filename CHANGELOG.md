@@ -16,6 +16,18 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.15] - 2026-11-06
+
+### Fixed
+
+- Unmeasured freshness no longer receives full credit in benchmark scoring.
+- Numeric benchmark matching now respects currency/credit/period units.
+- Repeated benchmark runs retain per-sample score/latency/cost/error and average
+  valid samples rather than selecting the highest-scoring sample.
+- `pypi.org` is classified as an authoritative package-index source (T2), so
+  official PyPI snapshots can support FRESH/STALE replay verdicts.
+- Added regression tests for scoring, repeat aggregation and PyPI tiering.
+
 ## [0.7.14] - 2026-11-05
 
 ### Fixed

@@ -359,16 +359,20 @@ class BenchmarkRunner:
             ] = []
             for repeat in range(repeats):
                 samples.append(await run_repeat(task, agent_id, repeat))
-            base = max(samples, key=lambda item: item[0].score)
-            scores = [item[0].score for item in samples]
-            successes = sum(
-                1
-                for result, _fault, _trace in samples
-                if not result.error and result.answer.text.strip()
-            )
-            faults = sorted({fault for _result, fault, _trace in samples if fault})
+            all_samples = samples
+            valid_samples = [
+                item
+                for item in all_samples
+                if not item[0].error and item[0].answer.text.strip()
+            ]
+            scores_pool = valid_samples or all_samples
+            base = max(scores_pool, key=lambda item: item[0].score)
+            samples = scores_pool
+            scores = [item[0].score for item in scores_pool]
+            successes = len(valid_samples)
+            faults = sorted({fault for _result, fault, _trace in all_samples if fault})
             trace: list[dict[str, object]] = []
-            for _result, _fault, sample_trace in samples:
+            for _result, _fault, sample_trace in all_samples:
                 trace.extend(sample_trace)
             trace = trace[:100]
 
@@ -411,6 +415,19 @@ class BenchmarkRunner:
                     "success_rate": round(successes / repeats, 3),
                     "faults": faults,
                     "trace": trace,
+                    "samples": [
+                        {
+                            "score": result.score,
+                            "numeric_accuracy": result.numeric_accuracy,
+                            "freshness_score": result.freshness_score,
+                            "stale_claim_rate": result.stale_claim_rate,
+                            "latency_s": result.answer.latency_s,
+                            "cost_usd": result.answer.cost_usd,
+                            "error": result.error,
+                            "fault": fault,
+                        }
+                        for result, fault, _trace in all_samples
+                    ],
                     "error": (
                         None
                         if successes == repeats

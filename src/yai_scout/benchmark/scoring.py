@@ -13,6 +13,10 @@ from ..domain.models import (
 )
 
 NUMBER_TOKEN = re.compile(r"\d+(?:\.\d+)?")
+UNIT_RE = re.compile(
+    r"\$|€|£|¥|\b(?:usd|eur|gbp|cny|jpy|credits?|million|billion|month|year|day|week|quarter)\b|%",
+    re.I,
+)
 TIER_WEIGHTS = {1: 1.0, 2: 0.8, 3: 0.5, 4: 0.25}
 
 
@@ -28,12 +32,20 @@ def normalize(text: str) -> str:
     )
 
 
+def _units(text: str) -> set[str]:
+    return {token.lower() for token in UNIT_RE.findall(text)}
+
+
 def match_gold(gold: str, answer: str) -> bool:
     g = normalize(gold)
     normalized_answer = normalize(answer)
     if not g:
         return False
     if re.fullmatch(r"\d+(?:\.\d+)?", g):
+        gold_units = _units(gold)
+        answer_units = _units(answer)
+        if gold_units and not (gold_units & answer_units):
+            return False
         target = float(g)
         for token in NUMBER_TOKEN.findall(normalized_answer):
             try:
@@ -75,7 +87,7 @@ def composite_score(
     cost_usd: float,
 ) -> float:
     citation = 1.0 if has_citations else 0.0
-    freshness = 1.0 - (stale_rate or 0.0)
+    freshness = 0.0 if stale_rate is None else 1.0 - stale_rate
     cost_component = 1.0 / (1.0 + max(cost_usd, 0.0) * 20.0)
     score = (
         0.45 * numeric
@@ -169,9 +181,9 @@ def weighted_view(
     latency_s: float,
 ) -> float:
     """可解释的加权视图（非默认排名依据；权重显式展示）。"""
-    freshness_component = (freshness or 0.0) / 100.0
+    freshness_component = 0.0 if freshness is None else freshness / 100.0
     evidence_component = evidence_quality or 0.0
-    stale_component = 1.0 - (stale_rate or 0.0)
+    stale_component = 0.0 if stale_rate is None else 1.0 - stale_rate
     cost_component = 1.0 / (1.0 + max(cost_usd, 0.0) * 20.0)
     latency_component = 1.0 / (1.0 + max(latency_s, 0.0) / 30.0)
     score = (

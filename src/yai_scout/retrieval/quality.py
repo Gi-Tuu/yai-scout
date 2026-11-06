@@ -56,6 +56,8 @@ T2_DOMAINS = {
     "36kr.com",
     # 官方代码仓库的 release/license 页面：版本/许可证类 claim 的一手来源
     "github.com",
+    # 官方包索引：版本、许可证和包元数据的权威来源
+    "pypi.org",
 }
 T4_DOMAINS = {
     "reddit.com",
