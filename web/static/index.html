@@ -81,6 +81,7 @@
   details.log pre { font-family: var(--mono); font-size: 11px; color: var(--muted); max-height: 240px; overflow: auto; }
   .status { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: auto; }
 </style>
+<link rel="stylesheet" href="/static/tokens.css" />
 </head>
 <body>
 <header>
@@ -93,52 +94,52 @@
 <main>
   <section>
     <div class="panel">
-      <h2>研究问题</h2>
-      <textarea id="question" placeholder="输入一个需要多来源核实的复杂问题……"></textarea>
+      <h2>Research question</h2>
+      <textarea id="question" placeholder="Enter a complex question that needs multi-source verification…"></textarea>
       <div class="row">
-        <button id="run">开始研究</button>
-        <button class="ghost" id="cancel" disabled>取消</button>
+        <button id="run">Run research</button>
+        <button class="ghost" id="cancel" disabled>Cancel</button>
       </div>
       <div class="examples" id="examples"></div>
     </div>
 
     <div class="panel" style="margin-top:14px">
-      <h2>流水线</h2>
+      <h2>Pipeline</h2>
       <div class="stages" id="stages">
-        <div class="stage" data-stage="planning"><span class="dot"></span>规划 · 拆解问题</div>
-        <div class="stage" data-stage="retrieving"><span class="dot"></span>检索 · 多来源取证</div>
-        <div class="stage" data-stage="extracting"><span class="dot"></span>抽取 · 引文校验 <span class="tag">(G0 未实现)</span></div>
-        <div class="stage" data-stage="verifying"><span class="dot"></span>验证 · 交叉核查 <span class="tag">(G0 未实现)</span></div>
-        <div class="stage" data-stage="reporting"><span class="dot"></span>报告 · 生成</div>
+        <div class="stage" data-stage="planning"><span class="dot"></span>Plan · decompose question</div>
+        <div class="stage" data-stage="retrieving"><span class="dot"></span>Retrieve · multi-source evidence</div>
+        <div class="stage" data-stage="extracting"><span class="dot"></span>Extract · citation check <span class="tag">(G0 not implemented)</span></div>
+        <div class="stage" data-stage="verifying"><span class="dot"></span>Verify · cross-check <span class="tag">(G0 not implemented)</span></div>
+        <div class="stage" data-stage="reporting"><span class="dot"></span>Report · generate</div>
       </div>
       <div class="cost">
-        <span>来源 <b id="c-sources">0</b></span>
-        <span>域名 <b id="c-domains">0</b></span>
+        <span>Sources <b id="c-sources">0</b></span>
+        <span>Domains <b id="c-domains">0</b></span>
         <span>credits <b id="c-credits">0</b></span>
-        <span>耗时 <b id="c-elapsed">0s</b></span>
+        <span>Elapsed <b id="c-elapsed">0s</b></span>
       </div>
     </div>
 
     <details class="log">
-      <summary class="tag">事件日志（G0 调试）</summary>
+      <summary class="tag">Event log (G0 debug)</summary>
       <pre id="log"></pre>
     </details>
   </section>
 
   <section>
     <div class="panel">
-      <h2>检索计划</h2>
-      <div id="plan" class="empty">尚未开始</div>
+      <h2>Retrieval plan</h2>
+      <div id="plan" class="empty">Not started</div>
     </div>
     <div class="panel" style="margin-top:14px">
-      <h2>来源 <span class="tag" id="src-count"></span></h2>
+      <h2>Sources <span class="tag" id="src-count"></span></h2>
       <div class="sources" id="sources">
-        <div class="empty">来源会在这里出现：标题、域名、发布时间、来源档位</div>
+        <div class="empty">Sources appear here: title, domain, published date, source tier</div>
       </div>
     </div>
     <div class="panel" style="margin-top:14px">
-      <h2>报告（G0 桩）</h2>
-      <pre class="report" id="report">报告生成后会显示在这里。</pre>
+      <h2>Report (G0 stub)</h2>
+      <pre class="report" id="report">The report will appear here once generated.</pre>
     </div>
   </section>
 </main>

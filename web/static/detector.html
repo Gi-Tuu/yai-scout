@@ -40,27 +40,28 @@
   .sugg{font-size:12px;color:var(--warn);border-left:2px solid #78350f;padding-left:8px;margin-top:6px}
   .muted{color:var(--muted)} .hidden{display:none}
 </style>
+<link rel="stylesheet" href="/static/tokens.css" />
 </head>
 <body>
 <header>
   <h1>YAI <span>Scout</span> · Stale-answer Detector</h1>
-  <div class="tag">输入任意 LLM 答案 → claim 级时效核验</div>
-  <div style="margin-left:auto"><a href="/">研究控制台</a> · <a href="/benchmark">Benchmark</a></div>
+  <div class="tag">Paste any LLM answer → claim-level freshness check</div>
+  <div style="margin-left:auto"><a href="/">Research console</a> · <a href="/benchmark">Benchmark</a></div>
 </header>
 <main>
   <div class="panel">
-    <h2>待检测的答案</h2>
-    <textarea id="answer" placeholder="粘贴一段 LLM 生成的答案（含价格/版本/日期/法规等可能过时的事实）……"></textarea>
+    <h2>Answer to check</h2>
+    <textarea id="answer" placeholder="Paste an LLM-generated answer (including prices, versions, dates or regulations that may be stale)…"></textarea>
     <div class="row">
-      <button id="run">检测时效</button>
-      <button class="ghost" id="clear">清空</button>
-      <span class="muted" id="hint">as_of 2026-11-01 · 最多 6 条 claim</span>
+      <button id="run">Check freshness</button>
+      <button class="ghost" id="clear">Clear</button>
+      <span class="muted" id="hint">as_of 2026-11-01 · up to 6 claims</span>
     </div>
     <div class="samples" id="samples"></div>
   </div>
 
   <div class="panel hidden" id="result">
-    <h2>检测报告</h2>
+    <h2>Freshness report</h2>
     <div class="score">
       <div class="big" id="overall">0</div>
       <div style="flex:1">

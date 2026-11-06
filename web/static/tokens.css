@@ -1,0 +1,31 @@
+/* YAI Scout · shared design layer 2026-11-05
+   Loaded after each page's inline <style>: consolidates repeated :root, removes gradient and rounded-card sameness, adds reduced-motion.
+   Competition constraints: dark #0b0f14 + amber #f5a524; UX is a judged dimension.
+   Deliberately leaves font-size and all layout dimensions untouched so the existing tables on the 10 pages do not break;
+   the >=16px type constraint is handled separately in landing.html and in the later per-page pass. */
+:root{
+  --bg:#0b0f14;--panel:#0b0f14;--panel2:#10151c;--line:#242b33;
+  --text:#d8d9d4;--muted:#8e969c;--accent:#f5a524;
+  --ok:#7bbf85;--bad:#e26a55;--warn:#f5a524;
+  --mono:ui-monospace,"SFMono-Regular",Consolas,monospace;
+  --serif:"Noto Serif CJK SC","Source Han Serif SC","SimSun",serif;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+body{background:var(--bg);background-image:none;color:var(--text);font-family:var(--serif)}
+h1,h2,h3{font-family:var(--serif);letter-spacing:.02em}
+.card,.badge,.panel,.box,.chip{border-radius:0;border-color:var(--line)}
+table th,table td{border-bottom:1px solid var(--line)}
+a,button{transition:color 120ms var(--ease),background-color 120ms var(--ease),border-color 120ms var(--ease)}
+:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* Lab notebook: ruled paper + binding margin. Loaded last to override each page's decorative radial gradient. */
+body{
+  background-color:var(--bg);
+  background-image:repeating-linear-gradient(to bottom, transparent 0 27px, #131a22 27px 28px);
+}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:#0b0f14;border-left:1px solid #1c242d}
+*::-webkit-scrollbar-thumb{background:#2b333c;border:2px solid #0b0f14}
+*::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+*{scrollbar-width:thin;scrollbar-color:#2b333c #0b0f14}

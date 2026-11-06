@@ -11,9 +11,9 @@ const safeUrl = (value) => {
 
 const state = { taskId: null, es: null, sources: new Map(), domains: new Set(), credits: 0, t0: 0, timer: null };
 const EXAMPLES = [
-  "2026 年全球 AI 芯片市场规模与主要厂商份额是多少？",
-  "开源大模型在 2026 年的推理成本下降了多少，有哪些独立来源？",
-  "某国 2026 年 AI 监管草案对开源模型有哪些实际限制？"
+  "What is the 2026 global AI chip market size and the market share of its major vendors?",
+  "How much did open-weight model inference costs fall in 2026, and which independent sources confirm it?",
+  "What practical restrictions does a 2026 national AI regulation draft place on open-weight models?"
 ];
 const TIER = {1: ["T1", "t1"], 2: ["T2", "t2"], 3: ["T3", ""], 4: ["T4", "t4"]};
 const EVENT_TYPES = ["stage_started","stage_finished","plan_ready","source_found","cost_update",
@@ -45,9 +45,9 @@ function setRunning(on) {
 }
 function reset() {
   state.sources.clear(); state.domains.clear(); state.credits = 0;
-  $("sources").innerHTML = '<div class="empty">检索中……</div>';
-  $("plan").className = "empty"; $("plan").textContent = "规划中……";
-  $("report").textContent = "报告生成后会显示在这里。";
+  $("sources").innerHTML = '<div class="empty">Retrieving…</div>';
+  $("plan").className = "empty"; $("plan").textContent = "Planning…";
+  $("report").textContent = "The report will appear here once generated.";
   $("log").textContent = "";
   ["planning","retrieving","extracting","verifying","reporting"].forEach((s) => markStage(s, ""));
   $("c-sources").textContent = "0"; $("c-domains").textContent = "0";
@@ -76,7 +76,7 @@ function handle(type, ev) {
       markStage(p.stage, "active");
       if (p.stage === "retrieving" && Array.isArray(p.queries)) {
         $("plan").className = "empty";
-        $("plan").textContent = `检索 ${p.queries.length} 条查询（模式：${p.mode || "?"}，预算 ${p.max_credits} credits）`;
+        $("plan").textContent = `Retrieving ${p.queries.length} queries (mode: ${p.mode || "?"}, budget ${p.max_credits} credits)`;
       }
       break;
     case "stage_finished":
@@ -105,7 +105,7 @@ function handle(type, ev) {
       card.className = "source";
       card.innerHTML = `<a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener noreferrer">${esc(p.title || p.url)}</a>
         <div class="meta"><span class="tier ${cls}">${label}</span><span>${esc(p.domain || "")}</span>
-        <span>${p.published_at ? new Date(p.published_at).toLocaleDateString() : "时间未知"}</span></div>`;
+        <span>${p.published_at ? new Date(p.published_at).toLocaleDateString() : "date unknown"}</span></div>`;
       $("sources").appendChild(card);
       $("c-sources").textContent = state.sources.size;
       $("c-domains").textContent = state.domains.size;
@@ -144,7 +144,7 @@ async function finish(failed) {
     $("c-domains").textContent = task.stats?.domains ?? state.domains.size;
     $("c-credits").textContent = task.stats?.credits ?? state.credits;
     if (task.report_md) $("report").textContent = task.report_md;
-    $("src-count").textContent = `${task.stats?.sources ?? 0} 条`;
+    $("src-count").textContent = `${task.stats?.sources ?? 0} sources`;
     ["planning","retrieving","extracting","verifying","reporting"].forEach((s) => markStage(s, "done"));
   } catch (err) {
     log("finish_error", String(err));

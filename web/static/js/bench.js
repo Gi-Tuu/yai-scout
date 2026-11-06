@@ -57,7 +57,7 @@ async function poll() {
   const res = await fetch(`/api/benchmark/sessions/${state.sessionId}`);
   const data = await res.json();
   const session = data.session || {};
-  $("status").textContent = `${session.status} · ${data.results.length}/${(session.agent_ids || []).length * (session.task_ids || []).length} 结果`;
+  $("status").textContent = `${session.status} · ${data.results.length}/${(session.agent_ids || []).length * (session.task_ids || []).length} results`;
   renderBoard(data.leaderboard || [], data.pareto || null);
   renderDetail(data.results || [], data.pareto || null);
   if (session.status !== "running") { clearInterval(state.timer); $("run").disabled = false; }
@@ -67,7 +67,7 @@ function renderBoard(rows, pareto) {
   if (!rows.length) { $("board").innerHTML = ""; return; }
   const frontier = new Set((pareto && pareto.frontier) || []);
   $("board").innerHTML =
-    `<tr><th>#</th><th>Agent</th><th>加权视图</th><th>准确率</th><th>Freshness</th><th>Stale率</th><th>证据质量</th><th>Claim覆盖</th><th>成本</th><th>时延</th><th>std</th><th>success</th><th>faults</th></tr>` +
+    `<tr><th>#</th><th>Agent</th><th>Weighted view</th><th>Accuracy</th><th>Freshness</th><th>Stale rate</th><th>Evidence quality</th><th>Claim coverage</th><th>Cost</th><th>Latency</th><th>std</th><th>success</th><th>faults</th></tr>` +
     rows.map((r, i) => `<tr>
       <td class="num">${i + 1}</td>
       <td>${esc(r.agent_id)} ${frontier.has(r.agent_id) ? `<span title="Pareto frontier">★</span>` : ""}</td>
@@ -97,6 +97,6 @@ function renderDetail(results, pareto) {
       </td>
     </tr>`).join("");
     return `<div style="margin-bottom:14px"><div class="num" style="font-size:12px">${esc(taskId)}</div>
-      <table><tr><th>Agent</th><th>数字准确</th><th>综合分</th><th>freshness</th><th>陈旧率</th><th>答案摘要</th></tr>${rows}</table></div>`;
+      <table><tr><th>Agent</th><th>Numeric accuracy</th><th>Overall score</th><th>freshness</th><th>Stale rate</th><th>Answer summary</th></tr>${rows}</table></div>`;
   }).join("");
 }

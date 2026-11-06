@@ -13,16 +13,17 @@
   button{background:#f5a524;color:#1b1206;border:0;border-radius:8px;padding:9px 14px;font-weight:700;cursor:pointer;margin-right:8px}
   button.ghost{background:transparent;color:#8b98a9;border:1px solid #1f2a37;font-weight:400}
 </style>
+<link rel="stylesheet" href="/static/tokens.css" />
 </head>
 <body>
 <main>
   <h1>YAI <span>Scout</span> · Recover Labels</h1>
-  <p class="muted">从当前浏览器 localStorage 读取已填写的 accuracy labels。只有在同一浏览器、同一域名下填写过才有效。</p>
-  <div class="muted" id="meta">读取中…</div>
+  <p class="muted">Reads accuracy labels already filled in from this browser's localStorage. Only works if they were entered in the same browser and on the same domain.</p>
+  <div class="muted" id="meta">Reading…</div>
   <textarea id="json" readonly></textarea>
   <p>
-    <button id="download">下载 labels JSON</button>
-    <button class="ghost" id="copy">复制 JSON</button>
+    <button id="download">Download labels JSON</button>
+    <button class="ghost" id="copy">Copy JSON</button>
   </p>
   <div class="muted" id="status"></div>
 </main>

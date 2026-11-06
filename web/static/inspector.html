@@ -39,26 +39,27 @@
   button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:400}
   .empty{color:var(--muted);padding:16px;text-align:center}
 </style>
+<link rel="stylesheet" href="/static/tokens.css" />
 </head>
 <body>
 <header>
   <h1>YAI <span>Scout</span> · Evidence Inspector</h1>
-  <div class="tag">逐条 claim → 证据 → 分数拆解</div>
-  <div style="margin-left:auto"><a href="/">首页</a> · <a href="/freshness">Freshness</a> · <a href="/benchmark">Benchmark</a></div>
+  <div class="tag">Claim by claim → evidence → score breakdown</div>
+  <div style="margin-left:auto"><a href="/">Home</a> · <a href="/freshness">Freshness</a> · <a href="/benchmark">Benchmark</a></div>
 </header>
 <main>
   <section class="panel">
-    <h2>历史报告</h2>
-    <div id="list"><div class="empty">加载中…</div></div>
+    <h2>Report history</h2>
+    <div id="list"><div class="empty">Loading…</div></div>
   </section>
   <section>
     <div class="panel">
       <div class="toolbar">
-        <h2 style="margin:0;align-self:center">报告详情</h2>
-        <button class="ghost" id="export">导出 Markdown</button>
-        <button class="ghost" id="copy">复制 JSON</button>
+        <h2 style="margin:0;align-self:center">Report detail</h2>
+        <button class="ghost" id="export">Export Markdown</button>
+        <button class="ghost" id="copy">Copy JSON</button>
       </div>
-      <div id="detail"><div class="empty">左侧选择一份报告</div></div>
+      <div id="detail"><div class="empty">Select a report on the left</div></div>
     </div>
   </section>
 </main>

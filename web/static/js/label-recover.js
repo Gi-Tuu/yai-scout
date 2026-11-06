@@ -19,5 +19,5 @@ document.getElementById("download").onclick = () => {
 };
 document.getElementById("copy").onclick = async () => {
   await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-  document.getElementById("status").textContent = "已复制到剪贴板";
+  document.getElementById("status").textContent = "Copied to clipboard";
 };

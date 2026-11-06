@@ -36,7 +36,7 @@ async function load() {
     renderCandidates(candidates.candidates);
     renderAudit(audit.audit);
   } catch (error) {
-    $("status").textContent = `加载失败：${error.message}`;
+    $("status").textContent = `Load failed: ${error.message}`;
   }
 }
 

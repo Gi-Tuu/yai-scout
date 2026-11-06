@@ -23,39 +23,40 @@
   .choices button{min-width:120px;margin-top:10px}
   .progress{font-family:var(--mono);font-size:11px;color:var(--muted)}
 </style>
+<link rel="stylesheet" href="/static/tokens.css" />
 </head>
 <body>
 <header>
   <h1>YAI <span>Scout</span> · Accuracy Labeling</h1>
   <div class="tag">blind worksheet · auto_update / review / reject / no_change</div>
-  <div style="margin-left:auto"><a href="/" style="color:var(--accent)">首页</a></div>
+  <div style="margin-left:auto"><a href="/" style="color:var(--accent)">Home</a></div>
 </header>
 <main>
   <div class="panel">
     <h2>Labeler</h2>
-    <input id="labeler" placeholder="你的名字/编号（用于独立性记录）" style="width:320px" />
+    <input id="labeler" placeholder="Your name / ID (for independence records)" style="width:320px" />
     <span class="progress" id="progress"></span>
   </div>
   <div class="panel">
-    <h2>先读一遍：怎么判断</h2>
+    <h2>Read first: how to judge</h2>
     <div style="font-size:13px;line-height:1.8">
-      看“当前 Anchor 的 value”和下面所有来源的 value、tier、group：
+      Compare the current anchor value with the value, tier and group of every source below:
       <ol style="margin:8px 0 0 18px;padding:0">
-        <li><b>no_change</b>：新值和旧值其实一样（忽略逗号/货币符号/版本 v 前缀）</li>
-        <li><b>reject</b>：来源不可靠（T3/T4）、打不开，或比旧值还旧</li>
-        <li><b>review</b>：只有 1 个权威来源、来源冲突、单位/周期说不清，或你拿不准</li>
-        <li><b>auto_update</b>：至少 2 个互相独立的 T1/T2 来源给出相同新值</li>
+        <li><b>no_change</b>: new value equals the old one (ignore commas, currency symbols and a leading v)</li>
+        <li><b>reject</b>: unreliable source (T3/T4), unreachable, or older than the current value</li>
+        <li><b>review</b>: only one authoritative source, conflicting sources, unclear units or periods, or you are unsure</li>
+        <li><b>auto_update</b>: at least two independent T1/T2 sources agree on the same new value</li>
       </ol>
-      <div class="muted" style="margin-top:6px">同一个 group 不算两个来源；拿不准就选 review，不要猜。</div>
+      <div class="muted" style="margin-top:6px">Sources in the same group count as one; when unsure, choose review instead of guessing.</div>
     </div>
   </div>
   <div class="panel" id="casePanel">
-    <div class="muted">加载中…</div>
+    <div class="muted">Loading…</div>
   </div>
   <div class="panel">
-    <button id="prev" class="ghost">上一题</button>
-    <button id="next" class="ghost">下一题</button>
-    <button id="export">导出 labels JSON</button>
+    <button id="prev" class="ghost">Previous</button>
+    <button id="next" class="ghost">Next</button>
+    <button id="export">Export labels JSON</button>
     <span class="muted" id="status"></span>
   </div>
 </main>

@@ -28,21 +28,21 @@ function current() { return worksheet[index]; }
 function render() {
   $("labeler").oninput = () => localStorage.setItem("accuracyLabeler", $("labeler").value);
   const item = current();
-  if (!item) { $("casePanel").innerHTML = '<div class="muted">没有题目</div>'; return; }
+  if (!item) { $("casePanel").innerHTML = '<div class="muted">No cases</div>'; return; }
   const anchor = item.anchor;
   const observations = item.observations || [];
   $("progress").textContent = `${index + 1}/${worksheet.length} · labeled ${Object.keys(labels).length}`;
   $("casePanel").innerHTML = `
     <div class="progress">${item.worksheet_id} · ${esc(item.temporal_sensitivity)}</div>
     <div class="case-title">${esc(item.claim_text)}</div>
-    <div class="muted" style="font-size:12px">当前 Anchor：${esc(anchor.value)} · T${anchor.source_tier} · ${esc(anchor.url)}</div>
-    <table style="margin-top:10px"><thead><tr><th>来源</th><th>tier</th><th>group</th><th>value</th><th>published</th><th>reachable</th></tr></thead><tbody>
+    <div class="muted" style="font-size:12px">Current anchor: ${esc(anchor.value)} · T${anchor.source_tier} · ${esc(anchor.url)}</div>
+    <table style="margin-top:10px"><thead><tr><th>Sources</th><th>tier</th><th>group</th><th>value</th><th>published</th><th>reachable</th></tr></thead><tbody>
       ${observations.map((o) => `<tr><td><a style="color:var(--accent)" href="${esc(safeUrl(o.url))}" target="_blank" rel="noopener noreferrer">${esc(o.url)}</a></td><td>T${o.source_tier}</td><td>${esc(o.independent_group)}</td><td class="mono">${esc(o.value)}</td><td>${esc(o.published_at || "—")}</td><td>${o.reachable === false ? "no" : "yes"}</td></tr>`).join("")}
     </tbody></table>
     <div class="choices">
       ${DECISIONS.map((d) => `<button data-decision="${d}">${d}</button>`).join("")}
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">选择后会保存到本机 localStorage；完成后导出 JSON 交给评估。</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Your choice is saved to local localStorage; export the JSON for evaluation when finished.</div>`;
   document.querySelectorAll("[data-decision]").forEach((button) => {
     button.onclick = () => {
       labels[item.worksheet_id] = button.dataset.decision;

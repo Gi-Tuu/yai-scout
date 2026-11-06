@@ -26,18 +26,19 @@
   .changed{color:var(--warn)} .new{color:var(--ok)} .removed{color:var(--bad)}
   .warnbox{color:var(--warn);border:1px solid #78350f;background:#1c1208;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px}
 </style>
+<link rel="stylesheet" href="/static/tokens.css" />
 </head>
 <body>
 <header>
   <h1>YAI <span>Scout</span> · Temporal Drift</h1>
-  <div class="tag">两份报告 → claim 级漂移（历史对比默认 simulated）</div>
+  <div class="tag">Two reports → claim-level drift (historical comparison defaults to simulated)</div>
   <div style="margin-left:auto"><a href="/inspector">Inspector</a> · <a href="/freshness">Freshness</a></div>
 </header>
 <main>
   <div class="panel">
-    <h2>选择两份报告</h2>
+    <h2>Select two reports</h2>
     <select id="left"></select> → <select id="right"></select>
-    <button id="run" style="margin-left:10px">对比</button>
+    <button id="run" style="margin-left:10px">Compare</button>
     <div class="muted" id="hint" style="margin-top:8px"></div>
   </div>
   <div id="result"></div>

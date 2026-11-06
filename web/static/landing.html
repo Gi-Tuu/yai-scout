@@ -4,64 +4,147 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>YAI Scout — Freshness-aware Agent Benchmarking</title>
+<link rel="stylesheet" href="/static/tokens.css" />
 <style>
-  :root{--bg:#0b0f14;--panel:#121821;--line:#1f2a37;--text:#e6e9ef;--muted:#8b98a9;
-        --accent:#f5a524;--ok:#34d399;--mono:ui-monospace,"Cascadia Code",Consolas,monospace}
-  *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;color:var(--text);
-       background:radial-gradient(1200px 700px at 20% -10%,#16202c 0%,var(--bg) 55%);
-       font:15px/1.7 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
-  main{max-width:1040px;margin:0 auto;padding:64px 28px 80px}
-  h1{font-size:30px;margin:0 0 8px;letter-spacing:.3px}
-  h1 span{color:var(--accent)}
-  .tag{color:var(--muted);font-family:var(--mono);font-size:12px}
-  .lead{color:var(--muted);max-width:720px;margin:16px 0 34px}
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  @media (max-width:820px){.cards{grid-template-columns:1fr}}
-  .card{display:block;text-decoration:none;color:inherit;background:var(--panel);
-        border:1px solid var(--line);border-radius:16px;padding:22px;transition:.15s}
-  .card:hover{border-color:#7a5314;transform:translateY(-2px)}
-  .card .k{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em}
-  .card h2{font-size:20px;margin:8px 0 6px}
-  .card p{color:var(--muted);font-size:13px;margin:0 0 12px}
-  .card .meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
-  .foot{margin-top:42px;color:var(--muted);font-size:12px;line-height:1.9}
-  .foot a{color:var(--muted)}
-  .badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;
-         border:1px solid var(--line);border-radius:999px;margin-right:6px}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:0 28px 60px;background:#0b0f14;color:#d8d9d4;
+     font-family:var(--serif);font-size:16px;line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;border-top:2px solid #f5a524}
+.mast{display:grid;grid-template-columns:150px 1fr 220px;gap:26px;padding:30px 0 22px;border-bottom:1px solid #242b33}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:#8e969c;margin:0}
+.mast h1{margin:8px 0 0;font-size:clamp(38px,6vw,64px);line-height:1.02;font-weight:400;letter-spacing:-.02em}
+.mast h1 em{font-style:normal;color:#f5a524}
+.mast .lead{margin:12px 0 0;max-width:640px;color:#a8afb4;font-size:16px}
+.mast .stamp{font-family:var(--mono);font-size:12px;color:#8e969c;text-align:right;line-height:2}
+.grid{display:grid;grid-template-columns:220px minmax(0,1fr) 260px;gap:0;padding:26px 0 10px}
+.col{padding:0 24px;border-right:1px solid #242b33}
+.col:first-child{padding-left:0}
+.col:last-child{border-right:0;padding-right:0}
+.col h2{font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.14em;color:#8e969c;margin:0 0 16px}
+.index{list-style:none;padding:0;margin:0;font-family:var(--mono);font-size:12px;line-height:2.1;color:#8e969c}
+.index li{border-bottom:1px solid #1b2128}
+.index b{color:#f5a524;font-weight:400}
+.claim{margin:0 0 14px;font-size:19px;line-height:1.6}
+.claim span{color:#f5a524}
+.entry{display:block;text-decoration:none;color:inherit;border-top:1px solid #242b33;
+       padding:14px 0 14px 16px;border-left:2px solid transparent;
+       transition:border-color 240ms var(--ease),background-color 240ms var(--ease)}
+.entry:hover{border-left-color:#f5a524;background:#10151c}
+.entry .n{font-family:var(--mono);font-size:12px;color:#f5a524;letter-spacing:.1em}
+.entry h3{font-size:21px;font-weight:400;margin:4px 0 5px}
+.entry p{margin:0;color:#a8afb4;font-size:15px}
+.entry .meta{font-family:var(--mono);font-size:12px;color:#8e969c;margin-top:6px;display:block}
+.asof{border-left:2px solid #f5a524;padding-left:16px}
+.date{font-family:var(--mono);font-size:22px;color:#f5a524;margin:0 0 4px}
+.state{font-family:var(--mono);font-size:13px;letter-spacing:.08em;margin:0 0 18px}
+.state.fresh{color:#7bbf85}
+.state.stale{color:#e26a55}
+.axis{height:1px;background:#242b33;margin:0 0 18px;position:relative}
+.axis::before,.axis::after{content:"";position:absolute;top:-3px;width:7px;height:7px;background:#f5a524}
+.axis::before{left:0}
+.axis::after{right:0;background:#e26a55}
+.hint{font-size:14px;color:#a8afb4;line-height:1.8}
+.foot{border-top:1px solid #242b33;margin-top:30px;padding-top:16px;
+      display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+      font-family:var(--mono);font-size:12px;color:#8e969c}
+.badge{display:inline-block;font-family:var(--mono);font-size:12px;padding:2px 9px;
+       border:1px solid #242b33;margin-right:6px}
+.foot a{color:#8e969c}
+.reveal{opacity:0;animation:arrive 240ms var(--ease) both;animation-delay:calc(var(--i) * 60ms)}
+@keyframes arrive{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.reveal{animation:none;opacity:1}}
+@media (max-width:860px){
+  .mast{grid-template-columns:1fr;gap:12px}
+  .mast .stamp{text-align:left}
+  .grid{grid-template-columns:1fr}
+  .col{padding:18px 0;border-right:0;border-bottom:1px solid #242b33}
+  .col:last-child{border-bottom:0}
+}
+
+/* Notebook craft layer: binding holes, double rules, footnote numbers, correction stamp */
+.wrap{position:relative;padding-left:36px}
+.wrap::before{content:"";position:absolute;left:0;top:0;bottom:0;width:13px;
+  border-right:1px solid #3a2a12;opacity:.9;
+  background-image:radial-gradient(circle at 6px 13px,#f5a524 2px,transparent 2.5px);
+  background-size:13px 44px;background-repeat:repeat-y}
+.col{border-right:3px double #242b33}
+.entry .n::after{content:" §";color:#6d757c}
+.state.stale::after{content:"CORRECTION";display:inline-block;margin-left:10px;
+  border:1px solid #e26a55;color:#e26a55;padding:1px 6px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;transform:rotate(-6deg)}
+.index li::before{content:"[" counter(idx,decimal-leading-zero) "] ";counter-increment:idx;color:#6d757c}
+.index{counter-reset:idx}
+.mast h1{text-shadow:none}
+@media(max-width:860px){.wrap{padding-left:20px}.wrap::before{display:none}.col{border-right:0}}
 </style>
 </head>
 <body>
-<main>
-  <h1>YAI <span>Scout</span></h1>
-  <div class="tag">Evidence first · Freshness-aware · Two independent tracks</div>
-  <p class="lead">
-    We benchmark not just whether agents are right, but whether their evidence is still current.
-    两个独立参赛作品，共享同一套 Claim / Evidence / Snapshot 底座。
-  </p>
+<div class="wrap">
+  <div class="mast reveal" style="--i:0">
+    <div>
+      <p class="kicker">EVIDENCE FIRST / 01</p>
+      <h1>YAI <em>Scout</em></h1>
+      <p class="kicker" style="margin-top:10px">Freshness-aware agent benchmarking</p>
+    </div>
+    <div>
+      <p class="lead">We benchmark not just whether agents are right, but whether their evidence is still current. Two independent submissions sharing one Claim / Evidence / Snapshot foundation.</p>
+    </div>
+    <div class="stamp">AS-OF REPLAY<br/>RESULT HASH SEALED<br/>VERIFY ENDPOINT<br/>1080P · MIN TYPE 16PX</div>
+  </div>
 
-  <div class="cards">
-    <a class="card" href="/benchmark">
-      <div class="k">BENCHMARK</div>
-      <h2>Benchmark</h2>
-      <p>接入不同架构的 Agent，在同一批任务上比较正确率、新鲜度、证据质量、成本与延迟。</p>
-      <div class="meta">/benchmark · leaderboard · Pareto</div>
-    </a>
-    <a class="card" href="/freshness">
-      <div class="k">FRESHNESS</div>
-      <h2>Freshness</h2>
-      <p>把任意 LLM 答案拆成 claim，逐条实时核验，给出 Freshness Score、证据与修正建议。</p>
-      <div class="meta">/freshness · claim inspector</div>
-    </a>
+  <div class="grid">
+    <div class="col reveal" style="--i:1">
+      <h2>EVIDENCE INDEX</h2>
+      <ul class="index">
+        <li><b>E-01</b> claim ledger</li>
+        <li><b>E-02</b> dated source</li>
+        <li><b>E-03</b> snapshot hash</li>
+        <li><b>E-04</b> verify endpoint</li>
+        <li><b>E-05</b> correction note</li>
+      </ul>
+    </div>
+
+    <div class="col reveal" style="--i:2">
+      <h2>WHAT THIS PROVES</h2>
+      <p class="claim">Audit whether the answer you already have is <span>still true</span> — claim by claim, with dated evidence and a correction.</p>
+      <a class="entry" href="/benchmark">
+        <span class="n">01 / BENCHMARK</span>
+        <h3>Benchmark</h3>
+        <p>Compare agents with different architectures on the same tasks: accuracy, freshness, evidence quality, cost and latency.</p>
+        <span class="meta">/benchmark · leaderboard · Pareto</span>
+      </a>
+      <a class="entry" href="/freshness">
+        <span class="n">02 / FRESHNESS</span>
+        <h3>Freshness</h3>
+        <p>Split any LLM answer into claims, verify each one, and return a Freshness Score with evidence and corrections.</p>
+        <span class="meta">/freshness · claim inspector</span>
+      </a>
+    </div>
+
+    <div class="col reveal" style="--i:3">
+      <h2>AS-OF</h2>
+      <div class="asof">
+        <p class="date">2026-10-28</p>
+        <p class="state fresh">FRESH · SUPPORTED</p>
+        <div class="axis"></div>
+        <p class="date">2026-11-01</p>
+        <p class="state stale">STALE · CORRECTION NEEDED</p>
+        <p class="hint">One answer, two dates, two different conclusions. Drag the timeline in the inspector to watch each claim being rewritten.</p>
+      </div>
+    </div>
   </div>
 
   <div class="foot">
-    <span class="badge">YAI Agent Core v0.25.0</span>
-    <span class="badge">Tavily Search</span>
-    <span class="badge">DeepSeek v4.1 flash</span><br/>
-    研究控制台（旧入口）：<a href="/research">/research</a> ·
-    健康检查：<a href="/api/healthz">/api/healthz</a>
+    <div>
+      <span class="badge">YAI Agent Core v0.25.0</span>
+      <span class="badge">Tavily Search</span>
+      <span class="badge">DeepSeek v4.1 flash</span>
+    </div>
+    <div>
+      Research console (legacy): <a href="/research">/research</a> ·
+      Health check: <a href="/api/healthz">/api/healthz</a>
+    </div>
   </div>
-</main>
+</div>
 </body>
 </html>

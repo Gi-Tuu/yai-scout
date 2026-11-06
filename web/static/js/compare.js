@@ -14,7 +14,7 @@ $("run").onclick = async () => {
   const left = $("left").value, right = $("right").value;
   if (!left || !right) return;
   const res = await fetch(`/freshness/compare?left_id=${encodeURIComponent(left)}&right_id=${encodeURIComponent(right)}`);
-  if (!res.ok) { $("result").innerHTML = '<div class="panel">对比失败</div>'; return; }
+  if (!res.ok) { $("result").innerHTML = '<div class="panel">Comparison failed</div>'; return; }
   render(await res.json());
 };
 function render(d) {
@@ -30,8 +30,8 @@ function render(d) {
     <td class="muted">+${(x.evidence_added || []).length} / −${(x.evidence_removed || []).length}</td>
   </tr>`).join("");
   $("result").innerHTML = `<div class="panel">${warn}
-    <h2>Claim 漂移</h2>
-    <table><tr><th>变化</th><th>之前</th><th>之后</th><th>数值</th><th>状态</th><th>Δfreshness</th><th>证据</th></tr>
-    ${rows || '<tr><td colspan="7" class="muted">没有可对比的 claim</td></tr>'}</table></div>`;
+    <h2>Claim drift</h2>
+    <table><tr><th>Change</th><th>Before</th><th>After</th><th>Value</th><th>Status</th><th>Δfreshness</th><th>Evidence</th></tr>
+    ${rows || '<tr><td colspan="7" class="muted">No claims to compare</td></tr>'}</table></div>`;
 }
 init();

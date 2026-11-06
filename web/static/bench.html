@@ -33,20 +33,21 @@
   .hidden{display:none}
   .claim{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px;font-size:12px}
 </style>
+<link rel="stylesheet" href="/static/tokens.css" />
 </head>
 <body>
 <header>
   <h1>YAI <span>Scout</span> · Benchmark</h1>
-  <div class="tag">研究型 Agent 评测：答案对不对 + 信息新不新 + 证据硬不硬</div>
-  <div style="margin-left:auto"><a href="/">首页</a> · <a href="/freshness">Freshness</a></div>
+  <div class="tag">Research agent benchmark: correctness + freshness + evidence quality</div>
+  <div style="margin-left:auto"><a href="/">Home</a> · <a href="/freshness">Freshness</a></div>
 </header>
 <main>
   <div class="panel">
-    <h2>选择参赛 Agent 与题目</h2>
+    <h2>Select agents and tasks</h2>
     <div class="row">
-      <button id="run">运行评测</button>
+      <button id="run">Run benchmark</button>
       <span class="status" id="status">idle</span>
-      <span class="muted" id="hint">repeats 1–5；可选故障注入；公开页默认只跑 synthetic agents；真实 agent 需 admin token</span>
+      <span class="muted" id="hint">repeats 1–5; optional fault injection; public pages run synthetic agents only; real agents require an admin token</span>
     </div>
     <div class="row" style="margin-top:10px">
       <label class="status">Repeats <input id="repeats" type="number" min="1" max="5" value="1" style="width:56px"></label>
@@ -62,7 +63,7 @@
   </div>
 
   <div class="panel hidden" id="detail-panel">
-    <h2>题目明细</h2>
+    <h2>Task details</h2>
     <div id="detail"></div>
   </div>
 </main>
