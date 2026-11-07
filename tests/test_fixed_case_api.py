@@ -37,6 +37,16 @@ def test_fixed_case_api_is_stale_without_url_claim(tmp_path: Path) -> None:
         response = client.post("/freshness/verify", json=PAYLOAD)
         assert response.status_code == 200
         report = response.json()
+        assert response.headers["X-Freshness-Status"] == "stale"
+        assert response.headers["X-Freshness-Report-ID"] == report["id"]
+        assert response.headers["X-Freshness-Score"]
+        share_url = response.headers["X-Freshness-Report-URL"]
+        from urllib.parse import urlsplit
+
+        share = client.get(urlsplit(share_url).path)
+        assert share.status_code == 200
+        assert "Freshness Report" in share.text
+        assert "0.24.0" in share.text
 
     assert report["mode"] == "replay"
     assert len(report["claims"]) == 1

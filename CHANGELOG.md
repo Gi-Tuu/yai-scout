@@ -16,6 +16,15 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.16] - 2026-11-07
+
+### Added
+
+- Freshness HTTP response headers: status, score, report id and share URL.
+- Public read-only `/freshness/share/{id}` report page.
+- Six-case live demo runner and a minimal stdio MCP tool for freshness checks.
+- README/docs now describe the live private Bifrost route.
+
 ## [0.7.15] - 2026-11-06
 
 ### Fixed
