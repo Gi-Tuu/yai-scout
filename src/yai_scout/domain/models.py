@@ -394,6 +394,8 @@ class TaskResult(BaseModel):
     repeats: int = 1
     score_std: float = 0.0
     success_rate: float = 1.0
+    steps: int = 0
+    tool_calls: int = 0
     faults: list[str] = Field(default_factory=list)
     trace: list[dict[str, Any]] = Field(default_factory=list)
     samples: list[dict[str, Any]] = Field(default_factory=list)

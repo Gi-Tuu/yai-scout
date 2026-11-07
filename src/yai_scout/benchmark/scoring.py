@@ -285,6 +285,11 @@ def leaderboard(results: list[TaskResult]) -> list[dict[str, float | str | None]
                 "samples": sum(i.repeats for i in items),
                 "avg_score_std": round(sum(i.score_std for i in items) / count, 4),
                 "success_rate": round(sum(i.success_rate for i in items) / count, 3),
+                "task_success_rate": round(
+                    sum(1 for i in items if i.numeric_accuracy >= 1.0) / count, 3
+                ),
+                "avg_steps": round(sum(i.steps for i in items) / count, 2),
+                "avg_tool_calls": round(sum(i.tool_calls for i in items) / count, 2),
                 "fault_count": sum(len(i.faults) for i in items),
             }
         )

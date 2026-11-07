@@ -67,16 +67,17 @@ function renderBoard(rows, pareto) {
   if (!rows.length) { $("board").innerHTML = ""; return; }
   const frontier = new Set((pareto && pareto.frontier) || []);
   $("board").innerHTML =
-    `<tr><th>#</th><th>Agent</th><th>Weighted view</th><th>Accuracy</th><th>Freshness</th><th>Stale rate</th><th>Evidence quality</th><th>Claim coverage</th><th>Cost</th><th>Latency</th><th>std</th><th>success</th><th>faults</th></tr>` +
+    `<tr><th>#</th><th>Agent</th><th>Weighted view</th><th>Accuracy</th><th>Task success</th><th>Freshness</th><th>Stale rate</th><th>Evidence quality</th><th>Claim coverage</th><th>Steps</th><th>Tools</th><th>Tokens</th><th>Cost</th><th>Latency</th><th>std</th><th>success</th><th>faults</th></tr>` +
     rows.map((r, i) => `<tr>
       <td class="num">${i + 1}</td>
       <td>${esc(r.agent_id)} ${frontier.has(r.agent_id) ? `<span title="Pareto frontier">★</span>` : ""}</td>
       <td><div class="row"><span class="num">${r.score}</span><span class="bar" style="width:120px"><i style="width:${Math.round(r.score * 100)}%"></i></span></div></td>
       <td class="num">${r.numeric_accuracy}</td>
+      <td class="num">${r.task_success_rate ?? "-"}</td>
       <td class="num">${r.freshness_score ?? "-"}</td>
       <td class="num" style="color:${r.stale_rate > 0.3 ? "#f87171" : "inherit"}">${r.stale_rate}</td>
       <td class="num">${r.evidence_quality ?? "-"}</td>
-      <td class="num">${r.claim_coverage ?? "-"}</td><td class="num">${r.avg_cost_usd ?? "-"}</td><td class="num">${r.avg_latency_s}s</td>
+      <td class="num">${r.claim_coverage ?? "-"}</td><td class="num">${r.avg_steps ?? "-"}</td><td class="num">${r.avg_tool_calls ?? "-"}</td><td class="num">${r.avg_tokens ?? "-"}</td><td class="num">${r.avg_cost_usd ?? "-"}</td><td class="num">${r.avg_latency_s}s</td>
       <td class="num">${r.avg_score_std ?? "-"}</td><td class="num">${r.success_rate ?? "-"}</td><td class="num">${r.fault_count ?? 0}</td>
     </tr>`).join("");
 }

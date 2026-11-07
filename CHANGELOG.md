@@ -16,6 +16,15 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.17] - 2026-11-07
+
+### Added
+
+- Benchmark results now record execution steps and tool calls per sample.
+- Leaderboard exposes task success rate, average steps/tool calls and tokens.
+- `/benchmark` table shows the new PS2-oriented metrics.
+- Added `docs/benchmark-ps2-readiness.md` with an explicit coverage/gap matrix.
+
 ## [0.7.16] - 2026-11-07
 
 ### Added

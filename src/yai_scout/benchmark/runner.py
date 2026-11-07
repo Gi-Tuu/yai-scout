@@ -321,6 +321,13 @@ class BenchmarkRunner:
 
             numeric = expected_accuracy(task, answer.text)
             coverage = claim_coverage(task, answer.text)
+            steps = len(answer.trace)
+            tool_calls = sum(
+                1
+                for event in answer.trace
+                if str(event.get("step", "")).startswith("tool.")
+                or bool(event.get("tool"))
+            )
             stable_integrity = (
                 metrics.get("stable_fact_integrity")
                 if task.category.value == "stable"
@@ -349,6 +356,8 @@ class BenchmarkRunner:
                     latency_s=answer.latency_s,
                 ),
                 error=answer.error,
+                steps=steps,
+                tool_calls=tool_calls,
             )
             trace.append({"step": "score.completed", "score": result.score})
             return result, fault, trace[:100]
@@ -423,6 +432,8 @@ class BenchmarkRunner:
                             "stale_claim_rate": result.stale_claim_rate,
                             "latency_s": result.answer.latency_s,
                             "cost_usd": result.answer.cost_usd,
+                            "steps": result.steps,
+                            "tool_calls": result.tool_calls,
                             "error": result.error,
                             "fault": fault,
                         }
