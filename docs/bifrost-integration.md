@@ -70,11 +70,24 @@ Evidence to capture:
 | Tavily search | ❌ (Tavily is the research layer) |
 | Deterministic scoring / status decision | ❌ (code, not model) |
 
-## 6. Live demo limitation
+## 6. Live demo
 
-Render cannot reach `127.0.0.1:8080`. For the live public demo, either:
+The live demo runs Bifrost on a private InstaBox VM. Render reaches it over a
+private HTTPS port; the port token is stored in the deployment's
+`BIFROST_API_KEY`, and the Bifrost virtual key / gateway configuration stays on
+the VM. The port is not publicly readable without that token.
 
-- deploy Bifrost as a separate Render/Docker service with a public URL, or
-- use the direct fallback and show Bifrost in the local/video demo.
+Verify the actual route, not just configuration:
 
-Do not claim the public link is running through Bifrost unless `healthz` says `"gateway":"bifrost"`.
+```bash
+curl -s https://yai-scout.onrender.com/api/healthz | jq '.llm'
+```
+
+Expected in the deployed demo:
+
+```json
+{"available": true, "gateway": "bifrost", "model": "openai/..."}
+```
+
+Caveat: the free VM auto-pauses when idle and has a bounded max-run window.
+Warm it before a live demo (`instabox wake bifrost`) and re-check `healthz`.

@@ -41,7 +41,7 @@ answer → claims → temporal sensitivity → current-source research
 | **Bifrost** | OpenAI-compatible model gateway: claim extraction, relation assessment, correction rewrite; provider routing and logs | `llm.py`, `docs/bifrost-integration.md` |
 | Deterministic code | status decisions, budgets, evidence storage, scoring, audit | `detector/`, `store.py` |
 
-Bifrost is an optional gateway. When `BIFROST_BASE_URL` is set, model requests go through Bifrost. Without it, the app uses a direct OpenAI-compatible endpoint. The public demo uses the direct fallback; local verification and the Bifrost verification docs show the gateway path.
+Bifrost is an optional gateway. When `BIFROST_BASE_URL` is set, model requests go through Bifrost. Without it, the app uses a direct OpenAI-compatible endpoint. The public demo is configured with Bifrost; the direct path remains available for offline/keyless runs. The live gateway can be checked at `/api/healthz` (`llm.gateway`).
 
 ## Quick start
 
@@ -119,7 +119,7 @@ flowchart LR
 - Human labels are **rule-following**, not an independent ground truth; `AUTO_UPDATE` stays **off**.
 - Web-archive history is unavailable in the current environment; replay uses GitHub release history and is labelled `simulated` when no snapshot exists. Historical evidence is never fabricated.
 - The benchmark is a small evaluation suite, not an academic leaderboard.
-- Bifrost is verified locally; the public demo uses the direct fallback unless a public Bifrost deployment is configured.
+- Bifrost is verified locally and used by the public demo; the direct path is used when no gateway is configured. `healthz.llm.gateway` reports the active route.
 - LLM/Tavily keys are not in this repo; keyless and rule-based fallbacks exist.
 
 
