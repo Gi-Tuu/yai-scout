@@ -25,6 +25,8 @@ class AdapterTask(BaseModel):
     question: str
     target_time: str
     category: str = "time_sensitive"
+    scenario: str = "none"
+    injected_instruction: str = ""
 
 
 class AdapterExecution(BaseModel):

@@ -346,6 +346,10 @@ class BenchmarkTask(BaseModel):
     gold_values: list[str] = Field(default_factory=list)
     gold_sources: list[str] = Field(default_factory=list)
     hidden: bool = False
+    scenario: Literal[
+        "none", "tool_timeout", "tool_error", "model_unavailable", "misleading_instruction"
+    ] = "none"
+    injected_instruction: str = ""
     # 已提交到公开 Git 历史的 hidden 题目必须标记为 compromised（无法再视为保密）。
     compromised: bool = False
     notes: str = ""

@@ -16,6 +16,16 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.19] - 2026-11-07
+
+### Added
+
+- Task-level PS2 scenarios: `tool_timeout`, `tool_error`, `model_unavailable`
+  and `misleading_instruction`.
+- Adapter protocol carries `scenario` and `injected_instruction`.
+- Built-in retrieval/scout/LLM adapters inject the scenario behavior.
+- Added `scripts/run_task_scenarios.py` and scenario regression tests.
+
 ## [0.7.18] - 2026-11-07
 
 ### Added

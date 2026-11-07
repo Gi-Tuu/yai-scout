@@ -18,9 +18,9 @@ provide a comparison interface and traces.
 | Cost | `avg_cost_usd`, per-sample samples | ✅ |
 | Completion time | `avg_latency_s` | ✅ |
 | Repeated runs | `repeats`, sample list, score std, success rate | ✅ |
-| Failing tools | explicit `tool_timeout` / `tool_error` fault labels; injected at answer boundary | ⚠️ partial |
-| Unavailable models | explicit `model_unavailable` fault label; adapter failure path | ⚠️ partial |
-| Misleading instructions | fault label exists; not yet a task-instruction scenario | ⚠️ partial |
+| Failing tools | task-level `tool_timeout` / `tool_error` scenario; built-in adapters inject failure and external adapters receive the scenario field | ✅ demo |
+| Unavailable models | task-level `model_unavailable` scenario | ✅ demo |
+| Misleading instructions | task-level `misleading_instruction` + `injected_instruction`; injected into source context | ✅ demo |
 | Comparison interface | `/benchmark` leaderboard, Pareto, per-task detail, two-agent trace compare | ✅ |
 | Detailed traces | `trace` + per-repeat `samples` | ✅ |
 | Persisted/manifested run | manifest, result hash, result rows | ✅ |
