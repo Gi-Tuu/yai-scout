@@ -130,6 +130,8 @@ The share page is `/freshness/share/{report_id}` and is `noindex`.
 For agent integration, `python scripts/mcp_freshness.py` exposes the same check
 as a stdio MCP tool (`freshness_check`). `scripts/demo_showcase_cases.py --check`
 runs the six showcase cases against a deployed instance.
+`scripts/async_freshness_queue.py` runs those cases through a bounded client-side
+worker pool; the six source cases live in `benchmarks/showcase_cases.jsonl`.
 
 ## Honest limits
 

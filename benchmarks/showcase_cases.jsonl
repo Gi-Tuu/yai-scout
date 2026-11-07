@@ -1,0 +1,6 @@
+{"id":"stable_release","label":"stable / historical fact","answer":"Python 3.12 于 2023 年发布。","as_of":"2026-11-01","mode":"live"}
+{"id":"pricing_current","label":"pricing / current","answer":"Tavily 免费计划每月提供 1000 credits。","as_of":"2026-11-01","mode":"live"}
+{"id":"version_stale","label":"version / stale","answer":"YAI Agent Core 当前版本是 0.24.0。","as_of":"2026-11-01","mode":"replay"}
+{"id":"leadership","label":"company / leadership","answer":"Apple 的 CEO 是 Tim Cook。","as_of":"2026-11-01","mode":"live"}
+{"id":"regulation","label":"regulation / stable","answer":"GDPR 于 2018 年 5 月 25 日生效。","as_of":"2026-11-01","mode":"live"}
+{"id":"insufficient","label":"no usable evidence","answer":"Acme 公司 2030 年的营收会达到 1000 亿美元。","as_of":"2026-11-01","mode":"live"}
