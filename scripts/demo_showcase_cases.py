@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import urllib.error
 import urllib.request
 
 CASES = [
@@ -71,15 +72,26 @@ def check(base: str, case: dict) -> dict:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=120) as response:  # noqa: S310
-        report = json.loads(response.read().decode())
-        headers = {
-            key: response.headers.get(key)
-            for key in (
-                "X-Freshness-Status",
-                "X-Freshness-Score",
-                "X-Freshness-Report-URL",
-            )
+    try:
+        with urllib.request.urlopen(request, timeout=120) as response:  # noqa: S310
+            report = json.loads(response.read().decode())
+            headers = {
+                key: response.headers.get(key)
+                for key in (
+                    "X-Freshness-Status",
+                    "X-Freshness-Score",
+                    "X-Freshness-Report-URL",
+                )
+            }
+    except urllib.error.HTTPError as exc:
+        return {
+            "id": case["id"],
+            "label": case["label"],
+            "status": "ERROR",
+            "score": None,
+            "claims": 0,
+            "headers": {},
+            "error": f"HTTP {exc.code}",
         }
     verdicts = report.get("verdicts") or []
     return {

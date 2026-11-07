@@ -114,6 +114,23 @@ flowchart LR
 | Verdict evaluation | claim-level Freshness status suite; no Tavily/LLM; precision/recall/confusion |
 | Quality gates | 374 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
+## Integration surfaces
+
+`POST /freshness/verify` and `POST /api/detector` return:
+
+```text
+X-Freshness-Status       first claim status
+X-Freshness-Statuses     all claim statuses
+X-Freshness-Score        overall score
+X-Freshness-Report-ID
+X-Freshness-Report-URL  public read-only share page
+```
+
+The share page is `/freshness/share/{report_id}` and is `noindex`.
+For agent integration, `python scripts/mcp_freshness.py` exposes the same check
+as a stdio MCP tool (`freshness_check`). `scripts/demo_showcase_cases.py --check`
+runs the six showcase cases against a deployed instance.
+
 ## Honest limits
 
 - Human labels are **rule-following**, not an independent ground truth; `AUTO_UPDATE` stays **off**.
