@@ -66,6 +66,17 @@
     <h2>Task details</h2>
     <div id="detail"></div>
   </div>
+
+  <div class="panel hidden" id="trace-panel">
+    <h2>Two-agent trace compare</h2>
+    <div class="row">
+      <select id="trace-a"></select>
+      <span class="muted">vs</span>
+      <select id="trace-b"></select>
+      <button id="trace-show">Compare traces</button>
+    </div>
+    <div id="trace-compare" style="margin-top:12px"></div>
+  </div>
 </main>
 
 <script src="/static/js/bench.js"></script>

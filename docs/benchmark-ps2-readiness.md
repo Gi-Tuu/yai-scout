@@ -18,10 +18,10 @@ provide a comparison interface and traces.
 | Cost | `avg_cost_usd`, per-sample samples | ✅ |
 | Completion time | `avg_latency_s` | ✅ |
 | Repeated runs | `repeats`, sample list, score std, success rate | ✅ |
-| Failing tools | generic `error` / `timeout` / `empty` injection | ⚠️ partial |
-| Unavailable models | adapter failure path exists; no explicit scenario type | ⚠️ partial |
-| Misleading instructions | not a first-class scenario | ❌ |
-| Comparison interface | `/benchmark` leaderboard, Pareto, per-task detail | ✅ |
+| Failing tools | explicit `tool_timeout` / `tool_error` fault labels; injected at answer boundary | ⚠️ partial |
+| Unavailable models | explicit `model_unavailable` fault label; adapter failure path | ⚠️ partial |
+| Misleading instructions | fault label exists; not yet a task-instruction scenario | ⚠️ partial |
+| Comparison interface | `/benchmark` leaderboard, Pareto, per-task detail, two-agent trace compare | ✅ |
 | Detailed traces | `trace` + per-repeat `samples` | ✅ |
 | Persisted/manifested run | manifest, result hash, result rows | ✅ |
 

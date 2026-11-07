@@ -1,6 +1,6 @@
 
 const $ = (id) => document.getElementById(id);
-const state = { agents: new Set(), tasks: new Set(), timer: null, sessionId: null };
+const state = { agents: new Set(), tasks: new Set(), timer: null, sessionId: null, results: [] };
 const esc = (s) => (s || "").replace(/[<>&"]/g, (c) => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
 
 init();
@@ -39,7 +39,7 @@ $("run").onclick = async () => {
       task_ids: [...state.tasks],
       repeats: Math.max(1, Math.min(5, Number($("repeats").value) || 1)),
       failure_injection: $("inject").checked
-        ? { enabled: true, rate: 0.2, modes: ["error", "empty"] }
+        ? { enabled: true, rate: 0.2, modes: ["error", "empty", "tool_timeout", "model_unavailable"] }
         : null
     })
   });
@@ -59,7 +59,9 @@ async function poll() {
   const session = data.session || {};
   $("status").textContent = `${session.status} · ${data.results.length}/${(session.agent_ids || []).length * (session.task_ids || []).length} results`;
   renderBoard(data.leaderboard || [], data.pareto || null);
-  renderDetail(data.results || [], data.pareto || null);
+  state.results = data.results || [];
+  renderDetail(state.results, data.pareto || null);
+  renderTraceControls(state.results);
   if (session.status !== "running") { clearInterval(state.timer); $("run").disabled = false; }
 }
 
@@ -100,4 +102,32 @@ function renderDetail(results, pareto) {
     return `<div style="margin-bottom:14px"><div class="num" style="font-size:12px">${esc(taskId)}</div>
       <table><tr><th>Agent</th><th>Numeric accuracy</th><th>Overall score</th><th>freshness</th><th>Stale rate</th><th>Answer summary</th></tr>${rows}</table></div>`;
   }).join("");
+}
+
+
+function renderTraceControls(results) {
+  const agents = [...new Set(results.map((r) => r.agent_id))];
+  if (agents.length < 2) return;
+  $("trace-panel").classList.remove("hidden");
+  const options = agents.map((a) => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
+  $("trace-a").innerHTML = options;
+  $("trace-b").innerHTML = options;
+  $("trace-b").selectedIndex = 1;
+  if (!$("trace-show").onclick) {
+    $("trace-show").onclick = () => renderTraceCompare(state.results);
+  }
+  renderTraceCompare(results);
+}
+
+function renderTraceCompare(results) {
+  const a = $("trace-a").value;
+  const b = $("trace-b").value;
+  const pick = (agent) => results.find((r) => r.agent_id === agent) || {};
+  const left = pick(a);
+  const right = pick(b);
+  const cell = (r) => `<td style="vertical-align:top;max-width:520px">
+    <div class="num">${esc(r.task_id || "-")} · score ${r.score ?? "-"} · steps ${r.steps ?? "-"} · tools ${r.tool_calls ?? "-"}</div>
+    <details open><summary>trace</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:260px;overflow:auto">${esc(JSON.stringify(r.trace || [], null, 2))}</pre></details>
+  </td>`;
+  $("trace-compare").innerHTML = `<table><tr><th>${esc(a)}</th><th>${esc(b)}</th></tr><tr>${cell(left)}${cell(right)}</tr></table>`;
 }

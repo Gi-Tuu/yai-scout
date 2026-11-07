@@ -16,6 +16,15 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.18] - 2026-11-07
+
+### Added
+
+- Two-agent execution-trace comparison in `/benchmark`.
+- Explicit PS2 failure labels: `tool_timeout`, `tool_error`, `model_unavailable`,
+  `misleading_instruction`.
+- PS2 readiness matrix updated with remaining gaps.
+
 ## [0.7.17] - 2026-11-07
 
 ### Added

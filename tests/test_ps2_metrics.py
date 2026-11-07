@@ -1,7 +1,21 @@
 from __future__ import annotations
 
+from yai_scout.benchmark.runner import FailureInjection
 from yai_scout.benchmark.scoring import leaderboard
 from yai_scout.domain.models import AgentAnswer, TaskResult
+
+
+def test_failure_scenarios_are_labeled() -> None:
+    injection = FailureInjection(
+        enabled=True,
+        rate=0.2,
+        modes=["tool_timeout", "model_unavailable", "misleading_instruction"],
+    )
+    assert injection.modes == [
+        "tool_timeout",
+        "model_unavailable",
+        "misleading_instruction",
+    ]
 
 
 def test_ps2_metrics_are_aggregated() -> None:

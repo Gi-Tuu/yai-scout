@@ -59,9 +59,17 @@ class FailureInjection(BaseModel):
 
     enabled: bool = False
     rate: float = Field(default=0.0, ge=0.0, le=1.0)
-    modes: list[Literal["error", "timeout", "empty"]] = Field(
-        default=["error"]
-    )
+    modes: list[
+        Literal[
+            "error",
+            "timeout",
+            "empty",
+            "tool_timeout",
+            "tool_error",
+            "model_unavailable",
+            "misleading_instruction",
+        ]
+    ] = Field(default=["error"])
 
 
 class BenchmarkRunner:
