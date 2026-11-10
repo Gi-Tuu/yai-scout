@@ -16,6 +16,16 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.21] - 2026-11-10
+
+### Changed
+
+- Extracted repeated-run aggregation into a pure `benchmark/aggregate.py`
+  module, reducing `runner.py` coupling.
+- Added one-command quality gate `scripts/check_all.py`.
+- Expanded temporal classification regression coverage.
+- README and open-tasks now document the current test count and quality gate.
+
 ## [0.7.20] - 2026-11-10
 
 ### Fixed

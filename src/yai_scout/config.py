@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "YAI Scout"
-    app_version: str = "0.7.20"
+    app_version: str = "0.7.21"
     # all | benchmark | freshness —— 用于独立部署/独立入口
     scout_mode: str = "all"
     snapshots_seed: str = "benchmarks/snapshots.json"

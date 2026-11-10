@@ -55,6 +55,12 @@ cp .env.example .env
 uv run uvicorn yai_scout.api.app:app --port 8010
 ```
 
+Run the configured quality gates with one command:
+
+```bash
+python scripts/check_all.py
+```
+
 | URL | Purpose |
 |---|---|
 | `/freshness` | paste an LLM answer → claim-level freshness report |
@@ -112,7 +118,7 @@ flowchart LR
 | Evidence governance | anchors, multi-source candidates, accuracy gate, approve/reject/rollback |
 | Benchmark | 40 tasks, HTTP/Python/CLI adapters, repeated runs, failure injection, step/tool traces, Pareto, manifest + `result_hash` |
 | Verdict evaluation | claim-level Freshness status suite; no Tavily/LLM; precision/recall/confusion |
-| Quality gates | 379 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
+| Quality gates | 382 tests on Python 3.11/3.12, ruff, mypy strict, CI + Docker |
 
 ## Integration surfaces
 

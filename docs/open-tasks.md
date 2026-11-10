@@ -1,6 +1,6 @@
 # Open Tasks
 
-> Snapshot: 2026-11-10 · release `v0.7.20` · 379 tests · Python 3.12 local verification
+> Snapshot: 2026-11-10 · release `v0.7.21` · 382 tests · Python 3.12 local verification
 
 ## DONE
 
