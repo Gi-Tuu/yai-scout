@@ -42,3 +42,18 @@ def test_ps2_metrics_are_aggregated() -> None:
     assert row["avg_steps"] == 4.0
     assert row["avg_tool_calls"] == 1.5
     assert row["avg_tokens"] == 150
+
+
+def test_unmeasured_metrics_stay_none() -> None:
+    result = TaskResult(
+        task_id="t1",
+        agent_id="a",
+        answer=AgentAnswer(text="x"),
+        stale_claim_rate=None,
+        evidence_quality=None,
+        stable_fact_integrity=None,
+    )
+    row = leaderboard([result])[0]
+    assert row["stale_rate"] is None
+    assert row["evidence_quality"] is None
+    assert row["stable_fact_integrity"] is None

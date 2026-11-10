@@ -77,7 +77,7 @@ function renderBoard(rows, pareto) {
       <td class="num">${r.numeric_accuracy}</td>
       <td class="num">${r.task_success_rate ?? "-"}</td>
       <td class="num">${r.freshness_score ?? "-"}</td>
-      <td class="num" style="color:${r.stale_rate > 0.3 ? "#f87171" : "inherit"}">${r.stale_rate}</td>
+      <td class="num" style="color:${r.stale_rate > 0.3 ? "#f87171" : "inherit"}">${r.stale_rate ?? "-"}</td>
       <td class="num">${r.evidence_quality ?? "-"}</td>
       <td class="num">${r.claim_coverage ?? "-"}</td><td class="num">${r.avg_steps ?? "-"}</td><td class="num">${r.avg_tool_calls ?? "-"}</td><td class="num">${r.avg_tokens ?? "-"}</td><td class="num">${r.avg_cost_usd ?? "-"}</td><td class="num">${r.avg_latency_s}s</td>
       <td class="num">${r.avg_score_std ?? "-"}</td><td class="num">${r.success_rate ?? "-"}</td><td class="num">${r.fault_count ?? 0}</td>
@@ -107,12 +107,14 @@ function renderDetail(results, pareto) {
 
 function renderTraceControls(results) {
   const agents = [...new Set(results.map((r) => r.agent_id))];
-  if (agents.length < 2) return;
+  const tasks = [...new Set(results.map((r) => r.task_id))];
+  if (agents.length < 2 || !tasks.length) return;
   $("trace-panel").classList.remove("hidden");
   const options = agents.map((a) => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
   $("trace-a").innerHTML = options;
   $("trace-b").innerHTML = options;
   $("trace-b").selectedIndex = 1;
+  $("trace-task").innerHTML = tasks.map((task) => `<option value="${esc(task)}">${esc(task)}</option>`).join("");
   if (!$("trace-show").onclick) {
     $("trace-show").onclick = () => renderTraceCompare(state.results);
   }
@@ -122,7 +124,8 @@ function renderTraceControls(results) {
 function renderTraceCompare(results) {
   const a = $("trace-a").value;
   const b = $("trace-b").value;
-  const pick = (agent) => results.find((r) => r.agent_id === agent) || {};
+  const task = $("trace-task").value;
+  const pick = (agent) => results.find((r) => r.agent_id === agent && r.task_id === task) || {};
   const left = pick(a);
   const right = pick(b);
   const cell = (r) => `<td style="vertical-align:top;max-width:520px">

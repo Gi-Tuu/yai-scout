@@ -16,6 +16,17 @@ Pre-1.0 versions are previews; APIs may change.
 - More agent adapters (framework wrappers) and larger benchmark dataset.
 - Independent accuracy calibration and a stable label-adjudication workflow.
 
+## [0.7.20] - 2026-11-10
+
+### Fixed
+
+- Benchmark aggregates now use consistent denominators: all repeats for success
+  rate, valid samples for accuracy/score/coverage/resources.
+- Aggregated cost, latency and token fields come from valid samples rather than
+  the representative maximum-score sample.
+- Two-agent trace comparison now requires a shared task id.
+- Unmeasured benchmark metrics stay `None` instead of being displayed as zero.
+
 ## [0.7.19] - 2026-11-07
 
 ### Added

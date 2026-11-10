@@ -91,4 +91,6 @@ async def test_repeated_runs_average_valid_samples_and_keep_samples() -> None:
     assert result.samples and len(result.samples) == 2
     assert result.success_rate == 0.5
     assert result.score > 0
+    assert result.numeric_accuracy == 1.0
+    assert result.answer.latency_s == 0.1
     store.close()

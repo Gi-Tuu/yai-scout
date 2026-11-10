@@ -385,6 +385,7 @@ class BenchmarkRunner:
             scores_pool = valid_samples or all_samples
             base = max(scores_pool, key=lambda item: item[0].score)
             samples = scores_pool
+            sample_count = len(valid_samples) or 1
             scores = [item[0].score for item in scores_pool]
             successes = len(valid_samples)
             faults = sorted({fault for _result, fault, _trace in all_samples if fault})
@@ -401,11 +402,12 @@ class BenchmarkRunner:
                 update={
                     "score": round(sum(scores) / len(scores), 4),
                     "numeric_accuracy": round(
-                        sum(item[0].numeric_accuracy for item in samples) / repeats, 3
+                        sum(item[0].numeric_accuracy for item in samples) / sample_count,
+                        3,
                     ),
                     "has_citations": any(item[0].has_citations for item in samples),
                     "citation_count": round(
-                        sum(item[0].citation_count for item in samples) / repeats
+                        sum(item[0].citation_count for item in samples) / sample_count
                     ),
                     "freshness_score": average(
                         [item[0].freshness_score for item in samples]
@@ -414,7 +416,8 @@ class BenchmarkRunner:
                         [item[0].stale_claim_rate for item in samples]
                     ),
                     "claim_coverage": round(
-                        sum(item[0].claim_coverage for item in samples) / repeats, 3
+                        sum(item[0].claim_coverage for item in samples) / sample_count,
+                        3,
                     ),
                     "supported_claim_rate": average(
                         [item[0].supported_claim_rate for item in samples]
@@ -427,7 +430,35 @@ class BenchmarkRunner:
                     ),
                     "repeats": repeats,
                     "score_std": (
-                        round(statistics.pstdev(scores), 4) if repeats > 1 else 0.0
+                        round(statistics.pstdev(scores), 4)
+                        if len(scores) > 1
+                        else 0.0
+                    ),
+                    "answer": base[0].answer.model_copy(
+                        update={
+                            "tokens": round(
+                                sum(item[0].answer.tokens for item in samples)
+                                / sample_count
+                            ),
+                            "prompt_tokens": round(
+                                sum(item[0].answer.prompt_tokens for item in samples)
+                                / sample_count
+                            ),
+                            "completion_tokens": round(
+                                sum(item[0].answer.completion_tokens for item in samples)
+                                / sample_count
+                            ),
+                            "cost_usd": round(
+                                sum(item[0].answer.cost_usd for item in samples)
+                                / sample_count,
+                                6,
+                            ),
+                            "latency_s": round(
+                                sum(item[0].answer.latency_s for item in samples)
+                                / sample_count,
+                                2,
+                            ),
+                        }
                     ),
                     "success_rate": round(successes / repeats, 3),
                     "faults": faults,

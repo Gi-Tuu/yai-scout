@@ -1,6 +1,6 @@
 # Open Tasks
 
-> Snapshot: 2026-11-04 · release `v0.7.19` · 378 tests · Python 3.12 local verification
+> Snapshot: 2026-11-10 · release `v0.7.20` · 379 tests · Python 3.12 local verification
 
 ## DONE
 
@@ -37,7 +37,7 @@
 
 | Task | Notes |
 |---|---|
-| Migration 8 validation in more real databases | local DB reports schema versions 1–8 and 0 consistency issues; add fixture coverage as databases appear |
+| Migration 11 validation in more real databases | local DB reports schema versions 1–11 and 0 consistency issues; add fixture coverage as databases appear |
 
 ## BLOCKED
 

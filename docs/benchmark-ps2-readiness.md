@@ -39,14 +39,27 @@ trace and per-repeat samples
 
 ## What is still missing for a strong PS2 submission
 
-1. Explicit scenario labels for:
-   - tool timeout
-   - model unavailable
-   - misleading instruction / prompt injection
-2. A comparison view that puts two agents' traces side by side.
-3. A general task suite beyond the current freshness/evidence-oriented dataset.
-4. A clear statement that this is a **small benchmark**, not an academic
+1. A general agent task suite beyond the current freshness/evidence-oriented
+   dataset.
+2. A UI control to attach `tool_timeout` / `model_unavailable` /
+   `misleading_instruction` to a selected task; the scenario model and adapter
+   behavior exist, but the dashboard currently selects tasks only.
+3. A reviewer-facing statement that this is a small benchmark, not an academic
    leaderboard.
+
+## What is already demo-ready
+
+```text
+/benchmark UI
+repeated runs (1–5)
+fault injection: error / timeout / empty
+task-level tool/model/misleading scenarios
+Pareto frontier
+per-agent leaderboard
+per-task detail
+same-task two-agent trace comparison
+trace and per-repeat samples
+```
 
 ## Recommended scope for the hackathon
 
@@ -55,11 +68,10 @@ Do not build a new benchmark platform. Position YAI Scout's benchmark as:
 ```text
 framework-independent agent evaluation
 + repeated-run reliability
-+ failure injection
++ task-level failure scenarios
 + cost/token/latency/steps/tools
-+ trace comparison
++ same-task trace comparison
 ```
 
-Add only the missing failure scenario labels and a two-agent trace comparison
-view if time permits. Do not claim full PS2 coverage until misleading-instruction
-and unavailable-model scenarios are explicit in the test data.
+Do not claim full PS2 coverage until the task suite is broader than
+freshness/evidence cases.

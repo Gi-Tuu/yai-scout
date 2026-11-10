@@ -243,6 +243,11 @@ def pareto_frontier(results: list[TaskResult]) -> dict[str, object]:
     }
 
 
+def _optional_average(values: list[float | None]) -> float | None:
+    usable = [value for value in values if value is not None]
+    return round(sum(usable) / len(usable), 3) if usable else None
+
+
 def leaderboard(results: list[TaskResult]) -> list[dict[str, float | str | None]]:
     """按 agent 聚合：多维指标（不隐藏单一总分）。"""
     grouped: dict[str, list[TaskResult]] = {}
@@ -259,18 +264,18 @@ def leaderboard(results: list[TaskResult]) -> list[dict[str, float | str | None]
                 "score": round(sum(i.score for i in items) / count, 4),
                 "numeric_accuracy": round(sum(i.numeric_accuracy for i in items) / count, 3),
                 "citation_rate": round(sum(1 for i in items if i.has_citations) / count, 3),
-                "stale_rate": round(
-                    sum(i.stale_claim_rate or 0.0 for i in items) / count, 3
+                "stale_rate": _optional_average(
+                    [i.stale_claim_rate for i in items]
                 ),
                 "freshness_score": round(sum(freshness_values) / len(freshness_values), 1)
                 if freshness_values
                 else None,
-                "evidence_quality": round(
-                    sum(i.evidence_quality or 0.0 for i in items) / count, 3
+                "evidence_quality": _optional_average(
+                    [i.evidence_quality for i in items]
                 ),
                 "claim_coverage": round(sum(i.claim_coverage for i in items) / count, 3),
-                "stable_fact_integrity": round(
-                    sum(i.stable_fact_integrity or 0.0 for i in items) / count, 3
+                "stable_fact_integrity": _optional_average(
+                    [i.stable_fact_integrity for i in items]
                 ),
                 "avg_latency_s": round(sum(i.answer.latency_s for i in items) / count, 2),
                 "avg_tokens": round(sum(i.answer.tokens for i in items) / count, 0),
