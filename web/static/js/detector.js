@@ -27,14 +27,42 @@ const safeUrl = (value) => {
 };
 
 
-$("run").onclick = async () => {
-  const answer = $("answer").value.trim();
-  if (answer.length < 10) return;
-  $("run").disabled = true; $("hint").textContent = "Checking (one Tavily search per claim)…";
+const REPLAYS = [
+  {
+    label: "FRESH at 2026-10-28",
+    answer: "YAI Agent Core 当前版本是 0.24.0。",
+    as_of: "2026-10-28",
+  },
+  {
+    label: "STALE at 2026-11-01",
+    answer: "YAI Agent Core 当前版本是 0.24.0。",
+    as_of: "2026-11-01",
+  },
+  {
+    label: "FRESH at 2026-11-01 (current value)",
+    answer: "YAI Agent Core 当前版本是 0.25.0。",
+    as_of: "2026-11-01",
+  },
+];
+REPLAYS.forEach((demo) => {
+  const b = document.createElement("button");
+  b.className = "ghost";
+  b.textContent = `Replay · ${demo.label}`;
+  b.onclick = () => runCheck(
+    { answer: demo.answer, as_of: demo.as_of, mode: "replay", max_claims: 3 },
+    "Running cached replay (no live search)…"
+  );
+  $("replays").appendChild(b);
+});
+
+async function runCheck(payload, label) {
+  if (!payload.answer || payload.answer.trim().length < 10) return;
+  $("run").disabled = true;
+  $("hint").textContent = label || "Checking (one Tavily search per claim)…";
   try {
     const res = await fetch("/api/detector", {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ answer })
+      body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error("HTTP " + res.status);
     render(await res.json());
@@ -43,6 +71,11 @@ $("run").onclick = async () => {
   } finally {
     $("run").disabled = false;
   }
+}
+
+$("run").onclick = () => {
+  const answer = $("answer").value.trim();
+  runCheck({ answer }, "Checking (one Tavily search per claim)…");
 };
 
 function render(report) {
